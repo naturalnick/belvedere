@@ -46,13 +46,7 @@ func _ready() -> void:
 	player.manor = self
 	player.automated = demo
 	add_child(player)
-	# The lever sits between the player and the guaranteed open gap doorway.
-	var gap_direction := 0
-	for d in 4:
-		if rules.can_slide(d) and rules.can_walk(d):
-			gap_direction = d
-	player.position = ManorGeometry.center(rules.slot()) - ManorGeometry.DIRECTIONS[gap_direction] * 1.5 + Vector3.UP * 0.02
-	player.aim_at(ManorGeometry.center(rules.board.find(-1)) + Vector3.UP * 1.4)
+	place_player_at_spawn()
 	for arg in OS.get_cmdline_user_args():
 		if arg == "--invert-y":
 			player.invert_y = true
@@ -69,6 +63,15 @@ func _ready() -> void:
 		driver.set_script(load("res://tools/demo_driver.gd"))
 		add_child(driver)
 		driver.call_deferred("run", self)
+
+func place_player_at_spawn() -> void:
+	# The lever sits between the player and the guaranteed open gap doorway.
+	var gap_direction := 0
+	for d in 4:
+		if rules.can_slide(d) and rules.can_walk(d):
+			gap_direction = d
+	player.position = ManorGeometry.center(rules.slot()) - ManorGeometry.DIRECTIONS[gap_direction] * 1.5 + Vector3.UP * 0.02
+	player.aim_at(ManorGeometry.center(rules.board.find(-1)) + Vector3.UP * 1.4)
 
 func _build_world() -> void:
 	var world := WorldEnvironment.new()

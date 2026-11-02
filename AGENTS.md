@@ -7,6 +7,7 @@ First-person 3D sliding-room puzzle. Godot 4.7, Compatibility renderer. Spec: `d
 Commands (kept in `tools/`; update this list when scripts change):
 - Run: `tools/run.sh`
 - Rule + solver tests (headless): `tools/test.sh`
+- Fun-test bots + geometry probes (headless): `tools/fun_test.sh` → `docs/FUNTEST.md`
 - Screenshots: `tools/capture.sh [mode] [seed] [out_dir]`
 - Web build (local zip, never uploaded): `tools/build_itch.sh`
 - Read-only export scope/identity preflight: `python3 tools/check_export_identity.py`
