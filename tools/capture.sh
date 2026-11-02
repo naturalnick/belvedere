@@ -9,4 +9,6 @@ mkdir -p "$OUT"
 OUT="$(cd "$OUT" && pwd)"
 godot --headless --path . --import > /tmp/shifting-manor-import.log 2>&1 || { cat /tmp/shifting-manor-import.log; exit 1; }
 if grep -E 'SCRIPT ERROR|Parse Error|Compile Error' /tmp/shifting-manor-import.log; then exit 1; fi
-exec godot --path . -- --demo --mode="$MODE" --seed="$SEED" --shots="$OUT" "$@"
+CLASSIC="--classic"
+if [ "$MODE" = "courtyard" ]; then CLASSIC=""; fi
+exec godot --path . -- $CLASSIC --demo --mode="$MODE" --seed="$SEED" --shots="$OUT" "$@"

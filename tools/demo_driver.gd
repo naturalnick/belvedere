@@ -17,14 +17,17 @@ func run(game: Manor) -> void:
 			shots_dir = arg.trim_prefix("--shots=")
 		if arg.begins_with("--mode="):
 			mode = arg.trim_prefix("--mode=")
-	if mode not in ["solve", "review"]:
-		printerr("Capture mode must be solve or review")
+	if mode not in ["solve", "review", "courtyard"]:
+		printerr("Capture mode must be solve, review or courtyard")
 		get_tree().quit(1)
 		return
 	DirAccess.make_dir_recursive_absolute(shots_dir)
 	started = Time.get_ticks_msec()
-	# Remove only this run's six outputs so stale success frames cannot survive.
-	for name_value in ["01_spawn", "02_window", "03_lever_held", "04_mid_slide", "05_solved", "06_front_door_open"]:
+	# Remove this mode's outputs so stale success frames cannot survive a failed run.
+	var shot_names := ["01_spawn", "02_window", "03_lever_held", "04_mid_slide", "05_solved", "06_front_door_open"]
+	if mode == "courtyard":
+		shot_names = ["01_spawn", "02_courtyards", "03_outside", "04_lever_held", "05_mid_slide", "06_multiple_directions", "07_shifted"]
+	for name_value in shot_names:
 		DirAccess.remove_absolute(shots_dir.path_join(name_value + ".png"))
 	DisplayServer.window_move_to_foreground()
 	get_window().grab_focus()
@@ -36,6 +39,11 @@ func run(game: Manor) -> void:
 		await shot("00_play_gate")
 		await check_pointer_input()
 	await shot("01_spawn")
+	if mode == "courtyard":
+		await courtyard_views()
+		print("Courtyard capture: %d screenshots; %d checks, %d failures; %.2fs" % [shot_count, checks, failures, elapsed()])
+		get_tree().quit(1 if failures else 0)
+		return
 	print("Spawn room %d slot %d, gap slot %d, yaw %.1f°" % [main.rules.player, main.rules.slot(), main.rules.board.find(-1), rad_to_deg(main.player.rotation.y)])
 	if mode == "review":
 		await review_views()
@@ -108,6 +116,55 @@ func run(game: Manor) -> void:
 	_check(main.player.global_position.z > 9.5, "unlocked front door can be walked through")
 	print("Capture: %d screenshots; %d checks, %d failures; %d slides; %.2fs" % [shot_count, checks, failures, main.slides, elapsed()])
 	get_tree().quit(1 if failures else 0)
+
+func courtyard_views() -> void:
+	_check(main.rules.courtyards and main.rooms.size() == 6 and main.gap_floors.size() == 3, "six-room courtyard scene")
+	await check_pointer_input()
+	await walk_direction(ManorRules.E)
+	await walk_direction(ManorRules.E)
+	_check(main.rules.player == -1 and main.rules.slot() == 8, "walk across two distinct gaps")
+	main.player.aim_at(Vector3(-3, 1.4, 0))
+	await shot("02_courtyards")
+	await walk_to(Vector3(6.25, 0, 11))
+	_check(main.rules.player == ManorRules.OUTSIDE, "walk from edge gap onto lawn")
+	_check(not main.request_slide(ManorRules.N), "cannot slide from lawn")
+	await walk_to(Vector3(11, 0, 11))
+	main.player.aim_at(Vector3(0, 1.4, 0))
+	await shot("03_outside")
+	await walk_to(Vector3(6.25, 0, 11))
+	await walk_to(ManorGeometry.center(8))
+	_check(main.rules.player == -1 and main.rules.slot() == 8, "return from lawn onto courtyard floor")
+	await walk_direction(ManorRules.W)
+	await walk_direction(ManorRules.W)
+	_check(main.rules.player == 7, "return through doorway to Foyer")
+	await approach_lever(main.rooms[7])
+	main.player.aim_at(main.rooms[7].lever.global_position + Vector3.UP * 0.8)
+	await hold_lever_input(ManorRules.E, true)
+	await shot("04_lever_held")
+	var local := main.rooms[7].to_local(main.player.global_position)
+	release_lever_input(true)
+	await get_tree().create_timer(0.7).timeout
+	_check(main.sliding, "input starts courtyard slide")
+	_check(main.rooms[7].to_local(main.player.global_position).distance_to(local) < 0.001, "rider stays on moving room")
+	await shot("05_mid_slide")
+	while main.sliding:
+		await get_tree().process_frame
+	_check(main.rules.slot() == 7 and main.gap_floors.has(6) and not main.gap_floors.has(7), "selected gap is filled and old slot becomes a gap")
+	await get_tree().create_timer(0.5).timeout
+	main.player.aim_at(main.rooms[7].lever.global_position + Vector3.UP * 0.8)
+	await hold_lever_input(ManorRules.E, false)
+	_check(main.rules.can_slide(ManorRules.E) and main.rules.can_slide(ManorRules.W), "two lever choices available")
+	await shot("06_multiple_directions")
+	release_lever_input(false)
+	while main.sliding:
+		await get_tree().process_frame
+	_check(main.rules.slot() == 8 and main.rules.board[8] == 7, "second slide chooses east, not first gap in board")
+	_check(not main.won and not main.carpet.visible, "prototype has no solve reward")
+	for door in main.rooms[7].doors:
+		if door.is_front or ManorRules.neighbor(8, door.direction) < 0:
+			_check(not door.opened and door.gate.collision_layer == 1, "exterior doors stay closed")
+	main.player.aim_at(Vector3(0, 1.4, 0))
+	await shot("07_shifted")
 
 
 func capture_window() -> bool:

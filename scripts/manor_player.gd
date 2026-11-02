@@ -108,10 +108,10 @@ func select_pull(direction: int) -> void:
 	if not held:
 		return
 	selected_direction = direction
-	var valid := -1
+	var valid := 0
 	for d in 4:
 		if manor.rules.can_slide(d):
-			valid = d
+			valid |= 1 << d
 	var room: ManorRoom = manor.rooms[manor.rules.player]
 	room.show_pull(direction, valid, true)
 

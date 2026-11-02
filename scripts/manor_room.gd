@@ -89,13 +89,13 @@ func _build_lever() -> void:
 		arrow.visible = false
 		arrows.append(arrow)
 
-func show_pull(direction: int, valid_direction: int, held: bool) -> void:
+func show_pull(direction: int, valid_directions: int, held: bool) -> void:
 	if lever_motion:
 		lever_motion.kill()
 	for d in 4:
 		arrows[d].visible = held
 		for mesh: MeshInstance3D in arrows[d].get_children():
-			mesh.material_override = ManorGeometry.material("F5DE8D" if d == valid_direction else "85744E", 0.006)
+			mesh.material_override = ManorGeometry.material("F5DE8D" if held and (valid_directions & (1 << d)) != 0 else "85744E", 0.006)
 	var target := Vector3.ZERO
 	if direction >= 0:
 		var v: Vector3 = ManorGeometry.DIRECTIONS[direction]

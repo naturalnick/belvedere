@@ -1,3 +1,5 @@
+CURRENT PROTOTYPE (2026-11-02): Six rooms and three gaps on the same 3×3 grid. Bedroom, Bathroom, Study, Kitchen, Living and Foyer retain their original fixed sides. Start board [-1,2,5,0,1,3,7,-1,-1], player in Foyer. Any adjacent gap can receive a slide. Gaps connect by walking; perimeter gaps lead onto the lawn and allow reentry. Exterior-facing doors, windows and the front door remain blocked. No docking, collectibles, win condition or finale in this movement prototype. Run tools/run.sh. The earlier eight-room puzzle remains available via --classic; the historical specification below and its solver/table apply to that mode only. See docs/DECISIONS.md for the pivot.
+
 SHIFTING MANOR — BUILD SPEC v1 (from Game Design Lab, Nov 2 2026). Godot 4, first-person 3D. (est.) = design picks.
 
 1. GRID AND RULES

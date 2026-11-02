@@ -11,6 +11,7 @@ var sliding := false
 var won := false
 var slides := 0
 var gap_floor: Node3D
+var gap_floors: Dictionary[int, Node3D] = {}
 var carpet: MeshInstance3D
 var seed_name := "random"
 var perimeter: Array[StaticBody3D] = []
@@ -18,17 +19,24 @@ var play_gate: Control
 
 func _ready() -> void:
 	var demo := false
+	var classic := OS.get_cmdline_user_args().has("--classic")
+	if not classic:
+		seed_name = "courtyard"
 	for arg in OS.get_cmdline_user_args():
 		if arg.begins_with("--seed="):
 			seed_name = arg.trim_prefix("--seed=")
 		elif arg == "--demo":
 			demo = true
-	rules = ManorRules.from_seed(seed_name)
+	if not classic and seed_name not in ["courtyard", "A"]:
+		printerr("The courtyard prototype has one fixed start; use --classic for the old seed table.")
+		get_tree().quit(1)
+		return
+	rules = ManorRules.from_seed(seed_name) if classic else ManorRules.courtyard_start()
 	if rules == null:
 		get_tree().quit(1)
 		return
 	_build_world()
-	for id in ManorRules.HOME:
+	for id in rules.board:
 		if id == -1:
 			continue
 		var room := ManorRoom.new()
@@ -36,13 +44,19 @@ func _ready() -> void:
 		room.build(id)
 		room.position = ManorGeometry.center(rules.board.find(id))
 		rooms[id] = room
-	gap_floor = Node3D.new()
-	add_child(gap_floor)
-	ManorGeometry.box(gap_floor, Vector3(6.25, 0.2, 6.25), Vector3(0, -0.1, 0), ManorGeometry.material("DCD6C8", 0.0), true)
-	for d in 4:
-		var edge := ManorGeometry.box(gap_floor, Vector3(5.65, 0.008, 0.04), ManorGeometry.DIRECTIONS[d] * 2.825 + Vector3.UP * 0.004, ManorGeometry.material("C6BEAD", 0.0))
-		edge.rotation.y = -d * PI / 2.0
-	gap_floor.position = ManorGeometry.center(rules.board.find(-1)) + Vector3.DOWN * 0.02
+	for slot_index in 9:
+		if rules.board[slot_index] != -1:
+			continue
+		var floor_node := Node3D.new()
+		add_child(floor_node)
+		ManorGeometry.box(floor_node, Vector3(6.25, 0.2, 6.25), Vector3(0, -0.1, 0), ManorGeometry.material("DCD6C8", 0.0), true)
+		for d in 4:
+			var edge := ManorGeometry.box(floor_node, Vector3(5.65, 0.008, 0.04), ManorGeometry.DIRECTIONS[d] * 2.825 + Vector3.UP * 0.004, ManorGeometry.material("C6BEAD", 0.0))
+			edge.rotation.y = -d * PI / 2.0
+		floor_node.position = ManorGeometry.center(slot_index) + Vector3.DOWN * 0.02
+		gap_floors[slot_index] = floor_node
+		if gap_floor == null:
+			gap_floor = floor_node
 	player = ManorPlayer.new()
 	player.manor = self
 	player.automated = demo
@@ -81,7 +95,7 @@ func place_player_at_spawn() -> void:
 		if rules.can_slide(d) and rules.can_walk(d):
 			gap_direction = d
 	player.position = ManorGeometry.center(rules.slot()) - ManorGeometry.DIRECTIONS[gap_direction] * 1.7 + Vector3.UP * 0.02
-	player.aim_at(ManorGeometry.center(rules.board.find(-1)) + Vector3.UP * 0.1)
+	player.aim_at(ManorGeometry.center(rules.slot()) + ManorGeometry.DIRECTIONS[gap_direction] * ManorGeometry.PITCH + Vector3.UP * 0.1)
 	player.camera.rotation.x = deg_to_rad(-16)
 
 func resume_play() -> void:
@@ -120,16 +134,25 @@ func _build_world() -> void:
 	sun.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_2_SPLITS
 	sun.directional_shadow_max_distance = 40
 	add_child(sun)
-	ManorGeometry.box(self, Vector3(220, 0.2, 220), Vector3(0, -0.25, 0), ManorGeometry.material("B9C98E", 0.0), true)
-	ManorGeometry.box(self, Vector3(65, 0.02, 65), Vector3(0, -0.14, 0), ManorGeometry.material("9DB86E", 0.0))
+	# Level courtyard/lawn collision avoids an unjumpable step on the return trip.
+	if rules.courtyards:
+		ManorGeometry.barrier(self, Vector3(220, 0.2, 220), Vector3(0, -0.12, 0))
+		ManorGeometry.box(self, Vector3(220, 0.2, 220), Vector3(0, -0.14, 0), ManorGeometry.material("B9C98E", 0.0))
+		# A meadow ring leaves the stone courtyards uncovered, without coplanar grass.
+		for d in 4:
+			var grass_size := Vector3(65, 0.02, 23.125) if d % 2 == 0 else Vector3(23.125, 0.02, 18.75)
+			ManorGeometry.box(self, grass_size, ManorGeometry.DIRECTIONS[d] * 20.9375 + Vector3.DOWN * 0.03, ManorGeometry.material("9DB86E", 0.0))
+	else:
+		ManorGeometry.box(self, Vector3(220, 0.2, 220), Vector3(0, -0.25, 0), ManorGeometry.material("B9C98E", 0.0), true)
+		ManorGeometry.box(self, Vector3(65, 0.02, 65), Vector3(0, -0.14, 0), ManorGeometry.material("9DB86E", 0.0))
 	carpet = ManorGeometry.box(self, Vector3(1.8, 0.025, 13), Vector3(0, 0, 15.8), ManorGeometry.material("B3363A", 0.0))
 	for x in [-0.84, 0.84]:
 		ManorGeometry.box(carpet, Vector3(0.06, 0.006, 13), Vector3(x, 0.016, 0), ManorGeometry.material("C9A04A", 0.0))
 	carpet.visible = false
-	# The open gap has no rail; keep the unsolved puzzle on its 3x3 footprint.
-	for d in 4:
-		var size := Vector3(18.75, 3, 0.1) if d % 2 == 0 else Vector3(0.1, 3, 18.75)
-		perimeter.append(ManorGeometry.barrier(self, size, ManorGeometry.DIRECTIONS[d] * 9.425 + Vector3.UP * 1.5))
+	if not rules.courtyards:
+		for d in 4:
+			var size := Vector3(18.75, 3, 0.1) if d % 2 == 0 else Vector3(0.1, 3, 18.75)
+			perimeter.append(ManorGeometry.barrier(self, size, ManorGeometry.DIRECTIONS[d] * 9.425 + Vector3.UP * 1.5))
 
 func refresh_doors(instant: bool = false) -> void:
 	for id in rooms:
@@ -145,14 +168,33 @@ func update_occupant() -> void:
 	var col := int(floor((p.x + ManorGeometry.PITCH * 1.5) / ManorGeometry.PITCH))
 	var row := int(floor((p.z + ManorGeometry.PITCH * 1.5) / ManorGeometry.PITCH))
 	if row < 0 or row > 2 or col < 0 or col > 2:
+		if rules.courtyards and rules.player == -1:
+			for d in 4:
+				if ManorRules.neighbor(rules.slot(), d) < 0:
+					rules.apply(ManorRules.WALK, d)
+					break
 		return
 	var new_slot := row * 3 + col
+	if rules.player == ManorRules.OUTSIDE:
+		rules.apply(ManorRules.ENTER_GAP, new_slot)
+		return
 	if new_slot == rules.slot():
 		return
 	for d in 4:
 		if ManorRules.neighbor(rules.slot(), d) == new_slot and rules.can_walk(d):
 			rules.apply(ManorRules.WALK, d)
 			return
+	# One physics tick can cross both grid axes at a corner of connected courtyards.
+	if rules.courtyards and rules.player == -1 and rules.board[new_slot] == -1:
+		for d in 4:
+			var middle := ManorRules.neighbor(rules.slot(), d)
+			if middle < 0 or rules.board[middle] != -1:
+				continue
+			for onward in 4:
+				if ManorRules.neighbor(middle, onward) == new_slot:
+					rules.apply(ManorRules.WALK, d)
+					rules.apply(ManorRules.WALK, onward)
+					return
 
 func request_slide(direction: int) -> bool:
 	if sliding:
@@ -164,7 +206,8 @@ func request_slide(direction: int) -> bool:
 	sliding = true
 	var room := rooms[rules.player]
 	var old_slot := rules.slot()
-	var destination := ManorGeometry.center(rules.board.find(-1))
+	var destination_slot := ManorRules.neighbor(old_slot, direction)
+	var destination := ManorGeometry.center(destination_slot)
 	player.reparent(room, true)
 	player.velocity = Vector3.ZERO
 	# Static door gates close during transit; only the room and rider move.
@@ -176,7 +219,10 @@ func request_slide(direction: int) -> bool:
 	tween.tween_callback(func() -> void:
 		rules.apply(ManorRules.SLIDE, direction)
 		player.reparent(self, true)
-		gap_floor.position = ManorGeometry.center(old_slot) + Vector3.DOWN * 0.02
+		var vacated_floor: Node3D = gap_floors[destination_slot]
+		gap_floors.erase(destination_slot)
+		gap_floors[old_slot] = vacated_floor
+		vacated_floor.position = ManorGeometry.center(old_slot) + Vector3.DOWN * 0.02
 		slides += 1
 		sliding = false
 		room.show_pull(-1, -1, false)
