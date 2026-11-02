@@ -1,0 +1,11 @@
+Shifting Manor
+Copyright (c) 2026 Puzzaholics LLC. All rights reserved.
+
+Shifting Manor's original game code, artwork, audio, designs, and other
+original content are proprietary to Puzzaholics LLC. No license is granted
+to redistribute, sublicense, sell, or create derivative works without
+prior written permission from Puzzaholics LLC.
+
+Third-party components, including the Godot Engine, retain their respective
+licenses. See docs/CREDITS.md and the Godot Engine license and notices
+distributed with Godot.

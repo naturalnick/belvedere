@@ -9,5 +9,8 @@ Commands (kept in `tools/`; update this list when scripts change):
 - Rule + solver tests (headless): `tools/test.sh`
 - Screenshots: `tools/capture.sh [mode] [seed] [out_dir]`
 - Web build (local zip, never uploaded): `tools/build_itch.sh`
+- Read-only export scope/identity preflight: `python3 tools/check_export_identity.py`
+
+Stage 1 controls: WASD/mouse; hold left mouse or E on the lever, push mouse/WASD, release. Escape releases the pointer. `tools/run.sh --seed=A` selects the jam layout (default: random accepted state); `--invert-y` inverts mouse Y.
 
 Rules: no visible instruction text, labels, room names, counters or taglines. All art and audio original or CC0 with entries in `docs/CREDITS.md`. Never push or publish.
