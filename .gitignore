@@ -1,0 +1,15 @@
+# Godot
+.godot/
+/android/
+/build/
+*.tmp
+
+# Reviewer captures (kept locally, not part of the game)
+/review/
+
+# OS
+.DS_Store
+
+# Python
+__pycache__/
+*.pkl

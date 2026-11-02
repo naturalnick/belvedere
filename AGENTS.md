@@ -1,0 +1,13 @@
+# Shifting Manor
+
+Follow Nick's global guidelines in `/Users/nick/.codex/AGENTS.md`.
+
+First-person 3D sliding-room puzzle. Godot 4.7, Compatibility renderer. Spec: `docs/SPEC.md`; amendments and decisions: `docs/DECISIONS.md`; art: `docs/STYLE.md`.
+
+Commands (kept in `tools/`; update this list when scripts change):
+- Run: `tools/run.sh`
+- Rule + solver tests (headless): `tools/test.sh`
+- Screenshots: `tools/capture.sh [mode] [seed] [out_dir]`
+- Web build (local zip, never uploaded): `tools/build_itch.sh`
+
+Rules: no visible instruction text, labels, room names, counters or taglines. All art and audio original or CC0 with entries in `docs/CREDITS.md`. Never push or publish.
