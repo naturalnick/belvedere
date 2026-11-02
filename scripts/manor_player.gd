@@ -32,13 +32,11 @@ func _unhandled_input(event: InputEvent) -> void:
 	if automated or manor.sliding:
 		return
 	if event is InputEventKey and event.pressed and event.physical_keycode == KEY_ESCAPE:
-		cancel_pull()
-		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+		manor.release_pointer()
+		return
+	if Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
 		return
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
-		if event.pressed and Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
-			Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
-			return
 		if event.pressed:
 			begin_interact()
 		else:

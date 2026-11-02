@@ -5,6 +5,9 @@ var shots_dir := ""
 var checks := 0
 var failures := 0
 var shot_count := 0
+var started := 0
+var action_number := 0
+var mode := "solve"
 
 func run(game: Manor) -> void:
 	main = game
@@ -12,27 +15,45 @@ func run(game: Manor) -> void:
 	for arg in OS.get_cmdline_user_args():
 		if arg.begins_with("--shots="):
 			shots_dir = arg.trim_prefix("--shots=")
-		if arg.begins_with("--mode=") and arg != "--mode=solve":
-			printerr("Only Stage 1 capture mode 'solve' is available")
-			get_tree().quit(1)
-			return
+		if arg.begins_with("--mode="):
+			mode = arg.trim_prefix("--mode=")
+	if mode not in ["solve", "review"]:
+		printerr("Capture mode must be solve or review")
+		get_tree().quit(1)
+		return
 	DirAccess.make_dir_recursive_absolute(shots_dir)
+	started = Time.get_ticks_msec()
+	# Remove only this run's six outputs so stale success frames cannot survive.
+	for name_value in ["01_spawn", "02_window", "03_lever_held", "04_mid_slide", "05_solved", "06_front_door_open"]:
+		DirAccess.remove_absolute(shots_dir.path_join(name_value + ".png"))
 	DisplayServer.window_move_to_foreground()
 	get_window().grab_focus()
-	get_tree().create_timer(420).timeout.connect(func() -> void:
-		printerr("FAIL: solve capture timed out")
+	get_tree().create_timer(175).timeout.connect(func() -> void:
+		printerr("FAIL: capture timed out at action %d, position %s, sliding %s" % [action_number, main.player.global_position, main.sliding])
 		get_tree().quit(1))
 	await get_tree().create_timer(0.6).timeout
+	if main.play_gate.visible:
+		await shot("00_play_gate")
+		await check_pointer_input()
 	await shot("01_spawn")
+	print("Spawn room %d slot %d, gap slot %d, yaw %.1f°" % [main.rules.player, main.rules.slot(), main.rules.board.find(-1), rad_to_deg(main.player.rotation.y)])
+	if mode == "review":
+		await review_views()
+		get_tree().quit(1 if failures else 0)
+		return
+	await check_pointer_input()
 	var room: ManorRoom = main.rooms[main.rules.player]
 	var solver := ManorSolver.new()
 	solver.build()
-	var path := solver.solution(main.rules)
+	var path := solver.solution(main.rules, true)
 	var expected := solver.distance[main.rules.key()]
 	print("Capture seed %s: %d actions, %d optimal slides" % [main.seed_name, path.size(), expected])
 	var first_slide := true
 	var window_captured := false
 	for action in path:
+		action_number += 1
+		var action_started := Time.get_ticks_msec()
+		print("Action %d/%d %s %s | t=%.2fs room=%d slot=%d" % [action_number, path.size(), "walk" if action.x == ManorRules.WALK else "slide", ["N", "E", "S", "W"][action.y], elapsed(), main.rules.player, main.rules.slot()])
 		var expected_state := main.rules.copy()
 		_check(expected_state.apply(action.x, action.y), "solver action is legal before physical execution")
 		if action.x == ManorRules.WALK:
@@ -42,13 +63,12 @@ func run(game: Manor) -> void:
 			await approach_lever(room)
 			main.player.aim_at(room.lever.global_position + Vector3.UP * 0.8)
 			await get_tree().physics_frame
-			_check(main.player.begin_interact(), "raycast reaches the room lever")
-			main.player.select_pull(action.y)
+			await hold_lever_input(action.y, main.slides % 2 == 0)
 			await get_tree().create_timer(0.18).timeout
 			if first_slide:
 				await shot("03_lever_held")
 			var rider_local := room.to_local(main.player.global_position)
-			main.player.release_interact()
+			release_lever_input(main.slides % 2 == 0)
 			_check(main.sliding, "lever release starts slide")
 			_check(not main.request_slide(action.y), "input is locked during slide")
 			if first_slide:
@@ -56,11 +76,17 @@ func run(game: Manor) -> void:
 				await get_tree().create_timer(0.7).timeout
 				_check(room.to_local(main.player.global_position).distance_to(rider_local) < 0.001, "player rides room at mid-slide")
 				await shot("04_mid_slide")
-			await main.slide_finished
+				if OS.get_cmdline_user_args().has("--stall-mid-slide"):
+					await get_tree().create_timer(1.0).timeout
+					_check(not main.sliding, "forced late screenshot wait outlives slide signal")
+			# A screenshot or slow frame can outlive the tween and its one-shot signal.
+			while main.sliding:
+				await get_tree().process_frame
 			_check(room.to_local(main.player.global_position).distance_to(rider_local) < 0.001, "player stays in room on landing")
-			await get_tree().create_timer(0.5).timeout
+			await get_tree().create_timer(0.45).timeout
 			first_slide = false
 		_check(main.rules.key() == expected_state.key(), "physical action matches solver state")
+		print("  complete in %.2fs, slides=%d" % [(Time.get_ticks_msec() - action_started) / 1000.0, main.slides])
 		if not window_captured and main.rules.player >= 0:
 			window_captured = await capture_window()
 	_check(main.won and main.rules.solved(), "physical solve reaches home")
@@ -80,7 +106,7 @@ func run(game: Manor) -> void:
 	await shot("06_front_door_open")
 	await walk_to(Vector3(0, 0, 11))
 	_check(main.player.global_position.z > 9.5, "unlocked front door can be walked through")
-	print("Capture: %d screenshots; %d checks, %d failures; %d slides" % [shot_count, checks, failures, main.slides])
+	print("Capture: %d screenshots; %d checks, %d failures; %d slides; %.2fs" % [shot_count, checks, failures, main.slides, elapsed()])
 	get_tree().quit(1 if failures else 0)
 
 
@@ -119,7 +145,7 @@ func walk_to(target: Vector3) -> void:
 	while true:
 		var offset := target - main.player.global_position
 		offset.y = 0
-		if offset.length() < 0.07:
+		if offset.length() < 0.12:
 			break
 		# Go around the small pedestal if the straight segment crosses it.
 		var steering := target
@@ -135,7 +161,7 @@ func walk_to(target: Vector3) -> void:
 				steering = center + tangent * 0.95
 		var drive := steering - main.player.global_position
 		drive.y = 0
-		main.player.bot_drive = drive.normalized() * minf(1.0, drive.length() * 4.0)
+		main.player.bot_drive = drive.normalized() * minf(1.0, drive.length() * 8.0)
 		main.player.aim_at(steering + Vector3.UP * 1.4)
 		if Time.get_ticks_msec() - started > 12000:
 			_check(false, "physical walking timed out: %s -> %s" % [main.player.global_position, target])
@@ -180,4 +206,104 @@ func _check(condition: bool, message: String) -> void:
 	checks += 1
 	if not condition:
 		failures += 1
-		printerr("FAIL: ", message)
+		printerr("FAIL at action %d (%.2fs): %s" % [action_number, elapsed(), message])
+		get_tree().quit(1)
+
+func elapsed() -> float:
+	return (Time.get_ticks_msec() - started) / 1000.0
+
+func key_event(key: Key, pressed: bool) -> void:
+	var event := InputEventKey.new()
+	event.keycode = key
+	event.physical_keycode = key
+	event.pressed = pressed
+	Input.parse_input_event(event)
+
+func mouse_button(pressed: bool) -> void:
+	var event := InputEventMouseButton.new()
+	event.button_index = MOUSE_BUTTON_LEFT
+	event.pressed = pressed
+	event.position = get_viewport().get_visible_rect().size / 2.0
+	Input.parse_input_event(event)
+
+func mouse_motion(delta: Vector2) -> void:
+	var event := InputEventMouseMotion.new()
+	event.relative = delta
+	event.screen_relative = delta
+	Input.parse_input_event(event)
+
+func check_pointer_input() -> void:
+	main.player.automated = false
+	if main.play_gate.visible:
+		_check(Input.mouse_mode == Input.MOUSE_MODE_VISIBLE, "gesture gate starts with pointer visible")
+		mouse_button(true)
+		mouse_button(false)
+		await get_tree().process_frame
+	_check(Input.mouse_mode == Input.MOUSE_MODE_CAPTURED, "play starts with pointer captured")
+	var yaw := main.player.rotation.y
+	var pitch := main.player.camera.rotation.x
+	mouse_motion(Vector2(12, 0))
+	await get_tree().process_frame
+	_check(not is_equal_approx(yaw, main.player.rotation.y), "real mouse motion changes yaw")
+	key_event(KEY_ESCAPE, true)
+	key_event(KEY_ESCAPE, false)
+	await get_tree().process_frame
+	_check(Input.mouse_mode == Input.MOUSE_MODE_VISIBLE and main.play_gate.visible, "Escape releases pointer and shows play icon")
+	main.player.aim_at(main.rooms[main.rules.player].lever.global_position + Vector3.UP * 0.8)
+	key_event(KEY_E, true)
+	key_event(KEY_E, false)
+	await get_tree().process_frame
+	_check(not main.player.held, "interact cannot bypass play gate")
+	mouse_button(true)
+	mouse_button(false)
+	await get_tree().process_frame
+	_check(Input.mouse_mode == Input.MOUSE_MODE_CAPTURED and not main.play_gate.visible, "play gesture recaptures pointer")
+	main.player.rotation.y = yaw
+	main.player.camera.rotation.x = pitch
+	main.player.automated = true
+
+func hold_lever_input(direction: int, keyboard: bool) -> void:
+	main.player.automated = false
+	if keyboard:
+		key_event(KEY_E, true)
+	else:
+		mouse_button(true)
+	await get_tree().process_frame
+	_check(main.player.held, "real interact press holds lever")
+	var local_direction: Vector3 = main.player.global_basis.inverse() * ManorGeometry.DIRECTIONS[direction]
+	var delta := Vector2(local_direction.x, local_direction.z)
+	if keyboard:
+		var key: Key = KEY_D if delta.x > 0 else KEY_A
+		if absf(delta.y) > absf(delta.x):
+			key = KEY_S if delta.y > 0 else KEY_W
+		key_event(key, true)
+		await get_tree().physics_frame
+		await get_tree().physics_frame
+		key_event(key, false)
+	else:
+		mouse_motion(delta * 60.0)
+		await get_tree().process_frame
+	_check(main.player.selected_direction == direction, "camera-relative input selects correct world direction")
+
+func release_lever_input(keyboard: bool) -> void:
+	if keyboard:
+		key_event(KEY_E, false)
+	else:
+		mouse_button(false)
+	main.player.automated = true
+
+func review_views() -> void:
+	main.rules = ManorRules.new()
+	main.won = true
+	for id in main.rooms:
+		main.rooms[id].position = ManorGeometry.center(id)
+	main.gap_floor.position = ManorGeometry.center(4) + Vector3.DOWN * 0.02
+	main.refresh_doors(true)
+	main.carpet.visible = true
+	main.player.position = ManorGeometry.center(7) + Vector3(0, 0, 1.5)
+	main.player.aim_at(Vector3(0, 1.4, 22))
+	await get_tree().create_timer(0.4).timeout
+	await shot("06_front_door_open")
+	main.rules.player = 0
+	main.player.position = ManorGeometry.center(0) + Vector3(1.6, 0, 0)
+	await capture_window()

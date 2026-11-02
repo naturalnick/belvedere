@@ -39,7 +39,9 @@ func build() -> void:
 				deque[tail] = nk
 				tail += 1
 
-func solution(start: ManorRules) -> Array[Vector2i]:
+func solution(start: ManorRules, minimize_walks: bool = false) -> Array[Vector2i]:
+	if minimize_walks:
+		return _shortest_optimal_route(start)
 	var result: Array[Vector2i] = []
 	var state := start.copy()
 	var seen: Dictionary[int, bool] = {}
@@ -53,3 +55,32 @@ func solution(start: ManorRules) -> Array[Vector2i]:
 		result.append(action)
 		state.apply(action.x, action.y)
 	return result
+
+func _shortest_optimal_route(start: ManorRules) -> Array[Vector2i]:
+	# BFS on distance-preserving edges breaks slide-optimal ties by walk count.
+	var queue: Array[int] = [start.key()]
+	var previous: Dictionary[int, int] = {start.key(): start.key()}
+	var actions: Dictionary[int, Vector2i] = {}
+	var cursor := 0
+	while cursor < queue.size():
+		var key := queue[cursor]
+		cursor += 1
+		var state := ManorRules.from_key(key)
+		if state.solved():
+			var path: Array[Vector2i] = []
+			while key != start.key():
+				path.append(actions[key])
+				key = previous[key]
+			path.reverse()
+			return path
+		for action in state.moves():
+			var next := state.copy()
+			next.apply(action.x, action.y)
+			var nk := next.key()
+			if previous.has(nk) or distance.get(nk, -1) != distance[key] - action.x:
+				continue
+			previous[nk] = key
+			actions[nk] = action
+			queue.append(nk)
+	push_error("No optimal route from requested state")
+	return []

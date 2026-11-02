@@ -1,7 +1,7 @@
 shader_type spatial;
 uniform vec4 base_color : source_color = vec4(0.9, 0.85, 0.75, 1.0);
 uniform vec4 shadow_tint : source_color = vec4(0.35, 0.28, 0.25, 1.0);
-uniform sampler2D paper_grain : repeat_enable, filter_linear;
+uniform sampler2D paper_grain : repeat_enable, filter_linear_mipmap;
 varying vec3 world_position;
 varying vec3 world_normal;
 void vertex() {
@@ -22,8 +22,13 @@ void light() {
 	float facing = dot(NORMAL, LIGHT);
 	float mid = smoothstep(0.16, 0.20, facing);
 	float lit = smoothstep(0.66, 0.70, facing);
-	vec3 band = mix(mix(ALBEDO, shadow_tint.rgb, 0.22) * 0.55, ALBEDO * 0.85, mid);
-	band = mix(band, ALBEDO, lit);
+	// Godot multiplies DIFFUSE_LIGHT by ALBEDO after light(); applying it here
+	// as well squares the palette and exaggerates colour saturation.
+	float band = mix(0.55, 0.85, mid);
+	band = mix(band, 1.0, lit);
 	float rim = pow(1.0 - max(dot(NORMAL, VIEW), 0.0), 3.0) * 0.15 * lit;
-	DIFFUSE_LIGHT += (band + ALBEDO * rim) * LIGHT_COLOR * ATTENUATION / PI;
+	// Compatibility adds shadowed lights in a separate LDR pass; leave headroom
+	// for the ambient pass instead of clipping the sunlit palette.
+	float energy_scale = LIGHT_IS_DIRECTIONAL ? 0.06 : 0.7;
+	DIFFUSE_LIGHT += (band + rim) * LIGHT_COLOR * ATTENUATION * energy_scale / PI;
 }

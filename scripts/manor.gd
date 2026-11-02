@@ -14,6 +14,7 @@ var gap_floor: Node3D
 var carpet: MeshInstance3D
 var seed_name := "random"
 var perimeter: Array[StaticBody3D] = []
+var play_gate: Control
 
 func _ready() -> void:
 	var demo := false
@@ -58,6 +59,15 @@ func _ready() -> void:
 	reticle.player = player
 	reticle.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	hud.add_child(reticle)
+	play_gate = Control.new()
+	play_gate.set_script(preload("res://scripts/play_gate.gd"))
+	play_gate.manor = self
+	hud.add_child(play_gate)
+	play_gate.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	if OS.has_feature("web") or OS.get_cmdline_user_args().has("--web-entry"):
+		release_pointer()
+	else:
+		resume_play()
 	if demo:
 		var driver := Node.new()
 		driver.set_script(load("res://tools/demo_driver.gd"))
@@ -70,8 +80,18 @@ func place_player_at_spawn() -> void:
 	for d in 4:
 		if rules.can_slide(d) and rules.can_walk(d):
 			gap_direction = d
-	player.position = ManorGeometry.center(rules.slot()) - ManorGeometry.DIRECTIONS[gap_direction] * 1.5 + Vector3.UP * 0.02
-	player.aim_at(ManorGeometry.center(rules.board.find(-1)) + Vector3.UP * 1.4)
+	player.position = ManorGeometry.center(rules.slot()) - ManorGeometry.DIRECTIONS[gap_direction] * 1.7 + Vector3.UP * 0.02
+	player.aim_at(ManorGeometry.center(rules.board.find(-1)) + Vector3.UP * 0.1)
+	player.camera.rotation.x = deg_to_rad(-16)
+
+func resume_play() -> void:
+	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+	play_gate.hide()
+
+func release_pointer() -> void:
+	player.cancel_pull()
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	play_gate.show()
 
 func _build_world() -> void:
 	var world := WorldEnvironment.new()
@@ -88,6 +108,8 @@ func _build_world() -> void:
 	environment.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
 	environment.ambient_light_color = Color("F3E3CF")
 	environment.ambient_light_energy = 0.55
+	environment.tonemap_mode = Environment.TONE_MAPPER_FILMIC
+	environment.tonemap_exposure = 0.65
 	world.environment = environment
 	add_child(world)
 	var sun := DirectionalLight3D.new()
@@ -95,10 +117,14 @@ func _build_world() -> void:
 	sun.light_color = Color("FFD9A8")
 	sun.light_energy = 1.6
 	sun.shadow_enabled = true
+	sun.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_2_SPLITS
 	sun.directional_shadow_max_distance = 40
 	add_child(sun)
-	ManorGeometry.box(self, Vector3(220, 0.2, 220), Vector3(0, -0.25, 0), ManorGeometry.material("9DB86E", 0.0), true)
+	ManorGeometry.box(self, Vector3(220, 0.2, 220), Vector3(0, -0.25, 0), ManorGeometry.material("B9C98E", 0.0), true)
+	ManorGeometry.box(self, Vector3(65, 0.02, 65), Vector3(0, -0.14, 0), ManorGeometry.material("9DB86E", 0.0))
 	carpet = ManorGeometry.box(self, Vector3(1.8, 0.025, 13), Vector3(0, 0, 15.8), ManorGeometry.material("B3363A", 0.0))
+	for x in [-0.84, 0.84]:
+		ManorGeometry.box(carpet, Vector3(0.06, 0.006, 13), Vector3(x, 0.016, 0), ManorGeometry.material("C9A04A", 0.0))
 	carpet.visible = false
 	# The open gap has no rail; keep the unsolved puzzle on its 3x3 footprint.
 	for d in 4:

@@ -1,0 +1,8 @@
+{
+  "scope": "local unsigned macOS test export only",
+  "decision": "Parent-agent decision pending Nick's confirmation under the global bundle-ID rule; identifier and unsigned-only scope explicitly supplied in the Stage 1 review instruction.",
+  "preset": "macOS Unsigned Test",
+  "bundle_identifier": "com.puzzaholics.shiftingmanor",
+  "codesign": 0,
+  "notarization": 0
+}

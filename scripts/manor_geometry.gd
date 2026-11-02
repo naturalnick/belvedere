@@ -20,6 +20,7 @@ static func material(hex: String, outline: float = 0.012) -> Material:
 		grain.width = 512
 		grain.height = 512
 		grain.seamless = true
+		grain.generate_mipmaps = true
 		var noise := FastNoiseLite.new()
 		noise.seed = 73
 		noise.frequency = 0.12

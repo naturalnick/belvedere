@@ -45,6 +45,14 @@ func _initialize() -> void:
 		var state := ManorRules.from_seed(seed_name)
 		var expected: int = {"A": 17, "B": 18, "C": 20}[seed_name]
 		var slides := _replay(solver, state)
+		var shortest := solver.solution(state, true)
+		var replay := state.copy()
+		var shortest_slides := 0
+		for action in shortest:
+			_check(replay.apply(action.x, action.y), "shortest optimal action legal")
+			shortest_slides += action.x
+		_check(replay.solved() and shortest_slides == expected, "walk tie-break preserves optimal slides")
+		_check(shortest.size() <= solver.solution(state).size(), "walk tie-break does not lengthen path")
 		_check(slides == expected, "curated seed optimum")
 		print("Seed %s: %d optimal slides" % [seed_name, slides])
 	var data: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://data/accepted_14_20.json"))

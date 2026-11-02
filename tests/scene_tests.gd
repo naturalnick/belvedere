@@ -22,6 +22,7 @@ func run() -> void:
 			var state := ManorRules.new(main.rules.board, id)
 			var allowed := not door.is_front and state.can_walk(door.direction)
 			_check(door.opened == allowed and (door.gate.collision_layer == 0) == allowed, "door animation and collision agree with rules")
+	_check_all_spawn_yaws()
 	var foyer: ManorRoom = main.rooms[7]
 	main.player.aim_at(foyer.global_position + Vector3.UP * 0.8)
 	_check(main.player.begin_interact(), "spawn lever reachable without walking")
@@ -70,3 +71,21 @@ func _check(condition: bool, message: String) -> void:
 	if not condition:
 		failures += 1
 		printerr("FAIL: ", message)
+
+func _check_all_spawn_yaws() -> void:
+	var original := main.rules.copy()
+	var data: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://data/accepted_14_20.json"))
+	for entry: Dictionary in data.states:
+		main.rules = ManorRules.new(PackedInt32Array(entry.board), int(entry.player))
+		main.place_player_at_spawn()
+		var room_center := ManorGeometry.center(main.rules.slot())
+		var gap_center := ManorGeometry.center(main.rules.board.find(-1))
+		var forward := -main.player.camera.global_basis.z
+		forward.y = 0
+		_check(forward.normalized().dot((gap_center - room_center).normalized()) > 0.99999, "every accepted spawn yaw faces the gap")
+		for point in [Vector3(-0.28, 0.0, -0.28), Vector3(0.28, 0.0, 0.28), Vector3(0, 0.9, 0)]:
+			_check(main.player.camera.is_position_in_frustum(room_center + point), "spawn frames entire lever")
+	main.rules = original
+	main.place_player_at_spawn()
+	_check(is_equal_approx(main.player.rotation.y, -PI / 2.0), "seed A spawn faces east, yaw -90 degrees")
+	print("Spawn yaw and lever framing: all 1,816 accepted seeds verified")

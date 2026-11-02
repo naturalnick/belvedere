@@ -60,8 +60,8 @@ func _window(wall: Node3D, x: float) -> void:
 		ManorGeometry.box(wall, Vector3(0.08, 1.6, 0.3), Vector3(x + offset, 1.65, 0), trim)
 	for y in [0.87, 2.43]:
 		ManorGeometry.box(wall, Vector3(1.5, 0.08, 0.35), Vector3(x, y, 0), trim)
-	ManorGeometry.box(wall, Vector3(0.045, 1.5, 0.12), Vector3(x, 1.65, 0), trim)
-	ManorGeometry.box(wall, Vector3(1.4, 0.045, 0.12), Vector3(x, 1.65, 0), trim)
+	ManorGeometry.box(wall, Vector3(0.045, 1.5, 0.12), Vector3(x, 1.65, 0), ManorGeometry.material("D9C7AE", 0.0))
+	ManorGeometry.box(wall, Vector3(1.4, 0.045, 0.12), Vector3(x, 1.65, 0), ManorGeometry.material("D9C7AE", 0.0))
 	var pane := ManorGeometry.box(wall, Vector3(1.4, 1.5, 0.018), Vector3(x, 1.65, 0), ManorGeometry.glass())
 	pane.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 
