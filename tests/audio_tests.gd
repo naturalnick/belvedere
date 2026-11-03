@@ -28,7 +28,7 @@ func run() -> void:
 	var audio := main.audio
 	audio.cued.connect(func(group: String) -> void: cues.append(group))
 
-	var expected := {"step_wood": 5, "step_tile": 6, "step_grass": 5, "step_carpet": 3, "lever_grab": 3, "lever_blocked": 3,
+	var expected := {"step_wood": 5, "step_tile": 6, "step_grass": 5, "lever_grab": 3, "lever_blocked": 3,
 		"door_rattle": 3, "door_open": 2, "door_close": 2, "slide": 3, "wake": 1}
 	for group in expected:
 		check(audio.streams[group].size() == expected[group], "%s has %d variants" % [group, expected[group]])
@@ -54,7 +54,7 @@ func run() -> void:
 	main.carpet.visible = true
 	main.rules.player = ManorRules.OUTSIDE
 	main.player.global_position = Vector3(0, 0, 15)
-	check(audio.surface() == "step_carpet", "finale carpet keeps its softer step")
+	check(audio.surface() == "step_wood", "finale carpet uses the soft wood step")
 	main.carpet.visible = false
 	main.rules.player = -1
 	main.player.global_position = ManorGeometry.center(7)

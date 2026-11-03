@@ -80,13 +80,12 @@ def write(name, x, peak, attack=.004, release=.04, ogg=False, rate=RATE):
 
 
 def effects():
-    # Kenney's carpet takes 001/002 and 003/004 are byte-identical, so carpet keeps three.
-    takes = {'wood': range(5), 'grass': range(5), 'carpet': [0, 1, 3]}
-    for surface, numbers in takes.items():
-        for i, number in enumerate(numbers):
-            x = source('impact', f'footstep_{surface}_{number:03}', cutoff={'wood': 4300, 'grass': 3800}.get(surface, 6200))
-            # Peaks balance perceived loudness: grass and rug steps are brighter than the low wood thump.
-            write(f'step_{surface}_{i}', x, {'grass': .12, 'carpet': .22}.get(surface, .32), release=.035)
+    # Three step sounds only: soft wood, normal shoe-on-tile, and grass.
+    for surface in ['wood', 'grass']:
+        for i in range(5):
+            x = source('impact', f'footstep_{surface}_{i:03}', cutoff=4300 if surface == 'wood' else 3800)
+            # Grass is brighter than the low wood thump, so it sits well below it at equal peak.
+            write(f'step_{surface}_{i}', x, .12 if surface == 'grass' else .32, release=.035)
     # Hard floors use the RPG pack's heel-and-toe shoe steps. Kenney's concrete takes all ring
     # at ~258 Hz and read as tapping; 05/06 are similarly tonal and 07/08 carry a bright tick.
     for i, number in enumerate([0, 1, 2, 3, 4, 9]):

@@ -26,7 +26,7 @@ var stride := STRIDE * 0.6
 var door_events: Array[Array] = []
 
 func _ready() -> void:
-	for group in ["step_wood", "step_tile", "step_grass", "step_carpet", "lever_grab", "lever_blocked", "door_rattle", "door_open", "door_close", "slide"]:
+	for group in ["step_wood", "step_tile", "step_grass", "lever_grab", "lever_blocked", "door_rattle", "door_open", "door_close", "slide"]:
 		var variants: Array = []
 		while ResourceLoader.exists(DIR + "%s_%d.wav" % [group, variants.size()]):
 			variants.append(load(DIR + "%s_%d.wav" % [group, variants.size()]))
@@ -120,10 +120,10 @@ func surface() -> String:
 	var position := manor.player.global_position
 	var id := manor.rules.player
 	if id >= 0 and manor.rooms.has(id):
-		# Rugs deliberately keep the room's floor step; Nick found a distinct rug step distracting.
 		return "step_tile" if id in TILE_ROOMS else "step_wood"
+	# The finale carpet shares the soft wood step; there is no separate rug/carpet sound.
 	if manor.carpet.visible and absf(position.x) < 0.9 and position.z > 9.3 and position.z < 22.3:
-		return "step_carpet"
+		return "step_wood"
 	var half := ManorGeometry.PITCH * 1.5
 	if absf(position.x) < half and absf(position.z) < half:
 		return "step_tile"
