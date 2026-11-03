@@ -161,10 +161,9 @@ def piano_note(midi, velocity, duration=8.):
 def music():
     duration=96.; stereo=np.zeros((int(duration*RATE), 2))
     # Original, unhurried voicings with rests; no looping arpeggiator or retro waveform.
-    # Each phrase rises root-fifth, then answers with a falling pair: third to ninth in the
-    # first half, third to root in the second. The last phrase stays open to lead into the loop.
-    phrases=[(0,[48,55,64,62]), (12,[45,52,60,59]), (24,[41,48,57,55]), (36,[43,50,59,57]),
-             (48,[48,55,64,60]), (60,[45,52,60,57]), (72,[41,48,57,53]), (84,[43,50,59,57])]
+    # Each phrase is root, fifth, then the third above; leaving the phrase there gives more space.
+    phrases=[(0,[48,55,64]), (12,[45,52,60]), (24,[41,48,57]), (36,[43,50,59]),
+             (48,[48,55,64]), (60,[45,52,60]), (72,[41,48,57]), (84,[43,50,59])]
 
     def place(sound, when, pan):
         at=int(when*RATE);count=min(len(sound),len(stereo)-at)
@@ -177,8 +176,8 @@ def music():
         # A soft bass note an octave below grounds each phrase.
         place(piano_note(notes[0]-12, .30*RNG.uniform(.92,1.04), 11.), start+.66, -.1)
         for k, note in enumerate(notes):
-            when=start+[.7, 2.15, 4.9, 7.3][k]+RNG.uniform(-.10,.10)
-            sound=piano_note(note, [.44,.36,.29,.23][k]*RNG.uniform(.9,1.05))
+            when=start+[.7, 2.15, 4.9][k]+RNG.uniform(-.10,.10)
+            sound=piano_note(note, [.44,.36,.29][k]*RNG.uniform(.9,1.05))
             place(sound, when, np.clip((note-56)/38, -.45,.45))
     # Baked warm hall: ~4 s decay with darker tail; avoids a heavy live reverb on the music bus.
     ir_n=int(4.5*RATE); t=np.arange(ir_n)/RATE
