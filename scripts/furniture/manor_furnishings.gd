@@ -99,7 +99,7 @@ func kitchen() -> void:
 	var prep := table("PreparationTable", Vector3(-1.95, 0, 2.28), 1.58, 0.90, 0.85)
 	box(prep, Vector3(1.60, 0.05, 0.92), Vector3(0, 0.875, 0), "F2E7D0")
 	box(prep, Vector3(0.55, 0.025, 0.38), Vector3(0.25, 0.913, 0), "B18B5E", 0.003)
-	basin(prep, Vector3(-0.43, 0.90, 0), 0.28, 0.28, 0.12)
+	bowl(prep, Vector3(-0.43, 0.90, 0), 0.14, 0.12)
 
 func living() -> void:
 	box(self, Vector3(2.10, 0.006, 2.1), Vector3(-1.86, 0.004, -1.83), "D9B48A", 0.0)

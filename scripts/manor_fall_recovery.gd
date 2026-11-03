@@ -1,7 +1,7 @@
 class_name ManorFallRecovery
 extends Node
 
-const FALL_SECONDS := 5.0
+const FALL_SECONDS := 15.0
 const FADE_OUT := 0.55
 const FADE_IN := 1.0
 const BEDSIDE := Vector3(-0.70, 0.02, -1.0)

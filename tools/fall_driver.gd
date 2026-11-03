@@ -21,11 +21,12 @@ func run(driver: Node) -> void:
 	await get_tree().process_frame
 	driver._check(main.player.rotation.y != yaw, "real mouse look remains active during the fall")
 	main.player.automated = true
-	driver._check(not main.recovering and main.player.position.y < -120, "five-second drop stays free and passes the underside")
+	driver._check(not main.recovering and main.player.position.y < -120, "early drop stays free and passes the underside")
 	main.player.aim_at(Vector3(0, -39, 0))
 	await driver.shot("03_underside")
 	while not main.recovering:
 		await get_tree().physics_frame
+	driver._check(main.fall_recovery.elapsed >= 15.0 and main.fall_recovery.elapsed < 15.1, "fade begins after fifteen seconds of falling")
 	await get_tree().create_timer(0.3).timeout
 	await driver.shot("04_fade_out")
 	while main.recovering:

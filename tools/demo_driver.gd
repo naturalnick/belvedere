@@ -30,7 +30,7 @@ func run(game: Manor) -> void:
 	elif mode == "trees":
 		shot_names = ["01_spawn", "02_meadow", "03_tree_detail", "04_house_and_trees", "05_window_view"]
 	elif mode == "furnishings":
-		shot_names = ["01_spawn", "dining_shelf_detail", "dining_bowl_detail"]
+		shot_names = ["01_spawn", "kitchen_bowl_detail", "dining_shelf_detail", "dining_bowl_detail"]
 		for room_name in ["bathroom", "study", "kitchen", "living", "dining", "foyer", "laundry"]:
 			for view in ["north", "south", "slide"]:
 				shot_names.append(room_name + "_" + view)
@@ -337,7 +337,9 @@ func walk_route(target_room: int) -> Array[int]:
 	return []
 
 func shot(label: String) -> void:
-	await RenderingServer.frame_post_draw
+	await get_tree().process_frame
+	# An occluded native window may stop redrawing while the player uses another game window.
+	RenderingServer.force_draw(false)
 	var output := shots_dir.path_join(label + ".png")
 	var error := get_viewport().get_texture().get_image().save_png(output)
 	_check(error == OK, "screenshot saved")

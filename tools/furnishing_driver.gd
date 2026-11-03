@@ -16,6 +16,10 @@ func run(driver: Node) -> void:
 		await driver.walk_to(room.position + Vector3(0, 0, -2.30))
 		main.player.aim_at(room.position + Vector3(0, 1.0, 1.80))
 		await driver.shot("%s_south" % NAMES[id])
+		if id == 3:
+			await driver.walk_to(room.position + Vector3(-1.0, 0, 1.3))
+			main.player.aim_at(room.position + Vector3(-2.38, 1.0, 2.28))
+			await driver.shot("kitchen_bowl_detail")
 		if id == 6:
 			await driver.walk_to(room.position + Vector3(1.2, 0, 1.6))
 			main.player.aim_at(room.position + Vector3(2.60, 1.15, 1.9))
