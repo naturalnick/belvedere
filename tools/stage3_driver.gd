@@ -21,6 +21,42 @@ func run(driver: Node) -> void:
 	driver._check(main.rules.player == ManorRules.OUTSIDE, "flat tracks permit walk from gap to lawn")
 	await driver.walk_to(ManorGeometry.center(7))
 	driver._check(main.rules.player == -1, "return to gap is clear")
+	for direction in driver.walk_route(0):
+		await driver.walk_direction(direction)
+	var bedroom: ManorRoom = main.rooms[0]
+	await driver.walk_to(bedroom.position + Vector3(0, 0, 2.2))
+	main.player.aim_at(bedroom.position + Vector3(-1.3, 0.9, -1.8))
+	await driver.shot("06_bedroom_entry")
+	await driver.walk_to(bedroom.position + Vector3(1.2, 0, 1.0))
+	main.player.aim_at(bedroom.position + Vector3(-1.65, 0.8, -1.9))
+	await driver.shot("07_bed_and_table")
+	await driver.walk_to(bedroom.position + Vector3(0, 0, 1.1))
+	main.player.aim_at(bedroom.position + Vector3(2.5, 1.0, 1.9))
+	await driver.shot("08_wardrobe")
+	driver._check(main.rules.player == 0, "trial bedroom is entered and walked physically")
+	for direction in driver.walk_route(7):
+		await driver.walk_direction(direction)
+	await driver.objective_action(Vector2i(ManorRules.SLIDE, ManorRules.E))
+	for direction in driver.walk_route(0):
+		await driver.walk_direction(direction)
+	await driver.approach_lever(bedroom)
+	main.player.aim_at(bedroom.lever.global_position + Vector3.UP * 0.8)
+	await get_tree().physics_frame
+	await driver.hold_lever_input(ManorRules.S, true)
+	await driver.shot("09_bedroom_lever")
+	var bed: Node3D = bedroom.get_node("BedroomFurnishings/Bed")
+	var before := bed.global_position
+	var rider := bedroom.to_local(main.player.global_position)
+	driver.release_lever_input(true)
+	driver._check(main.sliding, "real input starts furnished Bedroom slide")
+	main.player.aim_at(bed.global_position + Vector3.UP * 0.6)
+	await get_tree().create_timer(0.7).timeout
+	driver._check(bed.global_position.z > before.z and bed.global_position.z < before.z + 6.25, "bed rides room mid-slide")
+	await driver.shot("10_bedroom_sliding")
+	while main.sliding:
+		await get_tree().process_frame
+	driver._check(bed.global_position.is_equal_approx(before + Vector3.BACK * 6.25), "bed moves exactly with room")
+	driver._check(bedroom.to_local(main.player.global_position).distance_to(rider) < 0.001, "player rides furnished room")
 
 func click(button: Button) -> void:
 	var press := InputEventMouseButton.new()

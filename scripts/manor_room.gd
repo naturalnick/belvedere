@@ -52,6 +52,8 @@ func build(id: int) -> void:
 	fill.light_color = Color(ManorGeometry.ACCENTS[id]).lerp(Color("FFE2B0"), 0.7)
 	add_child(fill)
 	_build_lever()
+	if id == 0:
+		add_child(ManorBedroom.new())
 
 func first_window() -> int:
 	for d in 4:

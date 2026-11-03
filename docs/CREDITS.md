@@ -7,3 +7,4 @@
 - No audio is currently included; sound design is deferred.
 - No models or textures were downloaded; paper grain is generated at runtime.
 - Stage 3 meadow, hills, trees, flush track pattern and settings icons: original procedural geometry and drawing code created for Shifting Manor.
+- Bedroom trial furniture and rug: original box/cylinder geometry made for Shifting Manor; no downloaded models or textures.
