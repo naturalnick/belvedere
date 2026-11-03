@@ -28,7 +28,7 @@ func run() -> void:
 	var audio := main.audio
 	audio.cued.connect(func(group: String) -> void: cues.append(group))
 
-	var expected := {"step_wood": 5, "step_concrete": 5, "step_grass": 5, "step_carpet": 3, "lever_grab": 3, "lever_blocked": 3,
+	var expected := {"step_wood": 5, "step_tile": 6, "step_grass": 5, "step_carpet": 3, "lever_grab": 3, "lever_blocked": 3,
 		"door_rattle": 3, "door_open": 2, "door_close": 2, "slide": 3, "birds": 4, "wake": 1}
 	for group in expected:
 		check(audio.streams[group].size() == expected[group], "%s has %d variants" % [group, expected[group]])
@@ -39,7 +39,7 @@ func run() -> void:
 	# Surfaces, sampled synchronously so physics cannot reassign occupancy in between.
 	var foyer: ManorRoom = main.rooms[7]
 	var spawn := main.player.global_position
-	check(audio.surface() == "step_concrete", "Foyer tiles use hard steps")
+	check(audio.surface() == "step_tile", "Foyer tiles use hard steps")
 	main.rules.player = 0
 	main.player.global_position = main.rooms[0].to_global(Vector3(1.5, 0.02, 1.5))
 	check(audio.surface() == "step_wood", "Bedroom boards use wood steps")
@@ -47,7 +47,7 @@ func run() -> void:
 	check(audio.surface() == "step_carpet", "Bedroom rug muffles steps")
 	main.rules.player = -1
 	main.player.global_position = ManorGeometry.center(7)
-	check(audio.surface() == "step_concrete", "gap slab uses hard steps")
+	check(audio.surface() == "step_tile", "gap slab uses hard steps")
 	main.rules.player = ManorRules.OUTSIDE
 	main.player.global_position = Vector3(0, 0, 30)
 	check(audio.surface() == "step_grass", "lawn uses grass steps")
@@ -59,7 +59,7 @@ func run() -> void:
 	main.player.bot_drive = Vector3.ZERO
 	var steps := cues.filter(func(group: String) -> bool: return group.begins_with("step_"))
 	check(steps.size() >= 1 and steps.size() <= 3, "walking ~2.4 m gives a step every ~1 m (%d)" % steps.size())
-	check(steps.all(func(group: String) -> bool: return group == "step_concrete"), "Foyer steps stay on tile")
+	check(steps.all(func(group: String) -> bool: return group == "step_tile"), "Foyer steps stay on tile")
 	cues.clear()
 	await create_timer(0.3).timeout
 	check(cues.is_empty(), "standing still is silent")

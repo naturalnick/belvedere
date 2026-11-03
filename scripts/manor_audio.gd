@@ -30,7 +30,7 @@ var stride := STRIDE * 0.6
 var door_events: Array[Array] = []
 
 func _ready() -> void:
-	for group in ["step_wood", "step_concrete", "step_grass", "step_carpet", "lever_grab", "lever_blocked", "door_rattle", "door_open", "door_close", "slide", "birds"]:
+	for group in ["step_wood", "step_tile", "step_grass", "step_carpet", "lever_grab", "lever_blocked", "door_rattle", "door_open", "door_close", "slide", "birds"]:
 		var variants: Array = []
 		while ResourceLoader.exists(DIR + "%s_%d.wav" % [group, variants.size()]):
 			variants.append(load(DIR + "%s_%d.wav" % [group, variants.size()]))
@@ -130,12 +130,12 @@ func surface() -> String:
 			var rug: Array = RUGS[id]
 			if (Vector2(local.x, local.z) - rug[0]).abs() <= rug[1] / 2.0:
 				return "step_carpet"
-		return "step_concrete" if id in TILE_ROOMS else "step_wood"
+		return "step_tile" if id in TILE_ROOMS else "step_wood"
 	if manor.carpet.visible and absf(position.x) < 0.9 and position.z > 9.3 and position.z < 22.3:
 		return "step_carpet"
 	var half := ManorGeometry.PITCH * 1.5
 	if absf(position.x) < half and absf(position.z) < half:
-		return "step_concrete"
+		return "step_tile"
 	return "step_grass"
 
 func _process(delta: float) -> void:

@@ -4,8 +4,8 @@
 - Godot Engine 4.7: MIT license, https://godotengine.org/license/ . Third-party notices: https://godotengine.org/license/third-party/ .
 - Run, headless-test, capture, and local Web packaging workflows adapted from Nick's Castabout project with his authorization. No Castabout game art, fonts, music, or sound files are used.
 - Objective pendants, chandelier, solid front door, rainbow and flower mesh: original procedural geometry created for Shifting Manor.
-- Footstep, wood/glass impact and plank recordings: Kenney, “Impact Sounds”, CC0 1.0, https://kenney.nl/assets/impact-sounds .
-- Door, creak, cloth, metal click and latch recordings: Kenney, “RPG Audio”, CC0 1.0, https://kenney.nl/assets/rpg-audio .
+- Footstep, wood impact and plank recordings: Kenney, “Impact Sounds”, CC0 1.0, https://kenney.nl/assets/impact-sounds .
+- Shoe footstep, door, creak, cloth, metal click and latch recordings: Kenney, “RPG Audio”, CC0 1.0, https://kenney.nl/assets/rpg-audio .
 - Bird calls: isaiah658, “Ambient Bird Sounds”, CC0 1.0, https://opengameart.org/content/ambient-bird-sounds .
 - These recordings are trimmed, filtered, layered and mixed by `tools/gen_audio.py`; originals and checksums are in `tools/audio_sources/`. The room-slide rumble and the piano music loop are original, synthesized for Shifting Manor.
 - No models or textures were downloaded; paper grain is generated at runtime.

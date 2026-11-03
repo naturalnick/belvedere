@@ -72,29 +72,33 @@ def write(name, x, peak, attack=.004, release=.04, ogg=False):
     if ogg:
         target = path.with_suffix('.ogg')
         # Homebrew ffmpeg lacks libvorbis; oggenc is the reference encoder.
-        subprocess.run(['oggenc', '--quiet', '-q', '5', '-o', str(target), str(path)], check=True)
+        subprocess.run(['oggenc', '--quiet', '--serial', '1', '-q', '5', '-o', str(target), str(path)], check=True)
         path.unlink();path = target
     REPORT[name] = {'seconds': round(len(x)/RATE, 3), 'peak_dbfs': round(20*np.log10(np.max(abs(x))), 2), 'rms_dbfs': round(20*np.log10(np.sqrt(np.mean(x*x))), 2), 'bytes': path.stat().st_size}
 
 
 def effects():
     # Kenney's carpet takes 001/002 and 003/004 are byte-identical, so carpet keeps three.
-    takes = {'wood': range(5), 'concrete': range(5), 'grass': range(5), 'carpet': [0, 1, 3]}
+    takes = {'wood': range(5), 'grass': range(5), 'carpet': [0, 1, 3]}
     for surface, numbers in takes.items():
         for i, number in enumerate(numbers):
-            x = source('impact', f'footstep_{surface}_{number:03}', cutoff=4300 if surface == 'wood' else 6200)
-            write(f'step_{surface}_{i}', x, .32, release=.035)
+            x = source('impact', f'footstep_{surface}_{number:03}', cutoff={'wood': 4300, 'grass': 3800}.get(surface, 6200))
+            # Peaks balance perceived loudness: grass and rug steps are brighter than the low wood thump.
+            write(f'step_{surface}_{i}', x, {'grass': .12, 'carpet': .22}.get(surface, .32), release=.035)
+    # Hard floors use the RPG pack's heel-and-toe shoe steps. Kenney's concrete takes all ring
+    # at ~258 Hz and read as tapping; 05/06 are similarly tonal and 07/08 carry a bright tick.
+    for i, number in enumerate([0, 1, 2, 3, 4, 9]):
+        write(f'step_tile_{i}', source('rpg', f'footstep{number:02}', cutoff=3500), .17, release=.035)
     for i in range(3):
         metal = source('rpg', 'metalClick', .94 + i*.025, 4200)
         wood = source('impact', 'impactWood_light_000', .94 + i*.03, 2200)
-        glass = source('impact', 'impactGlass_light_000', .96 + i*.02, 5200)
         write(f'lever_grab_{i}', mix(.22, [(0, metal, .7), (.012, wood, .2)]), .25, release=.05)
         write(f'lever_blocked_{i}', mix(.30, [(0, wood, .7), (.04, metal, .3)]), .34)
-        # Four small contacts follow the existing 60 ms rattle steps, not a dramatic slam.
-        rattle = [(0, metal, .22)]
-        for t, gain in [(0, .7), (.06, .48), (.12, .32), (.18, .18)]:
-            rattle += [(t, wood, gain), (t+.008, glass, gain*.11)]
-        write(f'door_rattle_{i}', mix(.45, rattle), .37, release=.09)
+        # Locked door: a muted handle catch, then the leaves pushing once against the bolt.
+        # Repeated light knocks read as someone knocking, so there is a single heavy contact.
+        handle = source('rpg', 'metalLatch', .88 + i*.03, 3000)
+        bolt = source('rpg', 'doorClose_4', [1., .94, 1.05][i], 2200)
+        write(f'door_rattle_{i}', mix(.62, [(0, handle, .28), (.035, bolt, 1.)]), .34, release=.12)
     for i in range(2):
         # Natural speed: squeezing the recordings into the 0.45 s swing raised them over an octave.
         hinge = source('rpg', f'doorOpen_{i+1}', cutoff=3800)[:int(.95 * RATE)]
@@ -192,5 +196,7 @@ if __name__ == '__main__':
     for stale in list(OUT.glob('*.wav')) + list(OUT.glob('*.ogg')):
         stale.unlink()
     effects();birds();music()
+    for orphan in OUT.glob('*.import'):
+        if not orphan.with_suffix('').exists(): orphan.unlink()
     target=ROOT/'build/audio-metrics.json';target.write_text(json.dumps(REPORT,indent=2)+'\n')
     print(f'Prepared {len(REPORT)} assets; {sum(x["bytes"] for x in REPORT.values()) / 1e6:.2f} MB. Metrics: {target}')
