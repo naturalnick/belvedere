@@ -11,6 +11,23 @@ static var grain: NoiseTexture2D
 static func center(slot: int) -> Vector3:
 	return Vector3((slot % 3 - 1) * PITCH, 0, (slot / 3 - 1) * PITCH)
 
+static func build_gap_floor(parent: Node3D) -> void:
+	box(parent, Vector3(PITCH, 0.2, PITCH), Vector3(0, -0.1, 0), material("747B7D", 0.0), true)
+	var channel := material("3D4547", 0.0)
+	var steel := material("A5AAA5", 0.0)
+	for d in 4:
+		var edge := Node3D.new()
+		parent.add_child(edge)
+		edge.rotation.y = -d * PI / 2.0
+		# Breaks align with doorways; shallow visual rails stay below sliding room floors.
+		for side in [-1, 1]:
+			box(edge, Vector3(2.1, 0.004, 0.18), Vector3(side * 1.8, 0.002, -2.92), channel)
+			box(edge, Vector3(2.02, 0.008, 0.055), Vector3(side * 1.8, 0.008, -2.92), steel)
+	for x in [-2.92, 2.92]:
+		for z in [-2.92, 2.92]:
+			box(parent, Vector3(0.28, 0.01, 0.28), Vector3(x, 0.005, z), channel)
+			box(parent, Vector3(0.12, 0.012, 0.12), Vector3(x, 0.006, z), steel)
+
 static func material(hex: String, outline: float = 0.012) -> Material:
 	var key := hex + str(outline)
 	if materials.has(key):

@@ -49,10 +49,7 @@ func _ready() -> void:
 			continue
 		var floor_node := Node3D.new()
 		add_child(floor_node)
-		ManorGeometry.box(floor_node, Vector3(6.25, 0.2, 6.25), Vector3(0, -0.1, 0), ManorGeometry.material("DCD6C8", 0.0), true)
-		for d in 4:
-			var edge := ManorGeometry.box(floor_node, Vector3(5.65, 0.008, 0.04), ManorGeometry.DIRECTIONS[d] * 2.825 + Vector3.UP * 0.004, ManorGeometry.material("C6BEAD", 0.0))
-			edge.rotation.y = -d * PI / 2.0
+		ManorGeometry.build_gap_floor(floor_node)
 		floor_node.position = ManorGeometry.center(slot_index) + Vector3.DOWN * 0.02
 		gap_floors[slot_index] = floor_node
 		if gap_floor == null:
