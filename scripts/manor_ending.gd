@@ -16,6 +16,7 @@ var rng := RandomNumberGenerator.new()
 var ground_y := -0.02
 
 func _ready() -> void:
+	set_process(false)
 	rng.seed = 70123
 	rainbow = Node3D.new()
 	add_child(rainbow)
@@ -64,6 +65,7 @@ func activate() -> void:
 	if active:
 		return
 	active = true
+	set_process(true)
 	rainbow.show()
 	var fade := create_tween().set_parallel(true)
 	for mesh: MeshInstance3D in rainbow.get_children():

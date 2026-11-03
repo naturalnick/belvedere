@@ -63,3 +63,9 @@ func _crown_mesh(seed_value: int) -> ArrayMesh:
 				surface.add_vertex(corners[index])
 	surface.generate_normals()
 	return surface.commit()
+
+func foliage_prototype() -> MeshInstance3D:
+	for node in get_children():
+		if node is MeshInstance3D and node.mesh is ArrayMesh:
+			return node
+	return null

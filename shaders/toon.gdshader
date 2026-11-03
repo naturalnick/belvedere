@@ -4,6 +4,9 @@ uniform float self_light = 0.0;
 uniform bool vertex_colors = false;
 uniform bool gap_tracks = false;
 uniform bool meadow = false;
+uniform bool island_face = false;
+uniform bool clip_below_ground = false;
+uniform float ground_level = -0.04;
 uniform int floor_pattern = 0;
 uniform float tile_size = 0.45;
 uniform vec4 grout_color : source_color = vec4(0.78, 0.77, 0.73, 1.0);
@@ -23,6 +26,7 @@ void vertex() {
 	surface_normal = NORMAL;
 }
 void fragment() {
+	if (clip_below_ground && world_position.y < ground_level) { discard; }
 	vec3 weights = abs(surface_normal);
 	weights /= max(dot(weights, vec3(1.0)), 0.001);
 	float grain = texture(paper_grain, surface_position.yz * 0.7).r * weights.x
@@ -62,6 +66,14 @@ void fragment() {
 		float steel = 1.0 - smoothstep(0.028 - aa, 0.028 + aa, rail_distance);
 		ALBEDO = mix(ALBEDO, track_groove.rgb, groove);
 		ALBEDO = mix(ALBEDO, track_steel.rgb * mix(0.96, 1.0, grain), steel);
+	}
+	if (island_face && surface_normal.y < -0.2) {
+		vec2 p = -surface_position.xz;
+		float eyes = min(length(p - vec2(-18.0, -10.0)), length(p - vec2(18.0, -10.0))) - 4.0;
+		float mouth = max(abs(length(p - vec2(0.0, -5.0)) - 28.0) - 2.0, 1.0 - p.y);
+		float distance_to_face = min(eyes, mouth);
+		float aa = max(fwidth(distance_to_face), 0.1);
+		ALBEDO = mix(ALBEDO, vec3(0.19, 0.145, 0.11), 1.0 - smoothstep(-aa, aa, distance_to_face));
 	}
 	EMISSION = base_color.rgb * self_light;
 	ROUGHNESS = 0.75;

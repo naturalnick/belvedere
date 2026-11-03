@@ -39,7 +39,8 @@ func run() -> void:
 	quit(1 if conflicts else 0)
 
 func collect(node: Node, boxes: Array[Dictionary]) -> void:
-	if node is MeshInstance3D and node.mesh is BoxMesh and node.material_override is ShaderMaterial:
+	var mesh: Mesh = node.mesh if node is MeshInstance3D else (node.multimesh.mesh if node is MultiMeshInstance3D else null)
+	if mesh is BoxMesh and node.material_override is ShaderMaterial:
 		# Lever geometry is unrelated; this fixture isolates architecture and joinery.
 		var ancestor := node.get_parent()
 		var room: ManorRoom
@@ -49,6 +50,12 @@ func collect(node: Node, boxes: Array[Dictionary]) -> void:
 				break
 			ancestor = ancestor.get_parent()
 		if room != null and not room.lever.is_ancestor_of(node):
-			boxes.append({"bounds": node.global_transform * node.get_aabb(), "material": node.material_override.get_shader_parameter("base_color"), "room": room.room_id, "path": str(node.get_path())})
+			var transforms: Array[Transform3D] = [node.global_transform]
+			if node is MultiMeshInstance3D:
+				transforms.clear()
+				for i in node.multimesh.instance_count:
+					transforms.append(node.global_transform * ManorStaticBatch.instance_transform(node, i))
+			for transform in transforms:
+				boxes.append({"bounds": transform * mesh.get_aabb(), "material": node.material_override.get_shader_parameter("base_color"), "room": room.room_id, "path": str(node.get_path())})
 	for child in node.get_children():
 		collect(child, boxes)

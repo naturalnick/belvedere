@@ -30,7 +30,7 @@ func _ready() -> void:
 	Input.use_accumulated_input = false
 
 func _unhandled_input(event: InputEvent) -> void:
-	if automated or manor.sliding or manor.in_finale or manor.at_title:
+	if automated or manor.recovering or manor.sliding or manor.in_finale or manor.at_title:
 		return
 	if manor.play_gate != null and manor.play_gate.visible:
 		return
@@ -59,6 +59,10 @@ func _unhandled_input(event: InputEvent) -> void:
 			camera.rotation.x = clampf(camera.rotation.x - event.screen_relative.y * sensitivity * (-1.0 if invert_y else 1.0), -1.35, 1.35)
 
 func _physics_process(delta: float) -> void:
+	if manor.recovering and global_position.y < -1.0:
+		velocity.y -= 15.0 * delta
+		move_and_slide()
+		return
 	if manor.controls_locked():
 		velocity = Vector3.ZERO
 		return

@@ -52,10 +52,9 @@ func build(id: int) -> void:
 	fill.light_color = Color(ManorGeometry.ACCENTS[id]).lerp(Color("FFE2B0"), 0.7)
 	add_child(fill)
 	_build_lever()
-	if id == 0:
-		add_child(ManorBedroom.new())
-	else:
-		add_child(ManorFurnishings.new(id))
+	var furniture: Node3D = ManorBedroom.new() if id == 0 else ManorFurnishings.new(id)
+	add_child(furniture)
+	ManorStaticBatch.combine(furniture)
 
 func first_window() -> int:
 	for d in 4:

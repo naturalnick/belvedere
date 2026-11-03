@@ -17,15 +17,17 @@ func run(game: Manor) -> void:
 			shots_dir = arg.trim_prefix("--shots=")
 		if arg.begins_with("--mode="):
 			mode = arg.trim_prefix("--mode=")
-	if mode not in ["solve", "review", "courtyard", "single-gap", "objectives", "stage3", "furnishings", "trees"]:
-		printerr("Capture mode must be solve, review, courtyard, single-gap, objectives, stage3, furnishings or trees")
+	if mode not in ["solve", "review", "courtyard", "single-gap", "objectives", "stage3", "furnishings", "trees", "fall"]:
+		printerr("Capture mode must be solve, review, courtyard, single-gap, objectives, stage3, furnishings, trees or fall")
 		get_tree().quit(1)
 		return
 	DirAccess.make_dir_recursive_absolute(shots_dir)
 	started = Time.get_ticks_msec()
 	# Remove this mode's outputs so stale success frames cannot survive a failed run.
 	var shot_names := ["01_spawn", "02_window", "03_lever_held", "04_mid_slide", "05_solved", "06_front_door_open"]
-	if mode == "trees":
+	if mode == "fall":
+		shot_names = ["01_spawn", "02_edge", "03_underside", "04_fade_out", "05_bedside", "06_nearer_greenery"]
+	elif mode == "trees":
 		shot_names = ["01_spawn", "02_meadow", "03_tree_detail", "04_house_and_trees", "05_window_view"]
 	elif mode == "furnishings":
 		shot_names = ["01_spawn", "dining_shelf_detail", "dining_bowl_detail"]
@@ -57,6 +59,13 @@ func run(game: Manor) -> void:
 		await check_pointer_input()
 	if not OS.get_cmdline_user_args().has("--ending-only"):
 		await shot("01_spawn")
+	if mode == "fall":
+		var fall_test: Node = load("res://tools/fall_driver.gd").new()
+		add_child(fall_test)
+		await fall_test.run(self)
+		print("Fall capture: %d screenshots; %d checks, %d failures" % [shot_count, checks, failures])
+		get_tree().quit(1 if failures else 0)
+		return
 	if mode == "trees":
 		var trial: Node = load("res://tools/tree_driver.gd").new()
 		add_child(trial)

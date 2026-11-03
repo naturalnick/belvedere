@@ -40,6 +40,7 @@ func build(accent: String) -> void:
 			var pane := ManorGeometry.box(hinge, Vector3(0.52, 2.1, 0.018), Vector3(offset, 1.1, 0), ManorGeometry.glass())
 			pane.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		ManorGeometry.box(hinge, Vector3(0.04, 0.17, 0.12), Vector3(offset * 1.75, 1.02, 0.05), ManorGeometry.material("C9A04A"))
+		ManorStaticBatch.combine(hinge)
 		leaves.append(hinge)
 	gate = ManorGeometry.barrier(self, Vector3(1.2, 2.2, 0.27), Vector3(0, 1.1, 0))
 	gate.set_meta("door", self)
@@ -53,21 +54,22 @@ func build(accent: String) -> void:
 			roof.rotation.z = side * -PI / 4.0
 
 func set_open(value: bool, instant: bool = false) -> void:
+	if value == opened and not instant and (motion == null or not motion.is_running()):
+		return
 	opened = value
 	if emblem != null:
 		emblem.material_override = ManorGeometry.glowing_material("FFE3A1") if value else ManorGeometry.material("85744E")
 	gate.collision_layer = 0 if value else 1
 	if motion:
 		motion.kill()
-	motion = create_tween().set_parallel(true)
+	if not instant:
+		motion = create_tween().set_parallel(true)
 	for i in 2:
 		var angle := (deg_to_rad(-100) if i == 0 else deg_to_rad(100)) if value else 0.0
 		if instant:
 			leaves[i].rotation.y = angle
 		else:
 			motion.tween_property(leaves[i], "rotation:y", angle, 0.45).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-	if instant:
-		motion.kill()
 
 func rattle() -> void:
 	if opened:
@@ -77,3 +79,4 @@ func rattle() -> void:
 	motion = create_tween()
 	for angle in [0.035, -0.035, 0.02, 0.0]:
 		motion.tween_property(leaves[0], "rotation:y", angle, 0.06)
+		motion.parallel().tween_property(leaves[1], "rotation:y", -angle, 0.06)

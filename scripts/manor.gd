@@ -25,8 +25,11 @@ var environment: Environment
 var fade: ColorRect
 var in_finale := false
 var at_title := false
+var recovering := false
+var fall_recovery: ManorFallRecovery
 
 func _ready() -> void:
+	set_process(false)
 	var demo := false
 	var classic := OS.get_cmdline_user_args().has("--classic")
 	var three_gaps := OS.get_cmdline_user_args().has("--courtyard")
@@ -109,6 +112,9 @@ func _ready() -> void:
 	fade.color = Color(0.06, 0.045, 0.035, 0)
 	fade.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	hud.add_child(fade)
+	fall_recovery = ManorFallRecovery.new()
+	fall_recovery.manor = self
+	add_child(fall_recovery)
 	if (OS.has_feature("web") or OS.get_cmdline_user_args().has("--web-entry")) and not gesture_start:
 		release_pointer()
 	else:
@@ -142,10 +148,11 @@ func release_pointer() -> void:
 	play_gate.show_mode("pause")
 
 func controls_locked() -> bool:
-	return sliding or in_finale or at_title or (play_gate != null and play_gate.visible)
+	return recovering or sliding or in_finale or at_title or (play_gate != null and play_gate.visible)
 
 func return_to_title() -> void:
 	at_title = true
+	set_process(false)
 	if ending != null:
 		ending.set_process(false)
 	player.cancel_pull()
@@ -181,6 +188,7 @@ func begin_finale() -> void:
 	if in_finale or ending == null or not won:
 		return
 	in_finale = true
+	set_process(true)
 	player.cancel_pull()
 	player.velocity = Vector3.ZERO
 	player.bot_drive = Vector3.ZERO

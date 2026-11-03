@@ -27,7 +27,7 @@ func run() -> void:
 		await physics_frame
 		var room: ManorRoom = main.rooms[id]
 		var furniture: Node3D = room.get_node("Furnishings")
-		var meshes := furniture.find_children("*", "MeshInstance3D", true, false)
+		var meshes := furniture.find_children("*", "GeometryInstance3D", true, false)
 		print("Room %d: %d furniture meshes" % [id, meshes.size()])
 		check(meshes.size() <= 90, "room %d furniture mesh budget" % id)
 		check(not furniture.is_processing(), "furniture is static")
