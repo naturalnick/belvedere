@@ -38,11 +38,6 @@ static func draw(canvas: Control, kind: String, at: Vector2, color: Color) -> vo
 			var across := along.orthogonal() * 4
 			canvas.draw_polyline(PackedVector2Array([a + along * 5 + across, a, a + along * 5 - across]), color, 2, true)
 			canvas.draw_polyline(PackedVector2Array([b - along * 5 + across, b, b - along * 5 - across]), color, 2, true)
-		"camera_shake":
-			canvas.draw_rect(Rect2(at + Vector2(-12, -9), Vector2(24, 18)), color, false, 2)
-			canvas.draw_circle(at, 5, color, false, 2, true)
-			for side in [-1, 1]:
-				canvas.draw_polyline(PackedVector2Array([at + Vector2(side * 18, -12), at + Vector2(side * 21, -4), at + Vector2(side * 18, 4), at + Vector2(side * 21, 12)]), color, 2, true)
 		"master":
 			canvas.draw_colored_polygon(PackedVector2Array([at + Vector2(-16, -5), at + Vector2(-10, -5), at + Vector2(-2, -12), at + Vector2(-2, 12), at + Vector2(-10, 5), at + Vector2(-16, 5)]), color)
 			canvas.draw_arc(at + Vector2(-2, 0), 16, -PI / 3, PI / 3, 16, color, 2, true)

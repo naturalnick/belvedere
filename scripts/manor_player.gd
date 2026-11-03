@@ -9,7 +9,6 @@ var manor: Node3D
 var bot_drive := Vector3.ZERO
 var automated := false
 var invert_y := false
-var camera_shake_enabled := false
 var sensitivity := 0.0022
 var held := false
 var selected_direction := -1

@@ -6,7 +6,6 @@ const PATH := "user://settings.cfg"
 var fov := 75.0
 var sensitivity := 0.0022
 var invert_y := false
-var camera_shake := false
 var master := 1.0
 var effects := 1.0
 var music := 0.35
@@ -21,7 +20,6 @@ func load_file(path: String = PATH) -> void:
 	fov = clampf(float(config.get_value("view", "fov", fov)), 60, 100)
 	sensitivity = clampf(float(config.get_value("view", "sensitivity", sensitivity)), 0.0005, 0.006)
 	invert_y = bool(config.get_value("view", "invert_y", invert_y))
-	camera_shake = bool(config.get_value("view", "camera_shake", camera_shake))
 	master = clampf(float(config.get_value("audio", "master", master)), 0, 1)
 	effects = clampf(float(config.get_value("audio", "effects", effects)), 0, 1)
 	music = clampf(float(config.get_value("audio", "music", music)), 0, 1)
@@ -30,8 +28,11 @@ func load_file(path: String = PATH) -> void:
 func save() -> void:
 	var config := ConfigFile.new()
 	config.load(storage_path)
-	for key in ["fov", "sensitivity", "invert_y", "camera_shake"]:
+	for key in ["fov", "sensitivity", "invert_y"]:
 		config.set_value("view", key, get(key))
+	# Older saves carry the removed camera-shake toggle.
+	if config.has_section_key("view", "camera_shake"):
+		config.erase_section_key("view", "camera_shake")
 	for key in ["master", "effects", "music", "muted"]:
 		config.set_value("audio", key, get(key))
 	var error := config.save(storage_path)
@@ -43,7 +44,6 @@ func update(key: String, value: Variant) -> void:
 		"fov": fov = clampf(float(value), 60, 100)
 		"sensitivity": sensitivity = clampf(float(value), 0.0005, 0.006)
 		"invert_y": invert_y = bool(value)
-		"camera_shake": camera_shake = bool(value)
 		"master", "effects", "music": set(key, clampf(float(value), 0, 1))
 		"muted": muted = bool(value)
 		_: return
@@ -54,7 +54,6 @@ func apply(player: ManorPlayer) -> void:
 	player.camera.fov = fov
 	player.sensitivity = sensitivity
 	player.invert_y = invert_y
-	player.camera_shake_enabled = camera_shake
 	for bus_name in ["Effects", "Music"]:
 		if AudioServer.get_bus_index(bus_name) == -1:
 			AudioServer.add_bus()

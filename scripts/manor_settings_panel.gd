@@ -2,7 +2,7 @@ class_name ManorSettingsPanel
 extends Control
 
 signal closed
-const ROWS := ["fov", "sensitivity", "invert_y", "camera_shake", "master", "effects", "music"]
+const ROWS := ["fov", "sensitivity", "invert_y", "master", "effects", "music"]
 var preferences: ManorPreferences
 var sliders: Dictionary[String, HSlider] = {}
 var toggles: Dictionary[String, Button] = {}
@@ -12,11 +12,11 @@ var syncing := false
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	for key in ROWS:
-		if key in ["invert_y", "camera_shake"]:
+		if key == "invert_y":
 			var toggle := ManorMenuIcons.button(48)
 			toggle.size.x = 80
 			toggle.toggle_mode = true
-			toggle.accessibility_name = "Invert vertical mouse look" if key == "invert_y" else "Camera shake"
+			toggle.accessibility_name = "Invert vertical mouse look"
 			toggle.toggled.connect(func(value: bool) -> void:
 				if not syncing:
 					preferences.update(key, value))
@@ -59,8 +59,9 @@ func open() -> void:
 func _layout() -> void:
 	var width_value := minf(400, size.x - 48)
 	var x := (size.x - width_value) / 2
-	var spacing := minf(52, (size.y - 90) / 8)
-	var top := (size.y - spacing * 8) / 2
+	var lines := ROWS.size() + 1
+	var spacing := minf(52, (size.y - 90) / lines)
+	var top := (size.y - spacing * lines) / 2
 	for i in ROWS.size():
 		var key: String = ROWS[i]
 		var at := Vector2(x + 64, top + i * spacing)
@@ -69,7 +70,7 @@ func _layout() -> void:
 			sliders[key].size = Vector2(width_value - 64, 40)
 		else:
 			toggles[key].position = at + Vector2(width_value - 144, -4)
-	back.position = Vector2(size.x / 2 - 26, top + spacing * 7)
+	back.position = Vector2(size.x / 2 - 26, top + spacing * ROWS.size())
 	queue_redraw()
 
 func _draw() -> void:
