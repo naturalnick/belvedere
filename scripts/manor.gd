@@ -1,6 +1,8 @@
 class_name Manor
 extends Node3D
 
+signal slide_started
+signal slide_refused
 signal slide_finished
 signal puzzle_solved
 
@@ -27,6 +29,7 @@ var in_finale := false
 var at_title := false
 var recovering := false
 var fall_recovery: ManorFallRecovery
+var audio: ManorAudio
 
 func _ready() -> void:
 	set_process(false)
@@ -115,6 +118,9 @@ func _ready() -> void:
 	fall_recovery = ManorFallRecovery.new()
 	fall_recovery.manor = self
 	add_child(fall_recovery)
+	audio = ManorAudio.new()
+	audio.manor = self
+	add_child(audio)
 	if (OS.has_feature("web") or OS.get_cmdline_user_args().has("--web-entry")) and not gesture_start:
 		release_pointer()
 	else:
@@ -297,6 +303,7 @@ func request_slide(direction: int) -> bool:
 	if won or not rules.can_slide(direction):
 		if rules.player >= 0:
 			rooms[rules.player].show_pull(-1, -1, false)
+		slide_refused.emit()
 		return false
 	sliding = true
 	var room := rooms[rules.player]
@@ -309,6 +316,7 @@ func request_slide(direction: int) -> bool:
 	for id in rooms:
 		for door in rooms[id].doors:
 			door.set_open(false)
+	slide_started.emit()
 	var origin := room.position
 	var tween := create_tween()
 	tween.tween_interval(ManorSlideMotion.TAKE_UP)

@@ -1,6 +1,8 @@
 class_name ManorFallRecovery
 extends Node
 
+signal woke
+
 const FALL_SECONDS := 15.0
 const FADE_OUT := 0.55
 const FADE_IN := 1.0
@@ -38,3 +40,4 @@ func _wake() -> void:
 	manor.player.aim_at(bedroom.to_global(Vector3(-2.02, 0.7, -1.9)))
 	manor.rules.player = 0
 	manor.rules.gap_slot = -1
+	woke.emit()

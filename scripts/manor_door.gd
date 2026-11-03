@@ -1,6 +1,9 @@
 class_name ManorDoor
 extends Node3D
 
+signal swung(opening: bool)
+signal rattled
+
 var room_id := -1
 var direction := 0
 var is_front := false
@@ -56,6 +59,7 @@ func build(accent: String) -> void:
 func set_open(value: bool, instant: bool = false) -> void:
 	if value == opened and not instant and (motion == null or not motion.is_running()):
 		return
+	var changed := value != opened
 	opened = value
 	if emblem != null:
 		emblem.material_override = ManorGeometry.glowing_material("FFE3A1") if value else ManorGeometry.material("85744E")
@@ -64,6 +68,8 @@ func set_open(value: bool, instant: bool = false) -> void:
 		motion.kill()
 	if not instant:
 		motion = create_tween().set_parallel(true)
+		if changed:
+			swung.emit(value)
 	for i in 2:
 		var angle := (deg_to_rad(-100) if i == 0 else deg_to_rad(100)) if value else 0.0
 		if instant:
@@ -76,6 +82,7 @@ func rattle() -> void:
 		return
 	if motion:
 		motion.kill()
+	rattled.emit()
 	motion = create_tween()
 	for angle in [0.035, -0.035, 0.02, 0.0]:
 		motion.tween_property(leaves[0], "rotation:y", angle, 0.06)

@@ -24,3 +24,4 @@ run_checked --script res://tests/slide_motion_tests.gd
 run_checked --script res://tests/door_motion_tests.gd
 run_checked --script res://tests/reticle_tests.gd
 run_checked --script res://tests/fall_recovery_tests.gd
+run_checked --script res://tests/audio_tests.gd

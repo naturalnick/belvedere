@@ -1,6 +1,9 @@
 class_name ManorPlayer
 extends CharacterBody3D
 
+signal lever_grabbed
+signal lever_returned
+
 var camera: Camera3D
 var manor: Node3D
 var bot_drive := Vector3.ZERO
@@ -109,6 +112,7 @@ func begin_interact() -> bool:
 	selected_direction = -1
 	drag = Vector2.ZERO
 	select_pull(-1)
+	lever_grabbed.emit()
 	return true
 
 func select_pull(direction: int) -> void:
@@ -132,6 +136,7 @@ func release_interact() -> void:
 		manor.request_slide(selected_direction)
 	else:
 		room.show_pull(-1, -1, false)
+		lever_returned.emit()
 
 func cancel_pull() -> void:
 	if held:
