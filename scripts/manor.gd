@@ -19,7 +19,6 @@ var play_gate: Control
 static var gesture_start := false
 var objectives: ManorObjectives
 var objective_display: ManorObjectiveDisplay
-var chimes: ManorChimes
 var ending: ManorEnding
 var environment: Environment
 var fade: ColorRect
@@ -96,8 +95,6 @@ func _ready() -> void:
 		add_child(objective_display)
 		objective_display.setup(self)
 		objective_display.refresh(objectives)
-		chimes = ManorChimes.new()
-		add_child(chimes)
 		ending = ManorEnding.new()
 		ending.player = player
 		add_child(ending)
@@ -156,11 +153,9 @@ func refresh_progress() -> void:
 		won = rules.solved()
 	else:
 		var had_main := objectives.main_won
-		var earned := objectives.advance(rules)
+		objectives.advance(rules)
 		objective_display.refresh(objectives)
 		won = objectives.bonus_won
-		if not earned.is_empty():
-			chimes.play_completion(7 if objectives.main_won else earned.size())
 		if objectives.main_won and not had_main:
 			var warmth := create_tween()
 			warmth.tween_property(environment, "ambient_light_energy", 0.60, 1.5)
