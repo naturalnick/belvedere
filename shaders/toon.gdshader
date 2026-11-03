@@ -29,7 +29,7 @@ void fragment() {
 		+ texture(paper_grain, surface_position.xz * 0.7).r * weights.y
 		+ texture(paper_grain, surface_position.xy * 0.7).r * weights.z;
 	ALBEDO = base_color.rgb * mix(0.92, 1.0, grain) * (vertex_colors ? COLOR.rgb : vec3(1.0));
-	if (floor_pattern > 0 && surface_normal.y > 0.5) {
+	if ((floor_pattern == 1 || floor_pattern == 2) && surface_normal.y > 0.5) {
 		vec2 tile = surface_position.xz / tile_size;
 		vec2 edge = min(fract(tile), 1.0 - fract(tile)) * tile_size;
 		float distance_to_grout = min(edge.x, edge.y);
@@ -40,6 +40,17 @@ void fragment() {
 			ALBEDO = mix(ALBEDO, alternate_tile.rgb * mix(0.92, 1.0, grain), checker);
 		}
 		ALBEDO = mix(ALBEDO, grout_color.rgb, grout);
+	}
+	if (floor_pattern == 3 && surface_normal.y > 0.5) {
+		vec2 wood = surface_position.xz;
+		float row = floor(wood.x / 0.18);
+		float across = fract(wood.x / 0.18) * 0.18;
+		float along = fract((wood.y + mod(row, 3.0) * 0.53) / 1.6) * 1.6;
+		float seam_distance = min(min(across, 0.18 - across), min(along, 1.6 - along));
+		float aa = max(fwidth(seam_distance), 0.0005);
+		float seam = 1.0 - smoothstep(0.001 - aa, 0.001 + aa, seam_distance);
+		// Keep the existing palette; these are quiet joinery marks, not dark outlines.
+		ALBEDO *= mix(1.0, 0.98, mod(row, 2.0)) * mix(1.0, 0.92, seam);
 	}
 	if (meadow) {
 		ALBEDO = mix(base_color.rgb, meadow_far.rgb, smoothstep(18.0, 90.0, length(world_position.xz)));

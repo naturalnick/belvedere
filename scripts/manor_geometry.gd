@@ -57,6 +57,8 @@ static func floor_material(id: int) -> Material:
 			floor_mat.set_shader_parameter("grout_color", Color(grout[id]))
 			if id == 7:
 				floor_mat.set_shader_parameter("base_color", Color("EDE4D3"))
+		else:
+			floor_mat.set_shader_parameter("floor_pattern", 3)
 		materials[key] = floor_mat
 	return materials[key]
 
