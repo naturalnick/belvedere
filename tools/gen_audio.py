@@ -145,16 +145,17 @@ def birds():
 def piano_note(midi, velocity, duration=8.):
     n = int(duration*RATE);t=np.arange(n)/RATE;f=440*2**((midi-69)/12)
     note=np.zeros(n)
-    # Slightly inharmonic damped strings, soft hammer excitation, and unison beating.
-    for partial in range(1, 15):
+    # Felt piano: damped upper partials that die quickly, unison beating, and a padded attack.
+    for partial in range(1, 12):
         frequency=f*partial*np.sqrt(1 + .00009*partial*partial)
-        decay=(2.7 + (65-midi)*.025)/(partial**.67)
-        amplitude=np.exp(-partial*.20)/partial**1.3
+        decay=(3.0 + (65-midi)*.03)/(partial**.95)
+        amplitude=np.exp(-partial*.48)/partial**1.2
         for cents, gain in [(-.65,.23), (0,.54), (.85,.23)]:
             note += gain*amplitude*np.sin(2*np.pi*frequency*2**(cents/1200)*t)*np.exp(-t/decay)
-    note *= (1-np.exp(-t/.012))*velocity
-    hammer=filt(RNG.normal(size=n), [350, 2000], 'bandpass')*np.exp(-t/.012)*.012*velocity
-    return fade(note+hammer, .006, .5)
+    note *= (1-np.exp(-t/.022))*velocity
+    # A low, soft felt thump in place of a bright hammer click.
+    thump=filt(RNG.normal(size=n), [45, 380], 'bandpass')*np.exp(-t/.03)*.05*velocity
+    return fade(note+thump, .006, .5)
 
 
 def music():
@@ -164,29 +165,34 @@ def music():
     # first half, third to root in the second. The last phrase stays open to lead into the loop.
     phrases=[(0,[48,55,64,62]), (12,[45,52,60,59]), (24,[41,48,57,55]), (36,[43,50,59,57]),
              (48,[48,55,64,60]), (60,[45,52,60,57]), (72,[41,48,57,53]), (84,[43,50,59,57])]
+
+    def place(sound, when, pan):
+        at=int(when*RATE);count=min(len(sound),len(stereo)-at)
+        gains=np.array([np.sqrt((1-pan)/2), np.sqrt((1+pan)/2)])
+        stereo[at:at+count] += sound[:count,None]*gains
+        # Notes ringing past the end continue from the start, so the loop has no seam.
+        stereo[:len(sound)-count] += sound[count:,None]*gains
+
     for start, notes in phrases:
+        # A soft bass note an octave below grounds each phrase.
+        place(piano_note(notes[0]-12, .30*RNG.uniform(.92,1.04), 11.), start+.66, -.1)
         for k, note in enumerate(notes):
             when=start+[.7, 2.15, 4.9, 7.3][k]+RNG.uniform(-.10,.10)
             sound=piano_note(note, [.44,.36,.29,.23][k]*RNG.uniform(.9,1.05))
-            pan=np.clip((note-56)/38, -.45,.45)
-            at=int(when*RATE);count=min(len(sound),len(stereo)-at)
-            gains=np.array([np.sqrt((1-pan)/2), np.sqrt((1+pan)/2)])
-            stereo[at:at+count] += sound[:count,None]*gains
-            # Notes ringing past the end continue from the start, so the loop has no seam.
-            stereo[:len(sound)-count] += sound[count:,None]*gains
-    # Baked short room response avoids a heavy live reverb on the music bus.
-    ir_n=int(1.8*RATE); t=np.arange(ir_n)/RATE
+            place(sound, when, np.clip((note-56)/38, -.45,.45))
+    # Baked warm hall: ~4 s decay with darker tail; avoids a heavy live reverb on the music bus.
+    ir_n=int(4.5*RATE); t=np.arange(ir_n)/RATE
     for channel in range(2):
-        ir=filt(RNG.normal(size=ir_n), 2600)*np.exp(-t/0.32)
-        ir[:int(.025*RATE)] = 0
-        ir *= .13 / np.sqrt(np.sum(ir*ir))
-        for time_value, level in [(.037,.10),(.061,.07),(.093,.045)]:
+        ir=filt(RNG.normal(size=ir_n), 1700)*np.exp(-t/0.62) + filt(RNG.normal(size=ir_n), 4000)*np.exp(-t/0.18)*.35
+        ir[:int(.03*RATE)] = 0
+        ir *= .22 / np.sqrt(np.sum(ir*ir))
+        for time_value, level in [(.037,.08),(.061,.06),(.093,.04)]:
             ir[int((time_value+channel*.003)*RATE)] += level
         tail=signal.fftconvolve(stereo[:,channel], ir)
         # Fold the reverb tail into the start for an exact seamless loop boundary.
         stereo[:,channel] += tail[:len(stereo)]
         stereo[:len(tail)-len(stereo),channel] += tail[len(stereo):]
-    write('manor_theme', filt(stereo, 6800), .34, 0, 0, ogg=True)
+    write('manor_theme', filt(stereo, 5200), .34, 0, 0, ogg=True)
 
 
 if __name__ == '__main__':
