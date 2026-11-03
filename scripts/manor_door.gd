@@ -11,8 +11,9 @@ var motion: Tween
 var emblem: MeshInstance3D
 
 func build(accent: String) -> void:
-	var frame := ManorGeometry.material(accent, 0.006)
-	var wood := ManorGeometry.material("6E4A33")
+	var frame := ManorGeometry.material(accent, 0.0)
+	# Expanded box hulls become detached sheets when thin joinery is viewed up close.
+	var wood := ManorGeometry.material("6E4A33", 0.0)
 	for x in [-0.65, 0.65]:
 		ManorGeometry.box(self, Vector3(0.1, 2.3, 0.12), Vector3(x, 1.15, 0.125), frame)
 	ManorGeometry.box(self, Vector3(1.2, 0.1, 0.12), Vector3(0, 2.25, 0.125), frame)
@@ -23,10 +24,14 @@ func build(accent: String) -> void:
 		var offset := 0.3 if i == 0 else -0.3
 		if not is_front:
 			for edge in [-0.27, 0.27]:
-				ManorGeometry.box(hinge, Vector3(0.06, 2.16, 0.08), Vector3(offset + edge, 1.1, 0), wood)
-			for y in [0.05, 0.58, 1.1, 1.64, 2.17]:
-				ManorGeometry.box(hinge, Vector3(0.6, 0.06, 0.08), Vector3(offset, y, 0), wood)
-			ManorGeometry.box(hinge, Vector3(0.025, 2.15, 0.06), Vector3(offset, 1.1, 0), wood)
+				ManorGeometry.box(hinge, Vector3(0.06, 2.18, 0.08), Vector3(offset + edge, 1.11, 0), wood)
+			var rails: Array[float] = [0.05, 0.58, 1.1, 1.64, 2.17]
+			for y in rails:
+				ManorGeometry.box(hinge, Vector3(0.48, 0.06, 0.08), Vector3(offset, y, 0), wood)
+			for section in range(rails.size() - 1):
+				var bottom := rails[section] + 0.03
+				var top := rails[section + 1] - 0.03
+				ManorGeometry.box(hinge, Vector3(0.025, top - bottom, 0.06), Vector3(offset, (top + bottom) / 2, 0), wood)
 		if is_front:
 			ManorGeometry.box(hinge, Vector3(0.6, 2.2, 0.10), Vector3(offset, 1.1, -0.015), ManorGeometry.material("3F5E7A", 0.0))
 			for y in [0.32, 0.85, 1.38, 1.91]:

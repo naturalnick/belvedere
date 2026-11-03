@@ -9,6 +9,7 @@ Commands (kept in `tools/`; update this list when scripts change):
 - Rule + solver tests (headless): `tools/test.sh`
 - Classic-mode fun-test bots + geometry probes (headless): `tools/fun_test.sh` → `docs/FUNTEST.md`
 - Screenshots: `tools/capture.sh [trees|furnishings|stage3|objectives|single-gap|courtyard|solve|review] [seed] [out_dir] [extra flags]`
+- Door-frame close-up pixel check (real window): `tools/check_doors.sh [out_dir]`
 - Web build (local zip, never uploaded): `tools/build_itch.sh`
 - Read-only export scope/identity preflight: `python3 tools/check_export_identity.py`
 
