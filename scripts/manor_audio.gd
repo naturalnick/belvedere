@@ -5,11 +5,6 @@ const DIR := "res://assets/audio/"
 const STRIDE := 1.05
 const DOOR_RANGE := 7.5
 const TILE_ROOMS: Array[int] = [1, 3, 7, 8]
-# Room-local rug rectangles (centre, size) matching the furnishing geometry.
-const RUGS := {
-	0: [Vector2(-1.75, -1.45), Vector2(2.0, 2.9)],
-	5: [Vector2(-1.86, -1.83), Vector2(2.1, 2.1)],
-}
 const MUSIC_DUCK_DB := -6.0
 const BIRDS_DB := -9.0
 
@@ -125,14 +120,7 @@ func surface() -> String:
 	var position := manor.player.global_position
 	var id := manor.rules.player
 	if id >= 0 and manor.rooms.has(id):
-		var local := manor.rooms[id].to_local(position)
-		if RUGS.has(id):
-			var rug: Array = RUGS[id]
-			# Per-axis test: Vector2 comparison operators are lexicographic, not component-wise.
-			var offset: Vector2 = (Vector2(local.x, local.z) - rug[0]).abs()
-			var half: Vector2 = rug[1] / 2.0
-			if offset.x <= half.x and offset.y <= half.y:
-				return "step_carpet"
+		# Rugs deliberately keep the room's floor step; Nick found a distinct rug step distracting.
 		return "step_tile" if id in TILE_ROOMS else "step_wood"
 	if manor.carpet.visible and absf(position.x) < 0.9 and position.z > 9.3 and position.z < 22.3:
 		return "step_carpet"

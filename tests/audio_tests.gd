@@ -44,16 +44,18 @@ func run() -> void:
 	main.rules.player = 0
 	main.player.global_position = main.rooms[0].to_global(Vector3(1.5, 0.02, 1.5))
 	check(audio.surface() == "step_wood", "Bedroom boards use wood steps")
-	main.player.global_position = main.rooms[0].to_global(Vector3(-1.75, 0.02, -1.45))
-	check(audio.surface() == "step_carpet", "Bedroom rug muffles steps")
-	main.player.global_position = main.rooms[0].to_global(Vector3(-1.75, 0.02, 2.2))
-	check(audio.surface() == "step_wood", "boards beyond the Bedroom rug stay wood")
+	for rug_point in [Vector3(-1.75, 0.02, -1.45), Vector3(-1.75, 0.02, 2.2)]:
+		main.player.global_position = main.rooms[0].to_global(rug_point)
+		check(audio.surface() == "step_wood", "Bedroom rug and boards share wood steps")
 	main.rules.player = 5
-	main.player.global_position = main.rooms[5].to_global(Vector3(-1.86, 0.02, -1.4))
-	check(audio.surface() == "step_carpet", "Living rug muffles steps")
-	for z in [-0.5, 1.0, 2.5]:
+	for z in [-1.4, -0.5, 1.0, 2.5]:
 		main.player.global_position = main.rooms[5].to_global(Vector3(-1.86, 0.02, z))
-		check(audio.surface() == "step_wood", "Living boards in line with the rug stay wood (z %.1f)" % z)
+		check(audio.surface() == "step_wood", "Living rug and boards share wood steps (z %.1f)" % z)
+	main.carpet.visible = true
+	main.rules.player = ManorRules.OUTSIDE
+	main.player.global_position = Vector3(0, 0, 15)
+	check(audio.surface() == "step_carpet", "finale carpet keeps its softer step")
+	main.carpet.visible = false
 	main.rules.player = -1
 	main.player.global_position = ManorGeometry.center(7)
 	check(audio.surface() == "step_tile", "gap slab uses hard steps")
