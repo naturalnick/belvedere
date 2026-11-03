@@ -26,7 +26,7 @@ func run(game: Manor) -> void:
 	# Remove this mode's outputs so stale success frames cannot survive a failed run.
 	var shot_names := ["01_spawn", "02_window", "03_lever_held", "04_mid_slide", "05_solved", "06_front_door_open"]
 	if mode == "furnishings":
-		shot_names = ["01_spawn"]
+		shot_names = ["01_spawn", "dining_shelf_detail", "dining_bowl_detail"]
 		for room_name in ["bathroom", "study", "kitchen", "living", "dining", "foyer", "laundry"]:
 			for view in ["north", "south", "slide"]:
 				shot_names.append(room_name + "_" + view)

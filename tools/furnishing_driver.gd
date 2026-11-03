@@ -16,6 +16,13 @@ func run(driver: Node) -> void:
 		await driver.walk_to(room.position + Vector3(0, 0, -2.30))
 		main.player.aim_at(room.position + Vector3(0, 1.0, 1.80))
 		await driver.shot("%s_south" % NAMES[id])
+		if id == 6:
+			await driver.walk_to(room.position + Vector3(1.2, 0, 1.6))
+			main.player.aim_at(room.position + Vector3(2.60, 1.15, 1.9))
+			await driver.shot("dining_shelf_detail")
+			await driver.walk_to(room.position + Vector3(-0.6, 0, 2.0))
+			main.player.aim_at(room.position + Vector3(-1.85, 0.80, 2.65))
+			await driver.shot("dining_bowl_detail")
 		await driver.approach_lever(room)
 		main.player.aim_at(room.lever.global_position + Vector3.UP * 0.8)
 		await get_tree().physics_frame

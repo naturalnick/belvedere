@@ -134,6 +134,42 @@ func basin(parent: Node3D, at: Vector3, width: float, depth: float, height: floa
 	parent.add_child(node)
 	node.position = at
 
+# Tableware needs a thin lip and curved wall; the sink's fixed-width rim is too bulky.
+func bowl(parent: Node3D, at: Vector3, radius: float, height: float) -> void:
+	var profile: Array[Vector2] = [
+		Vector2(0, 0), Vector2(0.38, 0), Vector2(0.44, 0.10),
+		Vector2(0.61, 0.25), Vector2(0.80, 0.52), Vector2(0.96, 0.85),
+		Vector2(1.0, 0.96), Vector2(0.99, 1.0), Vector2(0.94, 0.99),
+		Vector2(0.92, 0.87), Vector2(0.76, 0.56), Vector2(0.55, 0.30),
+		Vector2(0.32, 0.23), Vector2(0, 0.23),
+	]
+	var surface := SurfaceTool.new()
+	surface.begin(Mesh.PRIMITIVE_TRIANGLES)
+	for p in range(profile.size() - 1):
+		var tint := Color.WHITE
+		if p in [6, 7]:
+			tint = Color("9CAFAA")
+		elif p >= 8:
+			tint = Color("E4E7DF")
+		for i in 32:
+			var corners: Array[Vector3] = []
+			for pair in [Vector2i(p, i), Vector2i(p, i + 1), Vector2i(p + 1, i), Vector2i(p + 1, i + 1)]:
+				var section: Vector2 = profile[pair.x]
+				var angle: float = pair.y * TAU / 32
+				corners.append(Vector3(cos(angle) * section.x * radius, section.y * height, sin(angle) * section.x * radius))
+			for index in [0, 1, 2, 1, 3, 2]:
+				surface.set_color(tint)
+				surface.add_vertex(corners[index])
+	surface.generate_normals()
+	var node := MeshInstance3D.new()
+	node.name = "CeramicBowl"
+	node.mesh = surface.commit()
+	var ceramic: ShaderMaterial = ManorGeometry.material("F4F1EA", 0.001).duplicate()
+	ceramic.set_shader_parameter("vertex_colors", true)
+	node.material_override = ceramic
+	parent.add_child(node)
+	node.position = at
+
 func tap(parent: Node3D, at: Vector3) -> void:
 	rod(parent, at, at + Vector3.UP * 0.23, 0.025, BRASS)
 	rod(parent, at + Vector3.UP * 0.23, at + Vector3(0, 0.23, 0.20), 0.025, BRASS)

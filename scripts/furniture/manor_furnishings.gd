@@ -150,10 +150,10 @@ func dining() -> void:
 		box(china, Vector3(1.20, 0.06, 0.48), Vector3(0, y, 0), "6A3A2A")
 	for y in [0.68, 1.28]:
 		for x in [-0.37, 0, 0.37]:
-			basin(china, Vector3(x, y, 0), 0.23, 0.23, 0.13)
+			bowl(china, Vector3(x, y, 0.025), 0.125, 0.075)
 	solid(china, Vector3(1.44, 1.95, 0.48), Vector3(0, 0.975, 0))
 	var serving := table("ServingTable", Vector3(-1.85, 0, 2.65), 1.30, 0.56, 0.75, "6A3A2A")
-	basin(serving, Vector3(0, 0.75, 0), 0.42, 0.32, 0.12)
+	bowl(serving, Vector3(0, 0.75, 0), 0.20, 0.095)
 
 func foyer() -> void:
 	var bench := table("EntryBench", Vector3(-1.85, 0, -2.50), 1.70, 0.65, 0.43)
