@@ -12,7 +12,7 @@ func build(id: int) -> void:
 	room_id = id
 	var plaster := ManorGeometry.material("EFE4D2", 0.0)
 	var accent := ManorGeometry.material(ManorGeometry.ACCENTS[id], 0.0)
-	ManorGeometry.box(self, Vector3(6.25, 0.2, 6.25), Vector3(0, -0.1, 0), ManorGeometry.material(ManorGeometry.FLOORS[id], 0.0), true)
+	ManorGeometry.box(self, Vector3(6.25, 0.2, 6.25), Vector3(0, -0.1, 0), ManorGeometry.floor_material(id), true)
 	ManorGeometry.box(self, Vector3(6.25, 0.2, 6.25), Vector3(0, 3.1, 0), ManorGeometry.material("F6EEE1", 0.0), true)
 	for d in 4:
 		var wall := Node3D.new()
@@ -54,6 +54,8 @@ func build(id: int) -> void:
 	_build_lever()
 	if id == 0:
 		add_child(ManorBedroom.new())
+	else:
+		add_child(ManorFurnishings.new(id))
 
 func first_window() -> int:
 	for d in 4:

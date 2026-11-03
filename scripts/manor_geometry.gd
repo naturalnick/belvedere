@@ -46,6 +46,20 @@ static func material(hex: String, outline: float = 0.012) -> Material:
 	materials[key] = result
 	return result
 
+static func floor_material(id: int) -> Material:
+	var key := "floor_%d" % id
+	if not materials.has(key):
+		var floor_mat: ShaderMaterial = material(FLOORS[id], 0.0).duplicate()
+		if id in [1, 3, 7, 8]:
+			floor_mat.set_shader_parameter("floor_pattern", 2 if id == 7 else 1)
+			floor_mat.set_shader_parameter("tile_size", 0.6 if id == 7 else 0.45)
+			var grout := {1: "C9C5BA", 3: "A96F53", 7: "A69985", 8: "A3A197"}
+			floor_mat.set_shader_parameter("grout_color", Color(grout[id]))
+			if id == 7:
+				floor_mat.set_shader_parameter("base_color", Color("EDE4D3"))
+		materials[key] = floor_mat
+	return materials[key]
+
 static func glass() -> Material:
 	if not materials.has("glass"):
 		var result := StandardMaterial3D.new()

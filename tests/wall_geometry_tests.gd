@@ -32,6 +32,7 @@ func run() -> void:
 					var face_b: float = b.position[axis] if sign_value == 0 else b.end[axis]
 					if absf(face_a - face_b) < 0.0001:
 						conflicts += 1
+						print("Coplanar faces: %s / %s (axis %d, face %d)" % [boxes[i].path, boxes[j].path, axis, sign_value])
 	print("Wall geometry: %d overlapping coplanar same-facing box faces" % conflicts)
 	world.queue_free()
 	await process_frame
@@ -48,6 +49,6 @@ func collect(node: Node, boxes: Array[Dictionary]) -> void:
 				break
 			ancestor = ancestor.get_parent()
 		if room != null and not room.lever.is_ancestor_of(node):
-			boxes.append({"bounds": node.global_transform * node.get_aabb(), "material": node.material_override.get_shader_parameter("base_color"), "room": room.room_id})
+			boxes.append({"bounds": node.global_transform * node.get_aabb(), "material": node.material_override.get_shader_parameter("base_color"), "room": room.room_id, "path": str(node.get_path())})
 	for child in node.get_children():
 		collect(child, boxes)

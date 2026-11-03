@@ -4,6 +4,10 @@ uniform float self_light = 0.0;
 uniform bool vertex_colors = false;
 uniform bool gap_tracks = false;
 uniform bool meadow = false;
+uniform int floor_pattern = 0;
+uniform float tile_size = 0.45;
+uniform vec4 grout_color : source_color = vec4(0.78, 0.77, 0.73, 1.0);
+uniform vec4 alternate_tile : source_color = vec4(0.23, 0.165, 0.133, 1.0);
 uniform vec4 meadow_far : source_color = vec4(0.7255, 0.7882, 0.5569, 1.0);
 varying vec3 world_position;
 uniform vec4 track_groove : source_color = vec4(0.239, 0.271, 0.278, 1.0);
@@ -25,6 +29,18 @@ void fragment() {
 		+ texture(paper_grain, surface_position.xz * 0.7).r * weights.y
 		+ texture(paper_grain, surface_position.xy * 0.7).r * weights.z;
 	ALBEDO = base_color.rgb * mix(0.92, 1.0, grain) * (vertex_colors ? COLOR.rgb : vec3(1.0));
+	if (floor_pattern > 0 && surface_normal.y > 0.5) {
+		vec2 tile = surface_position.xz / tile_size;
+		vec2 edge = min(fract(tile), 1.0 - fract(tile)) * tile_size;
+		float distance_to_grout = min(edge.x, edge.y);
+		float aa = max(fwidth(distance_to_grout), 0.001);
+		float grout = 1.0 - smoothstep(0.004 - aa, 0.004 + aa, distance_to_grout);
+		if (floor_pattern == 2) {
+			float checker = mod(floor(tile.x) + floor(tile.y), 2.0);
+			ALBEDO = mix(ALBEDO, alternate_tile.rgb * mix(0.92, 1.0, grain), checker);
+		}
+		ALBEDO = mix(ALBEDO, grout_color.rgb, grout);
+	}
 	if (meadow) {
 		ALBEDO = mix(base_color.rgb, meadow_far.rgb, smoothstep(18.0, 90.0, length(world_position.xz)));
 	}

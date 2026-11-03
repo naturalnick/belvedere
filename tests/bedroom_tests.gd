@@ -15,7 +15,7 @@ func run() -> void:
 	await physics_frame
 	await physics_frame
 	for id in main.rooms:
-		check(main.rooms[id].has_node("BedroomFurnishings") == (id == 0), "exactly one room is furnished")
+		check(main.rooms[id].has_node("BedroomFurnishings") == (id == 0), "Bedroom furnishings remain isolated to room 0")
 	var room: ManorRoom = main.rooms[0]
 	var furniture: Node3D = room.get_node("BedroomFurnishings")
 	check(furniture.find_children("*", "MeshInstance3D", true, false).size() <= 60, "trial furniture stays within mesh budget")
