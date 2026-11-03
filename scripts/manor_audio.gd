@@ -6,7 +6,7 @@ const STRIDE := 1.05
 const DOOR_RANGE := 7.5
 const TILE_ROOMS: Array[int] = [1, 3, 7, 8]
 const MUSIC_DUCK_DB := -6.0
-const BIRDS_DB := -25.0
+const BIRDS_DB := -33.0
 
 signal cued(group: String)
 
