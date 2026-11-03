@@ -16,4 +16,4 @@ Controls: WASD/mouse; hold left mouse or E on the lever, push mouse/WASD, releas
 
 The macOS Unsigned Test preset is authorized only for local unsigned/unnotarized testing in Stage 8; run the identity preflight first.
 
-Rules: no visible instruction text, labels, room names, counters or taglines. All art and audio original or CC0 with entries in `docs/CREDITS.md`. Never push or publish.
+Rules: the title screen may show “Shifting Manor”; otherwise no visible instruction text, labels, room names, counters or taglines. Title and pause have a persistent sound on/off icon. All art and audio original or CC0 with entries in `docs/CREDITS.md`. Never push or publish.
