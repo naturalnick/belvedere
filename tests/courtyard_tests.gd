@@ -51,7 +51,7 @@ func run() -> void:
 	main.player.automated = true
 	await physics_frame
 	await physics_frame
-	check(main.rules.courtyards and main.rooms.size() == 6 and main.gap_floors.size() == 3, "default launch builds new room setup")
+	check(main.rules.courtyards and main.rooms.size() == 6 and main.gap_floors.size() == 3, "explicit courtyard launch builds six-room setup")
 	check(main.perimeter.is_empty(), "no house perimeter barrier")
 	var original := main.rules.copy()
 	var original_position := main.player.position

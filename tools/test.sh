@@ -11,4 +11,5 @@ run_checked() {
 run_checked --import
 run_checked --script res://tests/run_tests.gd
 run_checked --script res://tests/scene_tests.gd -- --classic --seed=A
-run_checked --script res://tests/courtyard_tests.gd
+run_checked --script res://tests/courtyard_tests.gd -- --courtyard
+run_checked --script res://tests/single_gap_tests.gd

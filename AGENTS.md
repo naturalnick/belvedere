@@ -8,11 +8,11 @@ Commands (kept in `tools/`; update this list when scripts change):
 - Run: `tools/run.sh`
 - Rule + solver tests (headless): `tools/test.sh`
 - Classic-mode fun-test bots + geometry probes (headless): `tools/fun_test.sh` → `docs/FUNTEST.md`
-- Screenshots: `tools/capture.sh [courtyard|solve|review] [seed] [out_dir] [extra flags]`
+- Screenshots: `tools/capture.sh [single-gap|courtyard|solve|review] [seed] [out_dir] [extra flags]`
 - Web build (local zip, never uploaded): `tools/build_itch.sh`
 - Read-only export scope/identity preflight: `python3 tools/check_export_identity.py`
 
-Controls: WASD/mouse; hold left mouse or E on the lever, push mouse/WASD, release. Desktop captures the pointer on launch; Escape releases it and shows the play icon. `tools/run.sh` starts the six-room/three-gap courtyard prototype. `tools/run.sh --classic --seed=A` selects the old eight-room jam layout (`--classic` alone selects a random accepted state); `--invert-y` inverts mouse Y.
+Controls: WASD/mouse; hold left mouse or E on the lever, push mouse/WASD, release. Desktop captures the pointer on launch; Escape releases it and shows the play icon. `tools/run.sh` starts eight rooms and one gap on the 3×3 grid, using seed A with lawn access through the gap and no win trigger. `--seed=B|C|random|<index>` selects other original starts. `--courtyard` retains the earlier six-room/three-gap experiment. `tools/run.sh --classic --seed=A` selects the old eight-room jam layout (`--classic` alone selects a random accepted state); `--invert-y` inverts mouse Y.
 
 The macOS Unsigned Test preset is authorized only for local unsigned/unnotarized testing in Stage 8; run the identity preflight first.
 

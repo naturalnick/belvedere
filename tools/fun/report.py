@@ -44,7 +44,7 @@ planner_minutes = sorted(r['human_seconds'] / 60 for r in all_planner if r['solv
 randoms = [r for r in results if r['seed'] not in ('A', 'B', 'C')]
 lines = [
     '# Fun-test proxy — Stage 2', '',
-    '**Historical classic-mode results:** These measurements describe the eight-room/one-gap puzzle launched with `--classic`, not the new six-room courtyard prototype. That prototype has no solve objective yet.', '',
+    '**Historical classic-mode results:** These measurements describe the eight-room/one-gap puzzle launched with `--classic`, not the current open-lawn prototype. The current default also has eight rooms and one gap, but its win trigger is disabled.', '',
     '**A real five-person human playtest is still owed to Nick.** Pass bar: at least 4/5 solve in 5–20 minutes and make their first slide within 90 seconds. Bot results cannot establish this.', '',
     'Run `tools/fun_test.sh` from any working directory. It runs entirely headlessly and regenerates this report. Raw per-run results and probe failures are local files in `build/fun/` (git-ignored).', '',
     '## Method', '',

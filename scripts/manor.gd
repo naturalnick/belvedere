@@ -20,21 +20,26 @@ var play_gate: Control
 func _ready() -> void:
 	var demo := false
 	var classic := OS.get_cmdline_user_args().has("--classic")
-	if not classic:
+	var three_gaps := OS.get_cmdline_user_args().has("--courtyard")
+	if three_gaps:
 		seed_name = "courtyard"
+	elif not classic:
+		seed_name = "A"
 	for arg in OS.get_cmdline_user_args():
 		if arg.begins_with("--seed="):
 			seed_name = arg.trim_prefix("--seed=")
 		elif arg == "--demo":
 			demo = true
-	if not classic and seed_name not in ["courtyard", "A"]:
-		printerr("The courtyard prototype has one fixed start; use --classic for the old seed table.")
+	if three_gaps and seed_name not in ["courtyard", "A"]:
+		printerr("The three-gap prototype has one fixed start; omit --courtyard to use other seeds.")
 		get_tree().quit(1)
 		return
-	rules = ManorRules.from_seed(seed_name) if classic else ManorRules.courtyard_start()
+	rules = ManorRules.courtyard_start() if three_gaps else ManorRules.from_seed(seed_name)
 	if rules == null:
 		get_tree().quit(1)
 		return
+	if not classic:
+		rules.courtyards = true
 	_build_world()
 	for id in rules.board:
 		if id == -1:

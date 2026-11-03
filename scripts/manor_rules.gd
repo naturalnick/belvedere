@@ -112,7 +112,8 @@ func valid() -> bool:
 	var ordered := Array(board)
 	ordered.sort()
 	if courtyards:
-		return ordered == [-1, -1, -1, 0, 1, 2, 3, 5, 7] and (player == OUTSIDE or (player == -1 and gap_slot >= 0 and gap_slot < 9 and board[gap_slot] == -1) or (player >= 0 and board.has(player)))
+		var layout_valid := ordered == [-1, -1, -1, 0, 1, 2, 3, 5, 7] or ordered == [-1, 0, 1, 2, 3, 5, 6, 7, 8]
+		return layout_valid and (player == OUTSIDE or (player == -1 and gap_slot >= 0 and gap_slot < 9 and board[gap_slot] == -1) or (player >= 0 and board.has(player)))
 	return ordered == [-1, 0, 1, 2, 3, 5, 6, 7, 8] and board.has(player)
 
 func key() -> int:

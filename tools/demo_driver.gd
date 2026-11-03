@@ -17,8 +17,8 @@ func run(game: Manor) -> void:
 			shots_dir = arg.trim_prefix("--shots=")
 		if arg.begins_with("--mode="):
 			mode = arg.trim_prefix("--mode=")
-	if mode not in ["solve", "review", "courtyard"]:
-		printerr("Capture mode must be solve, review or courtyard")
+	if mode not in ["solve", "review", "courtyard", "single-gap"]:
+		printerr("Capture mode must be solve, review, courtyard or single-gap")
 		get_tree().quit(1)
 		return
 	DirAccess.make_dir_recursive_absolute(shots_dir)
@@ -27,6 +27,8 @@ func run(game: Manor) -> void:
 	var shot_names := ["01_spawn", "02_window", "03_lever_held", "04_mid_slide", "05_solved", "06_front_door_open"]
 	if mode == "courtyard":
 		shot_names = ["01_spawn", "02_courtyards", "03_outside", "04_lever_held", "05_mid_slide", "06_multiple_directions", "07_shifted"]
+	elif mode == "single-gap":
+		shot_names = ["01_spawn", "02_outside", "03_shifted"]
 	for name_value in shot_names:
 		DirAccess.remove_absolute(shots_dir.path_join(name_value + ".png"))
 	DisplayServer.window_move_to_foreground()
@@ -39,6 +41,11 @@ func run(game: Manor) -> void:
 		await shot("00_play_gate")
 		await check_pointer_input()
 	await shot("01_spawn")
+	if mode == "single-gap":
+		await single_gap_views()
+		print("Single-gap capture: %d screenshots; %d checks, %d failures; %.2fs" % [shot_count, checks, failures, elapsed()])
+		get_tree().quit(1 if failures else 0)
+		return
 	if mode == "courtyard":
 		await courtyard_views()
 		print("Courtyard capture: %d screenshots; %d checks, %d failures; %.2fs" % [shot_count, checks, failures, elapsed()])
@@ -116,6 +123,29 @@ func run(game: Manor) -> void:
 	_check(main.player.global_position.z > 9.5, "unlocked front door can be walked through")
 	print("Capture: %d screenshots; %d checks, %d failures; %d slides; %.2fs" % [shot_count, checks, failures, main.slides, elapsed()])
 	get_tree().quit(1 if failures else 0)
+
+func single_gap_views() -> void:
+	_check(main.rooms.size() == 8 and main.gap_floors.size() == 1, "eight rooms and one gap")
+	await check_pointer_input()
+	await walk_direction(ManorRules.E)
+	await walk_to(Vector3(0, 0, 12))
+	_check(main.rules.player == ManorRules.OUTSIDE, "gap still leads to lawn")
+	main.player.aim_at(Vector3(0, 1.4, 0))
+	await shot("02_outside")
+	await walk_to(ManorGeometry.center(7))
+	_check(main.rules.player == -1 and main.rules.slot() == 7, "return through single gap")
+	await walk_direction(ManorRules.W)
+	await approach_lever(main.rooms[7])
+	main.player.aim_at(main.rooms[7].lever.global_position + Vector3.UP * 0.8)
+	await hold_lever_input(ManorRules.E, true)
+	release_lever_input(true)
+	_check(main.sliding, "lever starts slide")
+	while main.sliding:
+		await get_tree().process_frame
+	_check(main.rules.slot() == 7 and main.rules.board.count(-1) == 1 and main.gap_floors.has(6), "slide preserves one gap")
+	_check(not main.won and not main.carpet.visible, "no new win trigger")
+	main.player.aim_at(ManorGeometry.center(6) + Vector3.UP * 1.4)
+	await shot("03_shifted")
 
 func courtyard_views() -> void:
 	_check(main.rules.courtyards and main.rooms.size() == 6 and main.gap_floors.size() == 3, "six-room courtyard scene")

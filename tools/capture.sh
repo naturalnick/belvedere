@@ -10,5 +10,6 @@ OUT="$(cd "$OUT" && pwd)"
 godot --headless --path . --import > /tmp/shifting-manor-import.log 2>&1 || { cat /tmp/shifting-manor-import.log; exit 1; }
 if grep -E 'SCRIPT ERROR|Parse Error|Compile Error' /tmp/shifting-manor-import.log; then exit 1; fi
 CLASSIC="--classic"
-if [ "$MODE" = "courtyard" ]; then CLASSIC=""; fi
+if [ "$MODE" = "courtyard" ]; then CLASSIC="--courtyard"; fi
+if [ "$MODE" = "single-gap" ]; then CLASSIC=""; fi
 exec godot --path . -- $CLASSIC --demo --mode="$MODE" --seed="$SEED" --shots="$OUT" "$@"
