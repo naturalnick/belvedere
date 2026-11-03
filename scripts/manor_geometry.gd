@@ -64,6 +64,14 @@ static func floor_material(id: int) -> Material:
 		materials[key] = floor_mat
 	return materials[key]
 
+static func vertex_color_material(hex: String, outline: float) -> Material:
+	var key := "vertex_%s%s" % [hex, outline]
+	if not materials.has(key):
+		var result: ShaderMaterial = material(hex, outline).duplicate()
+		result.set_shader_parameter("vertex_colors", true)
+		materials[key] = result
+	return materials[key]
+
 static func glass() -> Material:
 	if not materials.has("glass"):
 		var result := StandardMaterial3D.new()

@@ -1,13 +1,15 @@
 class_name ManorStaticBatch
 extends RefCounted
 
-## Only call on a rigid assembly: all descendants must move together.
-static func combine(assembly: Node3D) -> void:
+## Descendants must move together; `skip` excludes subtrees that animate, swap materials or batch separately.
+static func combine(assembly: Node3D, skip: Array[Node] = []) -> void:
 	var groups: Dictionary[String, Array] = {}
 	for node in assembly.find_children("*", "MeshInstance3D", true, false):
 		var piece := node as MeshInstance3D
 		# Transparent panes retain their individual sorting and culling.
 		if not piece.material_override is ShaderMaterial or piece.get_child_count() != 0:
+			continue
+		if skip.any(func(part: Node) -> bool: return part == piece or part.is_ancestor_of(piece)):
 			continue
 		var key := "%d:%d:%d" % [piece.mesh.get_instance_id(), piece.material_override.get_instance_id(), piece.cast_shadow]
 		if not groups.has(key):

@@ -27,11 +27,15 @@ void vertex() {
 }
 void fragment() {
 	if (clip_below_ground && world_position.y < ground_level) { discard; }
-	vec3 weights = abs(surface_normal);
-	weights /= max(dot(weights, vec3(1.0)), 0.001);
-	float grain = texture(paper_grain, surface_position.yz * 0.7).r * weights.x
-		+ texture(paper_grain, surface_position.xz * 0.7).r * weights.y
-		+ texture(paper_grain, surface_position.xy * 0.7).r * weights.z;
+	float grain = 1.0;
+	// The meadow replaces its albedo below, so skip three samples across most of the outdoor view.
+	if (!meadow) {
+		vec3 weights = abs(surface_normal);
+		weights /= max(dot(weights, vec3(1.0)), 0.001);
+		grain = texture(paper_grain, surface_position.yz * 0.7).r * weights.x
+			+ texture(paper_grain, surface_position.xz * 0.7).r * weights.y
+			+ texture(paper_grain, surface_position.xy * 0.7).r * weights.z;
+	}
 	ALBEDO = base_color.rgb * mix(0.92, 1.0, grain) * (vertex_colors ? COLOR.rgb : vec3(1.0));
 	if ((floor_pattern == 1 || floor_pattern == 2) && surface_normal.y > 0.5) {
 		vec2 tile = surface_position.xz / tile_size;

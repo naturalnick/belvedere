@@ -128,9 +128,7 @@ func basin(parent: Node3D, at: Vector3, width: float, depth: float, height: floa
 	surface.generate_normals()
 	var node := MeshInstance3D.new()
 	node.mesh = surface.commit()
-	var ceramic: ShaderMaterial = ManorGeometry.material("F4F1EA", 0.004).duplicate()
-	ceramic.set_shader_parameter("vertex_colors", true)
-	node.material_override = ceramic
+	node.material_override = ManorGeometry.vertex_color_material("F4F1EA", 0.004)
 	parent.add_child(node)
 	node.position = at
 
@@ -164,9 +162,7 @@ func bowl(parent: Node3D, at: Vector3, radius: float, height: float) -> void:
 	var node := MeshInstance3D.new()
 	node.name = "CeramicBowl"
 	node.mesh = surface.commit()
-	var ceramic: ShaderMaterial = ManorGeometry.material("F4F1EA", 0.001).duplicate()
-	ceramic.set_shader_parameter("vertex_colors", true)
-	node.material_override = ceramic
+	node.material_override = ManorGeometry.vertex_color_material("F4F1EA", 0.001)
 	parent.add_child(node)
 	node.position = at
 

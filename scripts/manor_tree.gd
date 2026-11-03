@@ -18,9 +18,7 @@ func build(height_value: float, variation: int) -> void:
 	for i in crowns.size():
 		var canopy := MeshInstance3D.new()
 		canopy.mesh = _crown_mesh(variation * 7 + i)
-		var leaves: ShaderMaterial = ManorGeometry.material(crowns[i][2], 0.003).duplicate()
-		leaves.set_shader_parameter("vertex_colors", true)
-		canopy.material_override = leaves
+		canopy.material_override = ManorGeometry.vertex_color_material(crowns[i][2], 0.003)
 		add_child(canopy)
 		canopy.position = crowns[i][0] * height_value
 		canopy.scale = crowns[i][1] * height_value

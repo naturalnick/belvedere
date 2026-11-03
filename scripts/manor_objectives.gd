@@ -6,7 +6,6 @@ var completed: Array[int] = []
 var active := -1
 var main_won := false
 var bonus_won := false
-var next_slide_distance := 0
 
 func advance(state: ManorRules) -> Array[int]:
 	var earned: Array[int] = []
@@ -34,9 +33,7 @@ func advance(state: ManorRules) -> Array[int]:
 			for room in ROOMS:
 				if not completed.has(room):
 					pending.append(room)
-			var result := nearest_goal(state, pending)
-			active = result.room
-			next_slide_distance = result.slides
+			active = nearest_goal(state, pending).room
 	main_won = completed.size() == ROOMS.size()
 	return earned
 

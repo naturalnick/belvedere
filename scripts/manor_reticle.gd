@@ -13,8 +13,8 @@ func _process(_delta: float) -> void:
 		return
 	var locked: bool = player.manor.controls_locked()
 	var camera_transform := player.camera.global_transform
-	var size := get_viewport_rect().size
-	if initialized and camera_transform == last_camera and locked == last_locked and player.held == last_held and size == last_size:
+	var viewport_size := get_viewport_rect().size
+	if initialized and camera_transform == last_camera and locked == last_locked and player.held == last_held and viewport_size == last_size:
 		return
 	var next_highlight := false
 	if not locked:
@@ -23,12 +23,12 @@ func _process(_delta: float) -> void:
 		else:
 			var hit := player.focus()
 			next_highlight = not hit.is_empty() and (hit.collider.has_meta("lever_room") or hit.collider.has_meta("door"))
-	if not initialized or locked != last_locked or next_highlight != highlighted or size != last_size:
+	if not initialized or locked != last_locked or next_highlight != highlighted or viewport_size != last_size:
 		queue_redraw()
 	last_camera = camera_transform
 	last_locked = locked
 	last_held = player.held
-	last_size = size
+	last_size = viewport_size
 	highlighted = next_highlight
 	initialized = true
 

@@ -52,7 +52,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			begin_interact()
 		else:
 			release_interact()
-	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
+	if event is InputEventMouseMotion:
 		if held:
 			drag += event.screen_relative
 			if drag.length() > 18:
@@ -109,15 +109,17 @@ func begin_interact() -> bool:
 	if not collider.has_meta("lever_room") or int(collider.get_meta("lever_room")) != manor.rules.player:
 		return false
 	held = true
-	selected_direction = -1
 	drag = Vector2.ZERO
-	select_pull(-1)
+	_show_pull(-1)
 	lever_grabbed.emit()
 	return true
 
 func select_pull(direction: int) -> void:
-	if not held:
-		return
+	# Drag and WASD re-select every event/tick; restarting the lever tween each time would stall it.
+	if held and direction != selected_direction:
+		_show_pull(direction)
+
+func _show_pull(direction: int) -> void:
 	selected_direction = direction
 	var valid := 0
 	for d in 4:
@@ -135,7 +137,6 @@ func release_interact() -> void:
 	if selected_direction >= 0:
 		manor.request_slide(selected_direction)
 	else:
-		room.show_pull(-1, -1, false)
 		lever_returned.emit()
 
 func cancel_pull() -> void:

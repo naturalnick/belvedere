@@ -55,6 +55,12 @@ func build(id: int) -> void:
 	var furniture: Node3D = ManorBedroom.new() if id == 0 else ManorFurnishings.new(id)
 	add_child(furniture)
 	ManorStaticBatch.combine(furniture)
+	var skip: Array[Node] = [lever, furniture]
+	for door in doors:
+		skip.append_array(door.leaves)
+		if door.emblem != null:
+			skip.append(door.emblem)
+	ManorStaticBatch.combine(self, skip)
 
 func first_window() -> int:
 	for d in 4:

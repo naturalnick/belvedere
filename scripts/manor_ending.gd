@@ -52,9 +52,7 @@ func _ready() -> void:
 	instances.instance_count = FLOWER_LIMIT
 	instances.visible_instance_count = 0
 	flowers.multimesh = instances
-	var flower_material: ShaderMaterial = ManorGeometry.material("FFFFFF", 0.0).duplicate()
-	flower_material.set_shader_parameter("vertex_colors", true)
-	flowers.material_override = flower_material
+	flowers.material_override = ManorGeometry.vertex_color_material("FFFFFF", 0.0)
 	flowers.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	add_child(flowers)
 	ages.resize(FLOWER_LIMIT)

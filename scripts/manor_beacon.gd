@@ -51,3 +51,5 @@ func set_state(value: int) -> void:
 	state = value
 	globe.material_override = ManorGeometry.glowing_material("FFF0DA") if value == 1 else ManorGeometry.material("77766E")
 	light.light_energy = 0.85 if value == 1 else 0.0
+	# A zero-energy light is still culled and shaded per object; hiding it skips that work.
+	light.visible = value == 1
