@@ -29,7 +29,9 @@ func _ready() -> void:
 	Input.use_accumulated_input = false
 
 func _unhandled_input(event: InputEvent) -> void:
-	if automated or manor.sliding:
+	if automated or manor.sliding or manor.in_finale or manor.at_title:
+		return
+	if manor.play_gate != null and manor.play_gate.visible:
 		return
 	if event is InputEventKey and event.pressed and event.physical_keycode == KEY_ESCAPE:
 		manor.release_pointer()
@@ -56,7 +58,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			camera.rotation.x = clampf(camera.rotation.x - event.screen_relative.y * sensitivity * (-1.0 if invert_y else 1.0), -1.35, 1.35)
 
 func _physics_process(delta: float) -> void:
-	if manor.sliding:
+	if manor.controls_locked():
 		velocity = Vector3.ZERO
 		return
 	var input := Vector2.ZERO
@@ -86,7 +88,7 @@ func focus() -> Dictionary:
 	return get_world_3d().direct_space_state.intersect_ray(query)
 
 func begin_interact() -> bool:
-	if manor.sliding or held:
+	if manor.controls_locked() or held:
 		return false
 	var hit := focus()
 	if hit.is_empty():

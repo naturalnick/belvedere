@@ -6,7 +6,7 @@ func _process(_delta: float) -> void:
 	queue_redraw()
 
 func _draw() -> void:
-	if not is_instance_valid(player) or player.manor.sliding:
+	if not is_instance_valid(player) or player.manor.controls_locked():
 		return
 	var center := get_viewport_rect().size / 2.0
 	draw_circle(center, 2.0, Color("F6EEE1"))

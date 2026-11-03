@@ -1,4 +1,10 @@
-CURRENT PROTOTYPE (2026-11-02): Eight rooms and one gap on the 3×3 grid, default seed A [6,2,5,0,1,3,7,-1,8], player in Foyer. Dark gray concrete and inset rails mark the gap. A perimeter gap leads onto the lawn and allows reentry; exterior-facing doors, windows and the front door remain blocked. No docking, collectibles, win trigger or finale in this prototype. Run tools/run.sh. --courtyard retains the six-room/three-gap experiment; --classic retains the original completion behavior and perimeter barrier. The historical specification below applies to classic mode; see docs/DECISIONS.md for current amendments.
+CURRENT GAME (2026-11-02): Eight rooms and one gap on the 3×3 grid, default seed A [6,2,5,0,1,3,7,-1,8], player in Foyer. Dark gray concrete and inset rails mark the gap. A perimeter gap leads onto the lawn and allows reentry; ordinary exterior-facing doors and windows remain blocked.
+
+MAIN WIN: Seven room objectives, excluding Foyer. An amber pendant with open shutters pulses in the active room; a matching illuminated floor ring marks its fixed home slot. Bring that room home to earn its objective permanently. Completed pendants remain steadily lit with brass check marks even when the room moves again. The next unfinished target is selected from the current arrangement using the fewest legal slides, with door restrictions respected. Already-home targets are credited automatically. A separate seven-light Foyer chandelier records completion. Completing all seven brightens the house, sounds a chime cascade, and shows wordless continue/return-to-title buttons.
+
+BONUS WIN: All eight rooms home simultaneously. This also awards the main win if it has not happened yet. The solid, opaque Foyer front door unlocks; its house emblem lights, the carpet appears and a rainbow fades in. Crossing that doorway eases the camera along the carpet, with small flowers continually sprouting on nearby grass, then fades to the wordless title. The main win alone leaves that door locked.
+
+Run tools/run.sh. --courtyard retains the six-room/three-gap experiment; --classic retains the original single-objective rules and perimeter barrier. The historical specification below describes the earlier design; docs/DECISIONS.md records amendments.
 
 SHIFTING MANOR — BUILD SPEC v1 (from Game Design Lab, Nov 2 2026). Godot 4, first-person 3D. (est.) = design picks.
 
@@ -26,7 +32,7 @@ Distinct floor material + accent wall colour per room, identifiable from a neigh
 
 4. EXIT AND FINALE
 - Trigger: all 8 rooms home (forces center empty). Check after every slide.
-- On solve: soft chime, every doorway swings open, Foyer front door unlocks and swings open (when Foyer out of place it's just a locked glazed door).
+- On solve: soft chime, every doorway swings open, Foyer front door unlocks and swings open (when Foyer is out of place it remains solid and locked).
 - Finale: walk through front door onto red carpet across a lawn, rainbow mesh fades in, camera stops at carpet end, fade to title. Cut rainbow if short on time.
 
 5. START STATE AND SCRAMBLE

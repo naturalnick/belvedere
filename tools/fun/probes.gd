@@ -93,6 +93,9 @@ func _probe_sides(index: int, room_id: int) -> void:
 		var q := ManorRules.neighbor(slot, d)
 		var expected := "edge" if q < 0 else ("empty" if main.rules.board[q] == -1 else "neighbour")
 		var kind := "window" if ManorRules.side(room_id, d) == ManorRules.WINDOW else "door"
+		if ManorRules.side(room_id, d) == ManorRules.FRONT:
+			kind = "front"
+			expected = "occluded"
 		var bucket := kind + "/" + expected
 		report.view_counts[bucket] = report.view_counts.get(bucket, 0) + 1
 		report.view_total += 1

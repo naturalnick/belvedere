@@ -65,6 +65,14 @@ static func glass() -> Material:
 		materials["glass"] = result
 	return materials["glass"]
 
+static func glowing_material(hex: String) -> Material:
+	var key := "lit_" + hex
+	if not materials.has(key):
+		var result: ShaderMaterial = material(hex, 0.006).duplicate()
+		result.set_shader_parameter("self_light", 0.7)
+		materials[key] = result
+	return materials[key]
+
 static func box(parent: Node3D, size: Vector3, at: Vector3, mat: Material, solid: bool = false) -> MeshInstance3D:
 	var node := MeshInstance3D.new()
 	var mesh := BoxMesh.new()

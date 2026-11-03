@@ -8,32 +8,49 @@ var opened := false
 var leaves: Array[Node3D] = []
 var gate: StaticBody3D
 var motion: Tween
+var emblem: MeshInstance3D
 
 func build(accent: String) -> void:
-	var frame := ManorGeometry.material(accent, 0.02)
+	var frame := ManorGeometry.material(accent, 0.006)
 	var wood := ManorGeometry.material("6E4A33")
 	for x in [-0.65, 0.65]:
-		ManorGeometry.box(self, Vector3(0.1, 2.3, 0.32), Vector3(x, 1.15, 0), frame)
-	ManorGeometry.box(self, Vector3(1.4, 0.1, 0.32), Vector3(0, 2.25, 0), frame)
+		ManorGeometry.box(self, Vector3(0.1, 2.3, 0.12), Vector3(x, 1.15, 0.125), frame)
+	ManorGeometry.box(self, Vector3(1.2, 0.1, 0.12), Vector3(0, 2.25, 0.125), frame)
 	for i in 2:
 		var hinge := Node3D.new()
 		add_child(hinge)
 		hinge.position.x = -0.6 if i == 0 else 0.6
 		var offset := 0.3 if i == 0 else -0.3
-		for edge in [-0.27, 0.27]:
-			ManorGeometry.box(hinge, Vector3(0.06, 2.16, 0.08), Vector3(offset + edge, 1.1, 0), wood)
-		for y in [0.05, 0.58, 1.1, 1.64, 2.17]:
-			ManorGeometry.box(hinge, Vector3(0.6, 0.06, 0.08), Vector3(offset, y, 0), wood)
-		ManorGeometry.box(hinge, Vector3(0.025, 2.15, 0.06), Vector3(offset, 1.1, 0), wood)
-		var pane := ManorGeometry.box(hinge, Vector3(0.52, 2.1, 0.018), Vector3(offset, 1.1, 0), ManorGeometry.glass())
-		pane.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		if not is_front:
+			for edge in [-0.27, 0.27]:
+				ManorGeometry.box(hinge, Vector3(0.06, 2.16, 0.08), Vector3(offset + edge, 1.1, 0), wood)
+			for y in [0.05, 0.58, 1.1, 1.64, 2.17]:
+				ManorGeometry.box(hinge, Vector3(0.6, 0.06, 0.08), Vector3(offset, y, 0), wood)
+			ManorGeometry.box(hinge, Vector3(0.025, 2.15, 0.06), Vector3(offset, 1.1, 0), wood)
+		if is_front:
+			ManorGeometry.box(hinge, Vector3(0.6, 2.2, 0.10), Vector3(offset, 1.1, -0.015), ManorGeometry.material("3F5E7A", 0.0))
+			for y in [0.32, 0.85, 1.38, 1.91]:
+				ManorGeometry.box(hinge, Vector3(0.44, 0.40, 0.025), Vector3(offset, y, 0.055), ManorGeometry.material("496A83", 0.006))
+		else:
+			var pane := ManorGeometry.box(hinge, Vector3(0.52, 2.1, 0.018), Vector3(offset, 1.1, 0), ManorGeometry.glass())
+			pane.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		ManorGeometry.box(hinge, Vector3(0.04, 0.17, 0.12), Vector3(offset * 1.75, 1.02, 0.05), ManorGeometry.material("C9A04A"))
 		leaves.append(hinge)
 	gate = ManorGeometry.barrier(self, Vector3(1.2, 2.2, 0.27), Vector3(0, 1.1, 0))
 	gate.set_meta("door", self)
+	if is_front:
+		var mark := Node3D.new()
+		add_child(mark)
+		mark.position = Vector3(0, 2.58, 0.13)
+		emblem = ManorGeometry.box(mark, Vector3(0.32, 0.25, 0.04), Vector3.ZERO, ManorGeometry.material("85744E"))
+		for side in [-1, 1]:
+			var roof := ManorGeometry.box(mark, Vector3(0.25, 0.045, 0.045), Vector3(side * 0.085, 0.19, 0), ManorGeometry.material("C9A04A"))
+			roof.rotation.z = side * -PI / 4.0
 
 func set_open(value: bool, instant: bool = false) -> void:
 	opened = value
+	if emblem != null:
+		emblem.material_override = ManorGeometry.glowing_material("FFE3A1") if value else ManorGeometry.material("85744E")
 	gate.collision_layer = 0 if value else 1
 	if motion:
 		motion.kill()

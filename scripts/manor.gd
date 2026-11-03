@@ -16,6 +16,15 @@ var carpet: MeshInstance3D
 var seed_name := "random"
 var perimeter: Array[StaticBody3D] = []
 var play_gate: Control
+static var gesture_start := false
+var objectives: ManorObjectives
+var objective_display: ManorObjectiveDisplay
+var chimes: ManorChimes
+var ending: ManorEnding
+var environment: Environment
+var fade: ColorRect
+var in_finale := false
+var at_title := false
 
 func _ready() -> void:
 	var demo := false
@@ -80,10 +89,28 @@ func _ready() -> void:
 	play_gate.manor = self
 	hud.add_child(play_gate)
 	play_gate.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	if OS.has_feature("web") or OS.get_cmdline_user_args().has("--web-entry"):
+	if not classic and not three_gaps:
+		objectives = ManorObjectives.new()
+		objectives.advance(rules)
+		objective_display = ManorObjectiveDisplay.new()
+		add_child(objective_display)
+		objective_display.setup(self)
+		objective_display.refresh(objectives, true)
+		chimes = ManorChimes.new()
+		add_child(chimes)
+		ending = ManorEnding.new()
+		ending.player = player
+		add_child(ending)
+	fade = ColorRect.new()
+	fade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	fade.color = Color(0.06, 0.045, 0.035, 0)
+	fade.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	hud.add_child(fade)
+	if (OS.has_feature("web") or OS.get_cmdline_user_args().has("--web-entry")) and not gesture_start:
 		release_pointer()
 	else:
 		resume_play()
+	gesture_start = false
 	if demo:
 		var driver := Node.new()
 		driver.set_script(load("res://tools/demo_driver.gd"))
@@ -101,17 +128,76 @@ func place_player_at_spawn() -> void:
 	player.camera.rotation.x = deg_to_rad(-16)
 
 func resume_play() -> void:
+	if in_finale or at_title:
+		return
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	play_gate.hide()
 
 func release_pointer() -> void:
 	player.cancel_pull()
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
-	play_gate.show()
+	play_gate.show_mode("pause")
+
+func controls_locked() -> bool:
+	return sliding or in_finale or at_title or (play_gate != null and play_gate.visible)
+
+func return_to_title() -> void:
+	at_title = true
+	if ending != null:
+		ending.set_process(false)
+	player.cancel_pull()
+	player.velocity = Vector3.ZERO
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	fade.color.a = 0
+	play_gate.show_mode("title")
+
+func refresh_progress() -> void:
+	if objectives == null:
+		won = rules.solved()
+	else:
+		var had_main := objectives.main_won
+		var earned := objectives.advance(rules)
+		objective_display.refresh(objectives)
+		won = objectives.bonus_won
+		if not earned.is_empty():
+			chimes.play_completion(7 if objectives.main_won else earned.size())
+		if objectives.main_won and not had_main:
+			var warmth := create_tween()
+			warmth.tween_property(environment, "ambient_light_energy", 0.60, 1.5)
+			player.cancel_pull()
+			player.velocity = Vector3.ZERO
+			Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+			play_gate.show_mode("victory")
+	if won:
+		carpet.visible = true
+		for barrier in perimeter:
+			barrier.collision_layer = 0
+		if ending != null:
+			ending.activate()
+	refresh_doors()
+
+func begin_finale() -> void:
+	if in_finale or ending == null or not won:
+		return
+	in_finale = true
+	player.cancel_pull()
+	player.velocity = Vector3.ZERO
+	player.bot_drive = Vector3.ZERO
+	var travel := create_tween()
+	travel.tween_property(player, "position", Vector3(0, -0.02, 22), 8.0).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	travel.tween_interval(2.0)
+	travel.tween_property(fade, "color:a", 1.0, 1.4)
+	travel.tween_callback(return_to_title)
+
+func _process(delta: float) -> void:
+	if in_finale and not at_title:
+		var direction := Vector3(0, 1.3, 36) - player.camera.global_position
+		player.rotation.y = lerp_angle(player.rotation.y, atan2(-direction.x, -direction.z), minf(delta * 2.5, 1))
+		player.camera.rotation.x = lerpf(player.camera.rotation.x, atan2(direction.y, Vector2(direction.x, direction.z).length()), minf(delta * 2.5, 1))
 
 func _build_world() -> void:
 	var world := WorldEnvironment.new()
-	var environment := Environment.new()
+	environment = Environment.new()
 	environment.background_mode = Environment.BG_SKY
 	var sky := Sky.new()
 	var atmosphere := ProceduralSkyMaterial.new()
@@ -167,6 +253,9 @@ func update_occupant() -> void:
 	if sliding:
 		return
 	var p := player.global_position
+	if won and objectives != null and rules.player == 7 and p.z > 9.45 and absf(p.x) < 0.7:
+		begin_finale()
+		return
 	var col := int(floor((p.x + ManorGeometry.PITCH * 1.5) / ManorGeometry.PITCH))
 	var row := int(floor((p.z + ManorGeometry.PITCH * 1.5) / ManorGeometry.PITCH))
 	if row < 0 or row > 2 or col < 0 or col > 2:
@@ -199,7 +288,7 @@ func update_occupant() -> void:
 					return
 
 func request_slide(direction: int) -> bool:
-	if sliding:
+	if controls_locked():
 		return false
 	if won or not rules.can_slide(direction):
 		if rules.player >= 0:
@@ -228,12 +317,8 @@ func request_slide(direction: int) -> bool:
 		slides += 1
 		sliding = false
 		room.show_pull(-1, -1, false)
-		won = rules.solved()
-		refresh_doors()
+		refresh_progress()
 		if won:
-			carpet.visible = true
-			for barrier in perimeter:
-				barrier.collision_layer = 0
 			puzzle_solved.emit()
 		slide_finished.emit())
 	return true

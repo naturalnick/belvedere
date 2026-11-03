@@ -47,7 +47,7 @@ func run() -> void:
 			check(not door.opened and door.gate.collision_layer == 1, "front door stays locked")
 	var state := main.rules.copy()
 	state.board = PackedInt32Array(ManorRules.HOME)
-	check(not state.solved(), "restoring layout does not add a win trigger")
+	check(not state.solved(), "movement rules defer objective-mode victory to the objective controller")
 	check(ManorRules.from_key(main.rules.key()).key() == main.rules.key(), "single-gap outdoor state key round trips")
 	print("Single gap: %d checks, %d failures" % [checks, failures])
 	main.queue_free()

@@ -44,7 +44,7 @@ planner_minutes = sorted(r['human_seconds'] / 60 for r in all_planner if r['solv
 randoms = [r for r in results if r['seed'] not in ('A', 'B', 'C')]
 lines = [
     '# Fun-test proxy — Stage 2', '',
-    '**Historical classic-mode results:** These measurements describe the eight-room/one-gap puzzle launched with `--classic`, not the current open-lawn prototype. The current default also has eight rooms and one gap, but its win trigger is disabled.', '',
+    '**Historical classic-mode results:** These measurements describe the eight-room/one-gap puzzle launched with `--classic`, not the current open-lawn prototype. The current default has seven persistent room objectives and an optional assembled-house bonus; these old timings do not measure the new main game.', '',
     '**A real five-person human playtest is still owed to Nick.** Pass bar: at least 4/5 solve in 5–20 minutes and make their first slide within 90 seconds. Bot results cannot establish this.', '',
     'Run `tools/fun_test.sh` from any working directory. It runs entirely headlessly and regenerates this report. Raw per-run results and probe failures are local files in `build/fun/` (git-ignored).', '',
     '## Method', '',
@@ -79,8 +79,8 @@ lines += ['', 'Capped rows above show time **spent before the cap**, not a time-
 for key, count in sorted(probes['view_counts'].items()):
     lines.append(f'| {key} | {count:,} |')
 lines += ['',
-          'Optical rays use temporary, test-only trimesh colliders derived from the live opaque render meshes. Transparent glass and invisible movement boundaries are omitted. The first hit is classified by its room, gap slab or exterior ownership. Window/door pane scans originate at eye height 1.65 m from reachable positions inside the room. These checks validate geometry and distinguish edge/neighbour/empty; they do **not** validate human colour recognition, lighting, or whether the unseen neighbour’s identity is visually unambiguous through an opaque wall.', '',
-          'No direct Stage 1 gameplay-rule changes are made by this report. The only shared scene seam extracts the existing spawn placement into a callable function so probes exercise the live spawn code.']
+          'Optical rays use temporary, test-only trimesh colliders derived from the live opaque render meshes. Transparent glass and invisible movement boundaries are omitted. The first hit is classified by its room, gap slab or exterior ownership. Window/door pane scans originate at eye height 1.65 m from reachable positions inside the room. These checks validate geometry and distinguish edge/neighbour/empty (the solid front door must instead read as occluded); they do **not** validate human colour recognition, lighting, or whether the unseen neighbour’s identity is visually unambiguous through an opaque wall.', '',
+          'The bot measurements above remain historical classic-mode results. Geometry probes exercise the current live architecture, including the intentionally opaque front door.']
 text = '\n'.join(lines) + '\n'
 (ROOT / 'docs/FUNTEST.md').write_text(text)
 print(table(results))

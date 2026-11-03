@@ -10,8 +10,8 @@ var lever_motion: Tween
 
 func build(id: int) -> void:
 	room_id = id
-	var plaster := ManorGeometry.material("EFE4D2", 0.02)
-	var accent := ManorGeometry.material(ManorGeometry.ACCENTS[id], 0.02)
+	var plaster := ManorGeometry.material("EFE4D2", 0.0)
+	var accent := ManorGeometry.material(ManorGeometry.ACCENTS[id], 0.0)
 	ManorGeometry.box(self, Vector3(6.25, 0.2, 6.25), Vector3(0, -0.1, 0), ManorGeometry.material(ManorGeometry.FLOORS[id], 0.0), true)
 	ManorGeometry.box(self, Vector3(6.25, 0.2, 6.25), Vector3(0, 3.1, 0), ManorGeometry.material("F6EEE1", 0.0), true)
 	for d in 4:
@@ -19,10 +19,13 @@ func build(id: int) -> void:
 		add_child(wall)
 		wall.position = ManorGeometry.DIRECTIONS[d] * 3.0625
 		wall.rotation.y = -d * PI / 2.0
+		var span := 6.0 if d % 2 == 0 else 6.25
+		var side_width := (span - 1.2) / 2.0
 		var mat: Material = accent if d == (first_window() + 2) % 4 else plaster
 		if ManorRules.side(id, d) != ManorRules.WINDOW:
-			for x in [-1.8625, 1.8625]:
-				ManorGeometry.box(wall, Vector3(2.525, 3, 0.125), Vector3(x, 1.5, 0), mat, true)
+			for sign_value in [-1, 1]:
+				var x: float = sign_value * (0.6 + side_width / 2.0)
+				ManorGeometry.box(wall, Vector3(side_width, 3, 0.125), Vector3(x, 1.5, 0), mat, true)
 			ManorGeometry.box(wall, Vector3(1.2, 0.8, 0.125), Vector3(0, 2.6, 0), mat, true)
 			var door := ManorDoor.new()
 			wall.add_child(door)
@@ -32,11 +35,13 @@ func build(id: int) -> void:
 			door.build("3F5E7A" if door.is_front else ManorGeometry.ACCENTS[id])
 			doors.append(door)
 		else:
-			ManorGeometry.box(wall, Vector3(6.25, 0.9, 0.125), Vector3(0, 0.45, 0), mat)
-			ManorGeometry.box(wall, Vector3(6.25, 0.6, 0.125), Vector3(0, 2.7, 0), mat)
+			ManorGeometry.box(wall, Vector3(span, 0.9, 0.125), Vector3(0, 0.45, 0), mat)
+			ManorGeometry.box(wall, Vector3(span, 0.6, 0.125), Vector3(0, 2.7, 0), mat)
 			ManorGeometry.box(wall, Vector3(1.8, 1.5, 0.125), Vector3(0, 1.65, 0), mat)
-			for x in [-2.7125, 2.7125]:
-				ManorGeometry.box(wall, Vector3(0.825, 1.5, 0.125), Vector3(x, 1.65, 0), mat)
+			for sign_value in [-1, 1]:
+				var outer_width := span / 2.0 - 2.3
+				var x: float = sign_value * (2.3 + outer_width / 2.0)
+				ManorGeometry.box(wall, Vector3(outer_width, 1.5, 0.125), Vector3(x, 1.65, 0), mat)
 			for x in [-1.6, 1.6]:
 				_window(wall, x)
 			ManorGeometry.barrier(wall, Vector3(6.25, 3, 0.125), Vector3(0, 1.5, 0))
@@ -55,11 +60,11 @@ func first_window() -> int:
 	return 0
 
 func _window(wall: Node3D, x: float) -> void:
-	var trim := ManorGeometry.material("D9C7AE", 0.02)
+	var trim := ManorGeometry.material("D9C7AE", 0.006)
 	for offset in [-0.72, 0.72]:
-		ManorGeometry.box(wall, Vector3(0.08, 1.6, 0.3), Vector3(x + offset, 1.65, 0), trim)
+		ManorGeometry.box(wall, Vector3(0.08, 1.6, 0.16), Vector3(x + offset, 1.65, 0.15), trim)
 	for y in [0.87, 2.43]:
-		ManorGeometry.box(wall, Vector3(1.5, 0.08, 0.35), Vector3(x, y, 0), trim)
+		ManorGeometry.box(wall, Vector3(1.36, 0.08, 0.16), Vector3(x, y, 0.15), trim)
 	ManorGeometry.box(wall, Vector3(0.045, 1.5, 0.12), Vector3(x, 1.65, 0), ManorGeometry.material("D9C7AE", 0.0))
 	ManorGeometry.box(wall, Vector3(1.4, 0.045, 0.12), Vector3(x, 1.65, 0), ManorGeometry.material("D9C7AE", 0.0))
 	var pane := ManorGeometry.box(wall, Vector3(1.4, 1.5, 0.018), Vector3(x, 1.65, 0), ManorGeometry.glass())

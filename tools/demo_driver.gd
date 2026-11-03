@@ -17,8 +17,8 @@ func run(game: Manor) -> void:
 			shots_dir = arg.trim_prefix("--shots=")
 		if arg.begins_with("--mode="):
 			mode = arg.trim_prefix("--mode=")
-	if mode not in ["solve", "review", "courtyard", "single-gap"]:
-		printerr("Capture mode must be solve, review, courtyard or single-gap")
+	if mode not in ["solve", "review", "courtyard", "single-gap", "objectives"]:
+		printerr("Capture mode must be solve, review, courtyard, single-gap or objectives")
 		get_tree().quit(1)
 		return
 	DirAccess.make_dir_recursive_absolute(shots_dir)
@@ -29,18 +29,30 @@ func run(game: Manor) -> void:
 		shot_names = ["01_spawn", "02_courtyards", "03_outside", "04_lever_held", "05_mid_slide", "06_multiple_directions", "07_shifted"]
 	elif mode == "single-gap":
 		shot_names = ["01_spawn", "02_outside", "03_shifted"]
+	elif mode == "objectives":
+		shot_names = ["00_front_locked", "01_spawn", "02_active_room", "03_completed_room", "04_main_win", "05_chandelier", "06_bonus_door", "07_flowers", "08_title"]
+		if OS.get_cmdline_user_args().has("--detail-only"):
+			shot_names = ["00_front_locked", "01_spawn"]
+		elif OS.get_cmdline_user_args().has("--ending-only"):
+			shot_names = ["06_bonus_door", "07_flowers", "08_title"]
 	for name_value in shot_names:
 		DirAccess.remove_absolute(shots_dir.path_join(name_value + ".png"))
 	DisplayServer.window_move_to_foreground()
 	get_window().grab_focus()
-	get_tree().create_timer(175).timeout.connect(func() -> void:
+	get_tree().create_timer(600 if mode == "objectives" else 175).timeout.connect(func() -> void:
 		printerr("FAIL: capture timed out at action %d, position %s, sliding %s" % [action_number, main.player.global_position, main.sliding])
 		get_tree().quit(1))
 	await get_tree().create_timer(0.6).timeout
 	if main.play_gate.visible:
 		await shot("00_play_gate")
 		await check_pointer_input()
-	await shot("01_spawn")
+	if not OS.get_cmdline_user_args().has("--ending-only"):
+		await shot("01_spawn")
+	if mode == "objectives":
+		await objective_views()
+		print("Objective capture: %d screenshots; %d checks, %d failures; %d slides; %.2fs" % [shot_count, checks, failures, main.slides, elapsed()])
+		get_tree().quit(1 if failures else 0)
+		return
 	if mode == "single-gap":
 		await single_gap_views()
 		print("Single-gap capture: %d screenshots; %d checks, %d failures; %.2fs" % [shot_count, checks, failures, elapsed()])
@@ -143,7 +155,7 @@ func single_gap_views() -> void:
 	while main.sliding:
 		await get_tree().process_frame
 	_check(main.rules.slot() == 7 and main.rules.board.count(-1) == 1 and main.gap_floors.has(6), "slide preserves one gap")
-	_check(not main.won and not main.carpet.visible, "no new win trigger")
+	_check(not main.won and not main.carpet.visible, "ordinary slide does not trigger a win")
 	main.player.aim_at(ManorGeometry.center(6) + Vector3.UP * 1.4)
 	await shot("03_shifted")
 
@@ -394,3 +406,96 @@ func review_views() -> void:
 	main.rules.player = 0
 	main.player.position = ManorGeometry.center(0) + Vector3(1.6, 0, 0)
 	await capture_window()
+
+func objective_views() -> void:
+	if OS.get_cmdline_user_args().has("--ending-only"):
+		# Visual fixture for ending framing; the full capture separately proves both solves.
+		main.rules.board = PackedInt32Array(ManorRules.HOME)
+		main.rules.player = 7
+		for id in main.rooms:
+			main.rooms[id].position = ManorGeometry.center(id)
+		main.gap_floor.position = ManorGeometry.center(4) + Vector3.DOWN * 0.02
+		main.player.position = ManorGeometry.center(7) + Vector3(0, 0.02, 1.5)
+		main.refresh_progress()
+		main.resume_play()
+		await get_tree().create_timer(0.6).timeout
+		await capture_exit()
+		return
+	_check(main.objectives != null, "default game has objectives")
+	await check_pointer_input()
+	main.player.aim_at(main.rooms[7].global_position + Vector3(0, 1.7, 3.0))
+	await shot("00_front_locked")
+	if OS.get_cmdline_user_args().has("--detail-only"):
+		return
+	var first_goal := true
+	while not main.objectives.main_won:
+		var active := main.objectives.active
+		var result := ManorObjectives.nearest_goal(main.rules, [active])
+		print("Objective room %d: %d slides, %d actions; t=%.2fs" % [active, result.slides, result.path.size(), elapsed()])
+		for action: Vector2i in result.path:
+			if first_goal and main.rules.player == active:
+				main.player.aim_at(main.rooms[active].global_position + Vector3.UP * 2.25)
+				await shot("02_active_room")
+				first_goal = false
+			await objective_action(action)
+		_check(main.objectives.completed.has(active), "physical target delivery earns completion")
+		if not main.objectives.main_won:
+			main.player.aim_at(main.rooms[active].global_position + Vector3.UP * 2.25)
+			await shot("03_completed_room")
+	_check(main.play_gate.visible and main.play_gate.mode == "victory", "main completion has explicit wordless finish screen")
+	await shot("04_main_win")
+	var event := InputEventMouseButton.new()
+	event.button_index = MOUSE_BUTTON_LEFT
+	event.pressed = true
+	event.position = get_viewport().get_visible_rect().size / 2 + Vector2(-62, 75)
+	Input.parse_input_event(event)
+	await get_tree().process_frame
+	_check(not main.play_gate.visible, "continue icon returns to optional bonus play")
+	var solver := ManorSolver.new()
+	solver.build()
+	var classic := ManorRules.new(main.rules.board, main.rules.player)
+	var path := solver.solution(classic, true)
+	print("Bonus: %d actions; t=%.2fs" % [path.size(), elapsed()])
+	for action in path:
+		await objective_action(action)
+	_check(main.won and main.objectives.main_won and main.objectives.bonus_won, "full house awards bonus without losing main win")
+	for direction in walk_route(7):
+		await walk_direction(direction)
+	main.player.aim_at(main.rooms[7].global_position + Vector3.UP * 2.4)
+	await shot("05_chandelier")
+	await walk_to(main.rooms[7].global_position + Vector3(0, 0, 1.5))
+	await capture_exit()
+
+func capture_exit() -> void:
+	main.player.aim_at(Vector3(0, 1.7, 18))
+	await shot("06_bonus_door")
+	main.player.bot_drive = Vector3.BACK
+	while not main.in_finale:
+		await get_tree().physics_frame
+	main.player.bot_drive = Vector3.ZERO
+	await get_tree().create_timer(4.5).timeout
+	_check(main.ending.total_spawned > 5, "flowers keep sprouting near player during exit")
+	await shot("07_flowers")
+	while not main.at_title:
+		await get_tree().process_frame
+	_check(main.play_gate.visible and main.play_gate.mode == "title", "outdoor ending returns to title")
+	await shot("08_title")
+
+func objective_action(action: Vector2i) -> void:
+	action_number += 1
+	print("Action %d %s %s | t=%.2fs room=%d" % [action_number, "walk" if action.x == ManorRules.WALK else "slide", ["N", "E", "S", "W"][action.y], elapsed(), main.rules.player])
+	var expected := main.rules.copy()
+	_check(expected.apply(action.x, action.y), "objective action is legal")
+	if action.x == ManorRules.WALK:
+		await walk_direction(action.y)
+	else:
+		await approach_lever(main.rooms[main.rules.player])
+		main.player.aim_at(main.rooms[main.rules.player].lever.global_position + Vector3.UP * 0.8)
+		await get_tree().physics_frame
+		var keyboard := main.slides % 2 == 0
+		await hold_lever_input(action.y, keyboard)
+		release_lever_input(keyboard)
+		_check(main.sliding, "input starts objective slide")
+		while main.sliding:
+			await get_tree().process_frame
+	_check(main.rules.key() == expected.key(), "physical action matches pure rules")
