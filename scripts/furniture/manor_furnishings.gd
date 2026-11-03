@@ -61,7 +61,7 @@ func study() -> void:
 	for level in 4:
 		for book in 6:
 			var height := 0.26 + (book % 3) * 0.055
-			box(shelf, Vector3(0.13, height, 0.25), Vector3(-0.64 + book * 0.23, 0.12 + level * 0.53 + height / 2, 0.045), colors[(book + level) % colors.size()], 0.003)
+			box(shelf, Vector3(0.085, height, 0.25), Vector3(-0.64 + book * 0.23, 0.12 + level * 0.53 + height / 2, 0.045), colors[(book + level) % colors.size()], 0.003)
 	solid(shelf, Vector3(1.76, 2.20, 0.4), Vector3(0, 1.1, 0))
 	var stand := table("GlobeStand", Vector3(2.05, 0, -2.05), 0.64, 0.64, 0.65, "5A3B28")
 	cylinder(stand, 0.16, 0.05, Vector3(0, 0.68, 0), BRASS)
@@ -132,11 +132,12 @@ func living() -> void:
 		box(console, Vector3(0.38, 0.045, 0.26), Vector3(-0.34, 0.768 + i * 0.047, 0), "768D80" if i == 0 else "AA8865", 0.003)
 
 func dining() -> void:
-	var dining_table := table("DiningTable", Vector3(-1.95, 0, -1.75), 0.80, 1.98, 0.75, "6A3A2A")
-	box(dining_table, Vector3(0.26, 0.006, 1.80), Vector3(0, 0.754, 0), "B79BA6", 0.0)
+	var dining_table := table("DiningTable", Vector3(-1.55, 0, 0), 0.80, 2.30, 0.75, "6A3A2A")
+	box(dining_table, Vector3(0.26, 0.006, 2.12), Vector3(0, 0.754, 0), "B79BA6", 0.0)
 	for side in [-1, 1]:
-		for index in 3:
-			chair("DiningChair%d_%d" % [side, index], Vector3(-1.95 + side * 0.61, 0, -2.38 + index * 0.63), -side * PI / 2, "7A4A6E")
+		for end in [-1, 1]:
+			chair("DiningChair%d_%d" % [side, end], Vector3(-1.55 + side * 0.61, 0, end * 0.62), -side * PI / 2, "7A4A6E")
+		chair("DiningEndChair%d" % side, Vector3(-1.55, 0, side * 1.43), PI if side == 1 else 0.0, "7A4A6E")
 	var sideboard := cabinet("Sideboard", Vector3(1.80, 0, -2.60), 1.85, 0.86, 0.60, "6A3A2A")
 	for i in 3:
 		cylinder(sideboard, 0.16, 0.018, Vector3(-0.54, 0.874 + i * 0.021, 0), CREAM)
@@ -151,7 +152,7 @@ func dining() -> void:
 		for x in [-0.37, 0, 0.37]:
 			basin(china, Vector3(x, y, 0), 0.23, 0.23, 0.13)
 	solid(china, Vector3(1.44, 1.95, 0.48), Vector3(0, 0.975, 0))
-	var serving := table("ServingTable", Vector3(-1.85, 0, 2.55), 1.30, 0.56, 0.75, "6A3A2A")
+	var serving := table("ServingTable", Vector3(-1.85, 0, 2.65), 1.30, 0.56, 0.75, "6A3A2A")
 	basin(serving, Vector3(0, 0.75, 0), 0.42, 0.32, 0.12)
 
 func foyer() -> void:
@@ -209,11 +210,11 @@ func laundry() -> void:
 		var x := -0.38 + i * 0.76
 		rod(coats, Vector3(x, 1.84, 0.03), Vector3(x, 1.86, 0.17), 0.02, BRASS)
 		var color := "A99679" if i == 0 else "7B8F83"
-		box(coats, Vector3(0.38, 0.65, 0.11), Vector3(x, 1.36, 0.13), color)
+		box(coats, Vector3(0.32, 0.65, 0.055), Vector3(x, 1.535, 0.16), color)
 		for side in [-1, 1]:
-			var sleeve := box(coats, Vector3(0.13, 0.45, 0.10), Vector3(x + side * 0.24, 1.40, 0.13), color)
+			var sleeve := box(coats, Vector3(0.10, 0.45, 0.05), Vector3(x + side * 0.20, 1.58, 0.16), color)
 			sleeve.rotation.z = side * 0.25
-		box(coats, Vector3(0.018, 0.57, 0.008), Vector3(x, 1.36, 0.192), "656B62", 0.0)
+		box(coats, Vector3(0.018, 0.57, 0.008), Vector3(x, 1.535, 0.193), "656B62", 0.0)
 	var folding := table("FoldingTable", Vector3(1.95, 0, 2.55), 1.35, 0.65, 0.75)
 	for towel in 3:
 		box(folding, Vector3(0.52, 0.065, 0.38), Vector3(-0.25, 0.784 + towel * 0.067, 0), CREAM if towel % 2 == 0 else "A6B9B5")

@@ -32,12 +32,20 @@ func run() -> void:
 		check(meshes.size() <= 90, "room %d furniture mesh budget" % id)
 		check(not furniture.is_processing(), "furniture is static")
 		check(furniture.find_children("*", "Light3D", true, false).is_empty(), "decorative lamps cannot compete with objective light")
-		for i in range(1, 25):
+		for i in range(1, 13 if id == 6 else 25):
 			var angle := i * TAU / 24.0
 			var target := room.position + Vector3(sin(angle), 0, cos(angle)) * 1.2
 			await driver.walk_to(target)
-			check(Vector2(main.player.position.x - target.x, main.player.position.z - target.z).length() < 0.15, "room %d clear lever ring" % id)
+			check(Vector2(main.player.position.x - target.x, main.player.position.z - target.z).length() < 0.15, "room %d clear lever approach" % id)
+		if id == 6:
+			# The centred dining set replaces the west half of the ring with an aisle.
+			for local_point in [Vector3(0, 0, 1.98), Vector3(-2.70, 0, 1.98), Vector3(-2.70, 0, 0), Vector3(-2.70, 0, -1.98), Vector3(0, 0, -1.98)]:
+				await driver.walk_to(room.position + local_point)
+				check(main.rules.player == id, "dining table and both ends have a walkable aisle")
+			await driver.walk_to(room.position + Vector3(0, 0, 1.2))
 		for direction in ManorGeometry.DIRECTIONS:
+			if id == 6 and direction == Vector3.LEFT:
+				continue
 			await driver.walk_to(room.position + direction * 1.2)
 			await driver.walk_to(room.position + direction * 2.5)
 			check(main.rules.player == id, "room %d clear side approach" % id)

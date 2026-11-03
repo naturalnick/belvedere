@@ -278,6 +278,9 @@ func walk_to(target: Vector3) -> void:
 				var tangent := Vector3(-offset.z, 0, offset.x).normalized()
 				if relative.dot(tangent) < 0:
 					tangent = -tangent
+				# Dining's central table leaves the east side as the lever bypass.
+				if main.rules.player == 6:
+					tangent = Vector3.RIGHT
 				steering = center + tangent * 0.95
 		var drive := steering - main.player.global_position
 		drive.y = 0
