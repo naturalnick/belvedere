@@ -45,6 +45,14 @@ func run() -> void:
 	check(audio.surface() == "step_wood", "Bedroom boards use wood steps")
 	main.player.global_position = main.rooms[0].to_global(Vector3(-1.75, 0.02, -1.45))
 	check(audio.surface() == "step_carpet", "Bedroom rug muffles steps")
+	main.player.global_position = main.rooms[0].to_global(Vector3(-1.75, 0.02, 2.2))
+	check(audio.surface() == "step_wood", "boards beyond the Bedroom rug stay wood")
+	main.rules.player = 5
+	main.player.global_position = main.rooms[5].to_global(Vector3(-1.86, 0.02, -1.4))
+	check(audio.surface() == "step_carpet", "Living rug muffles steps")
+	for z in [-0.5, 1.0, 2.5]:
+		main.player.global_position = main.rooms[5].to_global(Vector3(-1.86, 0.02, z))
+		check(audio.surface() == "step_wood", "Living boards in line with the rug stay wood (z %.1f)" % z)
 	main.rules.player = -1
 	main.player.global_position = ManorGeometry.center(7)
 	check(audio.surface() == "step_tile", "gap slab uses hard steps")

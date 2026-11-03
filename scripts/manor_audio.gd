@@ -128,7 +128,10 @@ func surface() -> String:
 		var local := manor.rooms[id].to_local(position)
 		if RUGS.has(id):
 			var rug: Array = RUGS[id]
-			if (Vector2(local.x, local.z) - rug[0]).abs() <= rug[1] / 2.0:
+			# Per-axis test: Vector2 comparison operators are lexicographic, not component-wise.
+			var offset: Vector2 = (Vector2(local.x, local.z) - rug[0]).abs()
+			var half: Vector2 = rug[1] / 2.0
+			if offset.x <= half.x and offset.y <= half.y:
 				return "step_carpet"
 		return "step_tile" if id in TILE_ROOMS else "step_wood"
 	if manor.carpet.visible and absf(position.x) < 0.9 and position.z > 9.3 and position.z < 22.3:
