@@ -23,8 +23,7 @@ func run() -> void:
 	check(main.objective_display.lamps[main.objectives.active].state == 1, "active room has active pendant")
 	for lamp: ManorBeacon in main.objective_display.lamps.values():
 		check(not lamp.is_processing() and lamp.globe.scale == Vector3.ONE, "objective lamps have no continuous animation or scaling")
-		for shutter in lamp.shutters:
-			check(is_equal_approx(shutter.rotation.x, -1.15), "every lamp stays open, including inactive lamps")
+		check((lamp.light.light_energy > 0) == (lamp.state == 1), "only the current objective room emits light")
 	var front: ManorDoor
 	for door in main.rooms[7].doors:
 		if door.is_front:
@@ -35,6 +34,8 @@ func run() -> void:
 	main.objectives.completed.assign([0, 1, 2, 3, 5, 6])
 	main.objectives.active = 8
 	main.refresh_progress()
+	for lamp: ManorBeacon in main.objective_display.lamps.values():
+		check(lamp.light.light_energy == 0, "completed room lamps turn off; progress remains in Foyer")
 	check(main.objectives.main_won and not main.won, "main win can happen independently of bonus")
 	check(main.controls_locked() and main.play_gate.mode == "victory", "main victory stops input and offers explicit finish")
 	check(not front.opened and not main.carpet.visible and not main.ending.active, "main win does not unlock bonus exit")

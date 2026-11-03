@@ -50,4 +50,4 @@ func refresh(objectives: ManorObjectives) -> void:
 	for id in lamps:
 		lamps[id].set_state(2 if objectives.completed.has(id) else (1 if objectives.active == id else 0))
 	for i in progress_lights.size():
-		progress_lights[i].material_override = ManorGeometry.glowing_material("FFF0C2") if objectives.completed.has(ManorObjectives.ROOMS[i]) else ManorGeometry.material("595C59")
+		progress_lights[i].material_override = ManorGeometry.glowing_material("FFF0DA") if objectives.completed.has(ManorObjectives.ROOMS[i]) else ManorGeometry.material("595C59")
