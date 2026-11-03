@@ -13,22 +13,37 @@ func setup(game: Manor) -> void:
 	var chandelier := Node3D.new()
 	chandelier.position.y = 2.4
 	game.rooms[7].add_child(chandelier)
-	var brass := ManorGeometry.material("C9A04A")
-	ManorGeometry.cylinder(chandelier, 0.025, 0.6, Vector3(0, 0.3, 0), brass)
+	var brass := ManorGeometry.material("B39459", 0.004)
+	ManorGeometry.cylinder(chandelier, 0.10, 0.05, Vector3(0, 0.57, 0), brass)
+	ManorGeometry.cylinder(chandelier, 0.018, 0.19, Vector3(0, 0.45, 0), brass)
+	var hoop := MeshInstance3D.new()
+	var ring := TorusMesh.new()
+	ring.inner_radius = 0.59
+	ring.outer_radius = 0.63
+	ring.rings = 40
+	ring.ring_segments = 8
+	hoop.mesh = ring
+	hoop.material_override = brass
+	chandelier.add_child(hoop)
+	for i in 3:
+		var angle := i * TAU / 3.0
+		var top := Vector3(0, 0.36, 0)
+		var bottom := Vector3(cos(angle), 0, sin(angle)) * 0.61
+		var rod := ManorGeometry.cylinder(chandelier, 0.009, top.distance_to(bottom), (top + bottom) / 2.0, brass)
+		rod.quaternion = Quaternion(Vector3.UP, (top - bottom).normalized())
 	for i in 7:
 		var angle := float(i) / 7 * TAU
-		var radial := Vector3(cos(angle), 0, sin(angle))
-		var arm := ManorGeometry.box(chandelier, Vector3(0.8, 0.035, 0.035), radial * 0.4, brass)
-		arm.rotation.y = -angle
+		var radial := Vector3(cos(angle), 0, sin(angle)) * 0.61
+		ManorGeometry.cylinder(chandelier, 0.045, 0.06, radial + Vector3.DOWN * 0.035, brass)
 		var globe := MeshInstance3D.new()
 		var sphere := SphereMesh.new()
-		sphere.radius = 0.14
-		sphere.height = 0.28
-		sphere.radial_segments = 12
-		sphere.rings = 6
+		sphere.radius = 0.085
+		sphere.height = 0.17
+		sphere.radial_segments = 16
+		sphere.rings = 8
 		globe.mesh = sphere
 		chandelier.add_child(globe)
-		globe.position = radial * 0.8 + Vector3.DOWN * 0.12
+		globe.position = radial + Vector3.DOWN * 0.13
 		progress_lights.append(globe)
 
 func refresh(objectives: ManorObjectives) -> void:
