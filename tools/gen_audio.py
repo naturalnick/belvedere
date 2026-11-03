@@ -160,8 +160,10 @@ def piano_note(midi, velocity, duration=8.):
 def music():
     duration=96.; stereo=np.zeros((int(duration*RATE), 2))
     # Original, unhurried voicings with rests; no looping arpeggiator or retro waveform.
-    phrases=[(0,[48,55,62,64]), (12,[45,52,59,60]), (24,[41,48,55,57]), (36,[43,50,57,59]),
-             (48,[48,55,59,64]), (60,[45,52,60,62]), (72,[41,48,57,60]), (84,[43,50,55,62])]
+    # Each phrase rises root-fifth, then answers with a falling pair: third to ninth in the
+    # first half, third to root in the second. The last phrase stays open to lead into the loop.
+    phrases=[(0,[48,55,64,62]), (12,[45,52,60,59]), (24,[41,48,57,55]), (36,[43,50,59,57]),
+             (48,[48,55,64,60]), (60,[45,52,60,57]), (72,[41,48,57,53]), (84,[43,50,59,57])]
     for start, notes in phrases:
         for k, note in enumerate(notes):
             when=start+[.7, 2.15, 4.9, 7.3][k]+RNG.uniform(-.10,.10)
