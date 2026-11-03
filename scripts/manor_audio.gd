@@ -143,13 +143,13 @@ func _set_birds(on: bool) -> void:
 	if on:
 		cued.emit("birds")
 		if audible and not birds.playing:
-			birds.volume_db = -40.0
+			birds.volume_db = -60.0
 			# Start anywhere in the loop so each trip outside doesn't open on the same call.
 			birds.play(randf() * birds.stream.get_length())
 		birds_fade.tween_property(birds, "volume_db", BIRDS_DB, 1.2)
 	else:
 		# Entering a room silences the birds at once; the short fade only avoids a click.
-		birds_fade.tween_property(birds, "volume_db", -40.0, 0.25)
+		birds_fade.tween_property(birds, "volume_db", -60.0, 0.25)
 		birds_fade.tween_callback(birds.stop)
 
 func _flush_doors() -> void:
