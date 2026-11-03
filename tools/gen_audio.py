@@ -18,13 +18,14 @@ RNG = np.random.default_rng(73104)
 REPORT = {}
 
 
-def read(path):
-    raw = subprocess.check_output(['ffmpeg', '-v', 'error', '-i', str(path), '-f', 'f32le', '-ac', '1', '-ar', str(RATE), '-'])
-    return np.frombuffer(raw, dtype='<f4').astype(np.float64)
+def read(path, channels=1, rate=RATE):
+    raw = subprocess.check_output(['ffmpeg', '-v', 'error', '-i', str(path), '-f', 'f32le', '-ac', str(channels), '-ar', str(rate), '-'])
+    x = np.frombuffer(raw, dtype='<f4').astype(np.float64)
+    return x if channels == 1 else x.reshape(-1, channels)
 
 
-def filt(x, cutoff, kind='lowpass', order=2):
-    return signal.sosfilt(signal.butter(order, cutoff, kind, fs=RATE, output='sos'), x, axis=0)
+def filt(x, cutoff, kind='lowpass', order=2, rate=RATE):
+    return signal.sosfilt(signal.butter(order, cutoff, kind, fs=rate, output='sos'), x, axis=0)
 
 
 def fade(x, attack=.004, release=.04):
@@ -62,19 +63,20 @@ def mix(length, layers):
     return result
 
 
-def write(name, x, peak, attack=.004, release=.04, ogg=False):
-    x = fade(filt(x, 25, 'highpass'), attack, release)
+def write(name, x, peak, attack=.004, release=.04, ogg=False, rate=RATE):
+    if rate == RATE:
+        x = fade(filt(x, 25, 'highpass'), attack, release)
     x = norm(x, peak)
     path = OUT / (name + '.wav')
     with wave.open(str(path), 'wb') as f:
-        f.setnchannels(1 if x.ndim == 1 else x.shape[1]);f.setsampwidth(2);f.setframerate(RATE)
+        f.setnchannels(1 if x.ndim == 1 else x.shape[1]);f.setsampwidth(2);f.setframerate(rate)
         f.writeframes(np.round(np.clip(x, -1, 1) * 32767).astype('<i2').tobytes())
     if ogg:
         target = path.with_suffix('.ogg')
         # Homebrew ffmpeg lacks libvorbis; oggenc is the reference encoder.
         subprocess.run(['oggenc', '--quiet', '--serial', '1', '-q', '5', '-o', str(target), str(path)], check=True)
         path.unlink();path = target
-    REPORT[name] = {'seconds': round(len(x)/RATE, 3), 'peak_dbfs': round(20*np.log10(np.max(abs(x))), 2), 'rms_dbfs': round(20*np.log10(np.sqrt(np.mean(x*x))), 2), 'bytes': path.stat().st_size}
+    REPORT[name] = {'seconds': round(len(x)/rate, 3), 'peak_dbfs': round(20*np.log10(np.max(abs(x))), 2), 'rms_dbfs': round(20*np.log10(np.sqrt(np.mean(x*x))), 2), 'bytes': path.stat().st_size}
 
 
 def effects():
@@ -130,17 +132,15 @@ def effects():
 
 
 def birds():
-    # Only isolated upper-frequency bird phrases, not the recording's background bed.
-    recording = filt(read(SOURCE / 'birds-original.ogg'), [1600, 7200], 'bandpass', 4)
-    for i, (start, end) in enumerate([(1.3, 4.3), (7.6, 11.1), (16.0, 19.0), (23.5, 27.0)]):
-        x = recording[int(start*RATE):int(end*RATE)]
-        # Smooth spectral gating removes residual room/air hiss between actual calls.
-        f, t, z = signal.stft(x, RATE, nperseg=1024, noverlap=768)
-        magnitude = abs(z)
-        floor = np.quantile(magnitude, .25, axis=1, keepdims=True)
-        gain = np.clip((magnitude - floor*1.7) / np.maximum(magnitude, 1e-9), 0, 1)
-        _, clean = signal.istft(z * gain**1.5, RATE, nperseg=1024, noverlap=768)
-        write(f'birds_{i}', clean[:len(x)], .25, .18, .25)
+    # Magnesus's seamless forest loop, kept at its native 48 kHz so resampling cannot mark the seam.
+    rate = 48000
+    x = read(SOURCE / 'forest-birds-723913.ogg', 2, rate)
+    # Remove the steady sub-300 Hz rumble (no wind outside) and soften the top slightly for distance.
+    # Filtering a wrapped copy carries the filter state across the loop point, keeping it seamless.
+    warm = rate
+    wrapped = np.concatenate([x[-warm:], x])
+    wrapped = filt(filt(wrapped, 380, 'highpass', 4, rate), 9000, 'lowpass', 2, rate)
+    write('birds_loop', wrapped[warm:], .25, ogg=True, rate=rate)
 
 
 def piano_note(midi, velocity, duration=8.):

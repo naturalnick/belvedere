@@ -29,10 +29,11 @@ func run() -> void:
 	audio.cued.connect(func(group: String) -> void: cues.append(group))
 
 	var expected := {"step_wood": 5, "step_tile": 6, "step_grass": 5, "step_carpet": 3, "lever_grab": 3, "lever_blocked": 3,
-		"door_rattle": 3, "door_open": 2, "door_close": 2, "slide": 3, "birds": 4, "wake": 1}
+		"door_rattle": 3, "door_open": 2, "door_close": 2, "slide": 3, "wake": 1}
 	for group in expected:
 		check(audio.streams[group].size() == expected[group], "%s has %d variants" % [group, expected[group]])
 	check(audio.music.stream.loop and audio.music.bus == "Music", "music loops on the Music bus")
+	check(audio.birds.stream.loop, "forest birds loop")
 	check(audio.voices.all(func(voice: AudioStreamPlayer) -> bool: return voice.bus == "Effects") and audio.birds.bus == "Effects", "effects use the Effects bus")
 	check(AudioServer.get_bus_index("Effects") > 0 and AudioServer.get_bus_index("Music") > 0, "volume buses exist")
 
@@ -111,18 +112,18 @@ func run() -> void:
 			door.rattle()
 	check(count("door_rattle") == 1, "locked front door rattles")
 
+	check(not audio.birds_on and count("birds") == 0, "no birds indoors")
 	main.rules.player = ManorRules.OUTSIDE
 	main.player.global_position = Vector3(0, 0, 30)
-	audio.bird_wait = 0.05
 	await create_timer(0.3).timeout
-	check(count("birds") == 1, "birds call outside")
+	check(audio.birds_on and count("birds") == 1, "birds start outside")
+	await create_timer(0.3).timeout
+	check(count("birds") == 1, "the birdsong is one continuous bed, not repeated starts")
 	main.rules.player = 7
 	main.player.global_position = foyer.global_position + Vector3(1.5, 0.02, 1.5)
 	await process_frame
-	var calls := count("birds")
-	audio.bird_wait = 0.0
-	await create_timer(0.5).timeout
-	check(count("birds") == calls and audio.bird_wait >= 1.0, "no birds indoors")
+	await process_frame
+	check(not audio.birds_on, "entering a room silences the birds")
 
 	main.fall_recovery._wake()
 	check(count("wake") == 1, "waking beside the bed rustles the bedding")

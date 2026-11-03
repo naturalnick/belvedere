@@ -11,6 +11,7 @@ const RUGS := {
 	5: [Vector2(-1.86, -1.83), Vector2(2.1, 2.1)],
 }
 const MUSIC_DUCK_DB := -6.0
+const BIRDS_DB := -9.0
 
 signal cued(group: String)
 
@@ -22,15 +23,15 @@ var streams: Dictionary[String, Array] = {}
 var last_variant: Dictionary[String, int] = {}
 var voices: Array[AudioStreamPlayer] = []
 var music: AudioStreamPlayer
-var birds: AudioStreamPlayer3D
-var bird_wait := 2.0
+var birds: AudioStreamPlayer
+var birds_on := false
 var birds_fade: Tween
 var music_fade: Tween
 var stride := STRIDE * 0.6
 var door_events: Array[Array] = []
 
 func _ready() -> void:
-	for group in ["step_wood", "step_tile", "step_grass", "step_carpet", "lever_grab", "lever_blocked", "door_rattle", "door_open", "door_close", "slide", "birds"]:
+	for group in ["step_wood", "step_tile", "step_grass", "step_carpet", "lever_grab", "lever_blocked", "door_rattle", "door_open", "door_close", "slide"]:
 		var variants: Array = []
 		while ResourceLoader.exists(DIR + "%s_%d.wav" % [group, variants.size()]):
 			variants.append(load(DIR + "%s_%d.wav" % [group, variants.size()]))
@@ -41,11 +42,10 @@ func _ready() -> void:
 		voice.bus = "Effects"
 		add_child(voice)
 		voices.append(voice)
-	birds = AudioStreamPlayer3D.new()
+	# The forest recording's own stereo image supplies direction, so the bed is not positional.
+	birds = AudioStreamPlayer.new()
+	birds.stream = load(DIR + "birds_loop.ogg")
 	birds.bus = "Effects"
-	# Distant calls keep their direction but not distance falloff, so they never swell when walking.
-	birds.attenuation_model = AudioStreamPlayer3D.ATTENUATION_DISABLED
-	birds.volume_db = -9.0
 	add_child(birds)
 	music = AudioStreamPlayer.new()
 	# Looping is set in the .import so a replacement track only needs the same setting.
@@ -141,31 +141,28 @@ func surface() -> String:
 		return "step_tile"
 	return "step_grass"
 
-func _process(delta: float) -> void:
+func _process(_delta: float) -> void:
 	_flush_doors()
-	var outdoors := manor.rules.player < 0 and not manor.at_title and not manor.play_gate.visible
-	if not outdoors:
-		if birds.playing and (birds_fade == null or not birds_fade.is_running()):
-			# Entering a room silences the birds at once; the short fade only avoids a click.
-			birds_fade = create_tween()
-			birds_fade.tween_property(birds, "volume_db", -40.0, 0.25)
-			birds_fade.tween_callback(birds.stop)
-		bird_wait = maxf(bird_wait, randf_range(1.5, 4.0))
+	_set_birds(manor.rules.player < 0 and not manor.at_title and not manor.play_gate.visible)
+
+func _set_birds(on: bool) -> void:
+	if on == birds_on:
 		return
-	bird_wait -= delta
-	if bird_wait > 0 or birds.playing:
-		return
-	bird_wait = randf_range(4.0, 11.0)
+	birds_on = on
 	if birds_fade != null:
 		birds_fade.kill()
-	var angle := randf() * TAU
-	birds.global_position = manor.player.global_position + Vector3(cos(angle) * 35.0, 9.0, sin(angle) * 35.0)
-	birds.stream = _pick("birds")
-	birds.volume_db = -9.0 + randf_range(-3.0, 1.0)
-	birds.pitch_scale = randf_range(0.96, 1.04)
-	cued.emit("birds")
-	if audible:
-		birds.play()
+	birds_fade = create_tween()
+	if on:
+		cued.emit("birds")
+		if audible and not birds.playing:
+			birds.volume_db = -40.0
+			# Start anywhere in the loop so each trip outside doesn't open on the same call.
+			birds.play(randf() * birds.stream.get_length())
+		birds_fade.tween_property(birds, "volume_db", BIRDS_DB, 1.2)
+	else:
+		# Entering a room silences the birds at once; the short fade only avoids a click.
+		birds_fade.tween_property(birds, "volume_db", -40.0, 0.25)
+		birds_fade.tween_callback(birds.stop)
 
 func _flush_doors() -> void:
 	if door_events.is_empty():

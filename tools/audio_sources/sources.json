@@ -10,15 +10,17 @@
       "license": "CC0-1.0",
       "url": "https://kenney.nl/assets/rpg-audio"
     },
-    "birds-original.ogg": {
-      "author": "isaiah658",
+    "forest-birds-723913.ogg": {
+      "title": "Forest birds - ambient seamless loop",
+      "author": "Magnesus",
       "license": "CC0-1.0",
-      "url": "https://opengameart.org/content/ambient-bird-sounds",
-      "download": "https://opengameart.org/sites/default/files/birds-isaiah658_0.ogg"
+      "url": "https://freesound.org/people/Magnesus/sounds/723913/",
+      "download": "https://cdn.freesound.org/previews/723/723913_2008500-hq.ogg",
+      "note": "Freesound high-quality Ogg preview (192 kbps, 48 kHz stereo); the original WAV requires a login."
     }
   },
   "sha256": {
-    "birds-original.ogg": "359e4e3f9da9d75aac64cede511c7e3ef8b461f9d9f8c230f8f80e44c4b3e35f",
+    "forest-birds-723913.ogg": "4c7c4076dd8475011e990fc6b8345d0292851e5cfc1588888caa999ee86ae2c2",
     "impact/footstep_carpet_000.ogg": "b9524658b52a99a20590f8feefc103088637fd13ea8ec35811aee785e1f2f330",
     "impact/footstep_carpet_001.ogg": "9af3c3f76705107339e72036e4053bdca3eaa50ad31c8c929f42ce8d40e5d781",
     "impact/footstep_carpet_003.ogg": "4ae7454338d57c7d102145919ae653c7d010eb542797c4f25a1c7470be3a7e4c",
