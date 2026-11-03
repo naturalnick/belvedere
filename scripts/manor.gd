@@ -16,6 +16,7 @@ var carpet: MeshInstance3D
 var seed_name := "random"
 var perimeter: Array[StaticBody3D] = []
 var play_gate: Control
+var preferences: ManorPreferences
 static var gesture_start := false
 var objectives: ManorObjectives
 var objective_display: ManorObjectiveDisplay
@@ -71,10 +72,15 @@ func _ready() -> void:
 	player.manor = self
 	player.automated = demo
 	add_child(player)
+	preferences = ManorPreferences.new()
+	preferences.load_file()
+	preferences.changed.connect(func() -> void: preferences.apply(player))
+	preferences.apply(player)
 	place_player_at_spawn()
 	for arg in OS.get_cmdline_user_args():
 		if arg == "--invert-y":
-			player.invert_y = true
+			preferences.invert_y = true
+			preferences.apply(player)
 	refresh_doors(true)
 	var hud := CanvasLayer.new()
 	add_child(hud)
@@ -220,14 +226,9 @@ func _build_world() -> void:
 	# Level courtyard/lawn collision avoids an unjumpable step on the return trip.
 	if rules.courtyards:
 		ManorGeometry.barrier(self, Vector3(220, 0.2, 220), Vector3(0, -0.12, 0))
-		ManorGeometry.box(self, Vector3(220, 0.2, 220), Vector3(0, -0.14, 0), ManorGeometry.material("B9C98E", 0.0))
-		# A meadow ring leaves the stone courtyards uncovered, without coplanar grass.
-		for d in 4:
-			var grass_size := Vector3(65, 0.02, 23.125) if d % 2 == 0 else Vector3(23.125, 0.02, 18.75)
-			ManorGeometry.box(self, grass_size, ManorGeometry.DIRECTIONS[d] * 20.9375 + Vector3.DOWN * 0.03, ManorGeometry.material("9DB86E", 0.0))
-	else:
-		ManorGeometry.box(self, Vector3(220, 0.2, 220), Vector3(0, -0.25, 0), ManorGeometry.material("B9C98E", 0.0), true)
-		ManorGeometry.box(self, Vector3(65, 0.02, 65), Vector3(0, -0.14, 0), ManorGeometry.material("9DB86E", 0.0))
+	var meadow := ManorMeadow.new()
+	add_child(meadow)
+	meadow.build(-0.04 if rules.courtyards else -0.15, not rules.courtyards)
 	carpet = ManorGeometry.box(self, Vector3(1.8, 0.025, 13), Vector3(0, 0, 15.8), ManorGeometry.material("B3363A", 0.0))
 	for x in [-0.84, 0.84]:
 		ManorGeometry.box(carpet, Vector3(0.06, 0.006, 13), Vector3(x, 0.016, 0), ManorGeometry.material("C9A04A", 0.0))

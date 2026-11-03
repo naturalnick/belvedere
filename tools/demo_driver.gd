@@ -17,15 +17,17 @@ func run(game: Manor) -> void:
 			shots_dir = arg.trim_prefix("--shots=")
 		if arg.begins_with("--mode="):
 			mode = arg.trim_prefix("--mode=")
-	if mode not in ["solve", "review", "courtyard", "single-gap", "objectives"]:
-		printerr("Capture mode must be solve, review, courtyard, single-gap or objectives")
+	if mode not in ["solve", "review", "courtyard", "single-gap", "objectives", "stage3"]:
+		printerr("Capture mode must be solve, review, courtyard, single-gap, objectives or stage3")
 		get_tree().quit(1)
 		return
 	DirAccess.make_dir_recursive_absolute(shots_dir)
 	started = Time.get_ticks_msec()
 	# Remove this mode's outputs so stale success frames cannot survive a failed run.
 	var shot_names := ["01_spawn", "02_window", "03_lever_held", "04_mid_slide", "05_solved", "06_front_door_open"]
-	if mode == "courtyard":
+	if mode == "stage3":
+		shot_names = ["01_spawn", "02_settings", "03_cross_tracks", "04_meadow", "05_landscape"]
+	elif mode == "courtyard":
 		shot_names = ["01_spawn", "02_courtyards", "03_outside", "04_lever_held", "05_mid_slide", "06_multiple_directions", "07_shifted"]
 	elif mode == "single-gap":
 		shot_names = ["01_spawn", "02_outside", "03_shifted"]
@@ -48,6 +50,13 @@ func run(game: Manor) -> void:
 		await check_pointer_input()
 	if not OS.get_cmdline_user_args().has("--ending-only"):
 		await shot("01_spawn")
+	if mode == "stage3":
+		var trial: Node = load("res://tools/stage3_driver.gd").new()
+		add_child(trial)
+		await trial.run(self)
+		print("Stage 3 capture: %d screenshots; %d checks, %d failures; %.2fs" % [shot_count, checks, failures, elapsed()])
+		get_tree().quit(1 if failures else 0)
+		return
 	if mode == "objectives":
 		await objective_views()
 		print("Objective capture: %d screenshots; %d checks, %d failures; %d slides; %.2fs" % [shot_count, checks, failures, main.slides, elapsed()])

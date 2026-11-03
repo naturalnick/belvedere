@@ -6,14 +6,13 @@ var primary: Button
 var secondary: Button
 var sound_button: Button
 var title_label: Label
-const SETTINGS_PATH := "user://settings.cfg"
+var settings_button: Button
+var settings_panel: ManorSettingsPanel
+var previous_mode := "pause"
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	var settings := ConfigFile.new()
-	if settings.load(SETTINGS_PATH) == OK:
-		AudioServer.set_bus_mute(0, bool(settings.get_value("audio", "muted", false)))
 	title_label = Label.new()
 	title_label.text = "Shifting Manor"
 	title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -24,6 +23,17 @@ func _ready() -> void:
 	sound_button = _icon_button()
 	sound_button.size = Vector2(52, 52)
 	sound_button.pressed.connect(_toggle_audio)
+	settings_button = _icon_button()
+	settings_button.size = Vector2(52, 52)
+	settings_button.accessibility_name = "Settings"
+	settings_button.pressed.connect(_open_settings)
+	settings_panel = ManorSettingsPanel.new()
+	settings_panel.preferences = manor.preferences
+	add_child(settings_panel)
+	settings_panel.closed.connect(_close_settings)
+	manor.preferences.changed.connect(func() -> void:
+		_update_sound_accessibility()
+		queue_redraw())
 	primary.pressed.connect(_activate_primary)
 	secondary.pressed.connect(manor.return_to_title)
 	resized.connect(_layout)
@@ -38,6 +48,8 @@ func show_mode(value: String) -> void:
 func _draw() -> void:
 	var center := size / 2.0
 	draw_rect(Rect2(Vector2.ZERO, size), Color(0.10, 0.075, 0.06, 0.97 if mode == "title" else 0.9))
+	if mode == "settings":
+		return
 	var brass := Color("C9A04A")
 	var ivory := Color("EFE4D2")
 	if mode == "victory":
@@ -59,6 +71,7 @@ func _draw() -> void:
 		_play_icon(center + Vector2(0, 70 if mode == "title" else 20), ivory)
 	if mode != "victory":
 		_sound_icon(sound_button.position + sound_button.size / 2.0, ivory)
+		ManorMenuIcons.draw(self, "settings", settings_button.position + settings_button.size / 2.0, ivory)
 
 func _play_icon(center: Vector2, color: Color) -> void:
 	draw_circle(center, 35, color, false, 2, true)
@@ -74,40 +87,41 @@ func _sound_icon(center: Vector2, color: Color) -> void:
 			draw_arc(center + Vector2(-2, 0), radius, -PI / 3, PI / 3, 16, color, 2, true)
 
 func _toggle_audio() -> void:
-	AudioServer.set_bus_mute(0, not AudioServer.is_bus_mute(0))
-	var settings := ConfigFile.new()
-	settings.load(SETTINGS_PATH)
-	settings.set_value("audio", "muted", AudioServer.is_bus_mute(0))
-	var error := settings.save(SETTINGS_PATH)
-	if error != OK:
-		push_warning("Could not save audio preference: %s" % error_string(error))
-	_update_sound_accessibility()
-	queue_redraw()
+	manor.preferences.update("muted", not manor.preferences.muted)
 
 func _update_sound_accessibility() -> void:
 	sound_button.accessibility_name = "Turn sound on" if AudioServer.is_bus_mute(0) else "Mute sound"
 
 func _icon_button() -> Button:
-	var button := Button.new()
-	button.action_mode = BaseButton.ACTION_MODE_BUTTON_PRESS
-	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	button.size = Vector2(76, 76)
-	for style in ["normal", "hover", "pressed", "disabled"]:
-		button.add_theme_stylebox_override(style, StyleBoxEmpty.new())
-	var focus := StyleBoxFlat.new()
-	focus.bg_color = Color.TRANSPARENT
-	focus.border_color = Color("C9A04A")
-	focus.set_border_width_all(2)
-	focus.set_corner_radius_all(38)
-	button.add_theme_stylebox_override("focus", focus)
+	var button := ManorMenuIcons.button(76)
 	add_child(button)
 	return button
 
+func _open_settings() -> void:
+	previous_mode = mode
+	mode = "settings"
+	_layout()
+	settings_panel.open()
+
+func _close_settings() -> void:
+	show_mode(previous_mode)
+	settings_button.grab_focus()
+
+func _unhandled_key_input(event: InputEvent) -> void:
+	if visible and mode == "settings" and event is InputEventKey and event.pressed and event.physical_keycode == KEY_ESCAPE:
+		_close_settings()
+		get_viewport().set_input_as_handled()
+
 func _layout() -> void:
+	settings_panel.visible = mode == "settings"
+	settings_panel.size = size
+	primary.visible = mode != "settings"
+	settings_button.visible = mode in ["title", "pause"]
+	settings_button.position = Vector2(maxf(8, size.x - 136), maxf(8, size.y - 72))
 	primary.position = size / 2.0 + (Vector2(-62, 75) if mode == "victory" else Vector2(0, 70 if mode == "title" else 20)) - primary.size / 2.0
 	secondary.position = size / 2.0 + Vector2(62, 75) - secondary.size / 2.0
 	secondary.visible = mode == "victory"
-	sound_button.visible = mode != "victory"
+	sound_button.visible = mode in ["title", "pause"]
 	sound_button.position = Vector2(maxf(8, size.x - 72), maxf(8, size.y - 72))
 	title_label.visible = mode == "title"
 	title_label.position = Vector2(16, size.y / 2.0 - 36)

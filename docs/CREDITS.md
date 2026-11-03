@@ -6,3 +6,4 @@
 - Objective pendants, chandelier, solid front door, rainbow and flower mesh: original procedural geometry created for Shifting Manor.
 - No audio is currently included; sound design is deferred.
 - No models or textures were downloaded; paper grain is generated at runtime.
+- Stage 3 meadow, hills, trees, flush track pattern and settings icons: original procedural geometry and drawing code created for Shifting Manor.

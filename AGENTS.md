@@ -8,7 +8,7 @@ Commands (kept in `tools/`; update this list when scripts change):
 - Run: `tools/run.sh`
 - Rule + solver tests (headless): `tools/test.sh`
 - Classic-mode fun-test bots + geometry probes (headless): `tools/fun_test.sh` → `docs/FUNTEST.md`
-- Screenshots: `tools/capture.sh [objectives|single-gap|courtyard|solve|review] [seed] [out_dir] [extra flags]`
+- Screenshots: `tools/capture.sh [stage3|objectives|single-gap|courtyard|solve|review] [seed] [out_dir] [extra flags]`
 - Web build (local zip, never uploaded): `tools/build_itch.sh`
 - Read-only export scope/identity preflight: `python3 tools/check_export_identity.py`
 
@@ -16,4 +16,4 @@ Controls: WASD/mouse; hold left mouse or E on the lever, push mouse/WASD, releas
 
 The macOS Unsigned Test preset is authorized only for local unsigned/unnotarized testing in Stage 8; run the identity preflight first.
 
-Rules: the title screen may show “Shifting Manor”; otherwise no visible instruction text, labels, room names, counters or taglines. Title and pause have a persistent sound on/off icon. All art and audio original or CC0 with entries in `docs/CREDITS.md`. Never push or publish.
+Rules: the title screen may show “Shifting Manor”; otherwise no visible instruction text, labels, room names, counters or taglines. Title and pause have persistent sound on/off and settings icons. Settings cover FOV, sensitivity, invert-Y, camera shake (off by default), and master/effects/music volumes. Audio remains deferred. All art and audio original or CC0 with entries in `docs/CREDITS.md`. Never push or publish.

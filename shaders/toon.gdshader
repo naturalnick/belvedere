@@ -2,6 +2,12 @@ shader_type spatial;
 uniform vec4 base_color : source_color = vec4(0.9, 0.85, 0.75, 1.0);
 uniform float self_light = 0.0;
 uniform bool vertex_colors = false;
+uniform bool gap_tracks = false;
+uniform bool meadow = false;
+uniform vec4 meadow_far : source_color = vec4(0.7255, 0.7882, 0.5569, 1.0);
+varying vec3 world_position;
+uniform vec4 track_groove : source_color = vec4(0.239, 0.271, 0.278, 1.0);
+uniform vec4 track_steel : source_color = vec4(0.545, 0.573, 0.557, 1.0);
 uniform vec4 shadow_tint : source_color = vec4(0.35, 0.28, 0.25, 1.0);
 uniform sampler2D paper_grain : repeat_enable, filter_linear_mipmap;
 varying vec3 surface_position;
@@ -9,6 +15,7 @@ varying vec3 surface_normal;
 void vertex() {
 	// Mesh-local grain rides with moving rooms and swinging doors.
 	surface_position = VERTEX;
+	world_position = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
 	surface_normal = NORMAL;
 }
 void fragment() {
@@ -18,6 +25,17 @@ void fragment() {
 		+ texture(paper_grain, surface_position.xz * 0.7).r * weights.y
 		+ texture(paper_grain, surface_position.xy * 0.7).r * weights.z;
 	ALBEDO = base_color.rgb * mix(0.92, 1.0, grain) * (vertex_colors ? COLOR.rgb : vec3(1.0));
+	if (meadow) {
+		ALBEDO = mix(base_color.rgb, meadow_far.rgb, smoothstep(18.0, 90.0, length(world_position.xz)));
+	}
+	if (gap_tracks && surface_normal.y > 0.5) {
+		float rail_distance = min(abs(abs(surface_position.x) - 1.65), abs(abs(surface_position.z) - 1.65));
+		float aa = max(fwidth(rail_distance), 0.001);
+		float groove = 1.0 - smoothstep(0.075 - aa, 0.075 + aa, rail_distance);
+		float steel = 1.0 - smoothstep(0.028 - aa, 0.028 + aa, rail_distance);
+		ALBEDO = mix(ALBEDO, track_groove.rgb, groove);
+		ALBEDO = mix(ALBEDO, track_steel.rgb * mix(0.96, 1.0, grain), steel);
+	}
 	EMISSION = base_color.rgb * self_light;
 	ROUGHNESS = 0.75;
 	SPECULAR = 0.25;

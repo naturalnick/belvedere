@@ -16,3 +16,4 @@ run_checked --script res://tests/single_gap_tests.gd
 run_checked --script res://tests/wall_geometry_tests.gd
 run_checked --script res://tests/objective_tests.gd
 run_checked --script res://tests/ending_tests.gd
+run_checked --script res://tests/settings_tests.gd
