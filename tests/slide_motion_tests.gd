@@ -12,7 +12,7 @@ func check(ok: bool, message: String) -> void:
 		printerr("FAIL: ", message)
 
 func run() -> void:
-	check(is_equal_approx(ManorSlideMotion.DURATION, 1.4), "weight pass preserves the slide duration")
+	check(is_equal_approx(ManorSlideMotion.DURATION, 1.6), "settling pass adds only 0.2 seconds to the slide")
 	check(ManorSlideMotion.travel_progress(0) == 0 and ManorSlideMotion.travel_progress(1) == 1, "slide has exact endpoints")
 	var previous := 0.0
 	for i in range(1, 201):
@@ -21,6 +21,8 @@ func run() -> void:
 		previous = progress
 	check(ManorSlideMotion.travel_progress(0.001) < 0.00001, "travel starts without a velocity jump")
 	check(1.0 - ManorSlideMotion.travel_progress(0.999) < 0.00001, "travel lands without a velocity jump")
+	var last_tenth := 6.25 * (1.0 - ManorSlideMotion.travel_progress(1.0 - 0.1 / ManorSlideMotion.TRAVEL))
+	check(last_tenth < 0.025, "last tenth of a second settles less than 2.5 cm")
 	var main: Manor = load("res://scenes/manor.tscn").instantiate()
 	root.add_child(main)
 	main.player.automated = true
