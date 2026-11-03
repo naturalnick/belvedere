@@ -246,7 +246,8 @@ func capture_window() -> bool:
 			continue
 		var side: Vector3 = ManorGeometry.DIRECTIONS[d]
 		var tangent: Vector3 = ManorGeometry.DIRECTIONS[(d + 1) % 4] * 1.6
-		await walk_to(room.global_position + tangent + side * 1.9)
+		# Furnishings occupy window corners; take this view from the clear central aisle.
+		await walk_to(room.global_position + Vector3.RIGHT * 1.2)
 		main.player.aim_at(room.global_position + tangent + side * 3.125 + Vector3.UP * 1.65)
 		await shot("02_window")
 		return true

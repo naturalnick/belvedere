@@ -301,8 +301,12 @@ func request_slide(direction: int) -> bool:
 	for id in rooms:
 		for door in rooms[id].doors:
 			door.set_open(false)
+	var origin := room.position
 	var tween := create_tween()
-	tween.tween_property(room, "position", destination, 1.4).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	tween.tween_interval(ManorSlideMotion.TAKE_UP)
+	tween.tween_method(func(fraction: float) -> void:
+		room.position = origin.lerp(destination, ManorSlideMotion.travel_progress(fraction)), 0.0, 1.0, ManorSlideMotion.TRAVEL)
+	tween.tween_interval(ManorSlideMotion.DOCK)
 	tween.tween_callback(func() -> void:
 		rules.apply(ManorRules.SLIDE, direction)
 		player.reparent(self, true)

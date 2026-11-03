@@ -19,3 +19,4 @@ run_checked --script res://tests/ending_tests.gd
 run_checked --script res://tests/settings_tests.gd
 run_checked --script res://tests/bedroom_tests.gd
 run_checked --script res://tests/furnishing_tests.gd
+run_checked --script res://tests/slide_motion_tests.gd
