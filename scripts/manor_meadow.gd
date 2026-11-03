@@ -22,28 +22,14 @@ func build(ground_y: float, solid: bool) -> void:
 		add_child(hill)
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 381
-	var bark := ManorGeometry.material("8A8064", 0.0)
-	var leaves := [ManorGeometry.material("9DAC7D", 0.0), ManorGeometry.material("AAB889", 0.0)]
 	for i in 22:
 		var angle := rng.randf_range(0, TAU)
 		var at := Vector3(cos(angle), 0, sin(angle)) * rng.randf_range(38, 68)
 		# Keep the carpet and rainbow approach open; trees only frame the meadow.
 		if at.z > 0 and absf(at.x) < 24:
 			continue
-		var tree := Node3D.new()
+		var tree := ManorTree.new()
 		add_child(tree)
-		tree.position = at
-		var height_value := rng.randf_range(3.2, 5.0)
-		ManorGeometry.cylinder(tree, 0.13, height_value * 0.55, Vector3(0, height_value * 0.275, 0), bark)
-		ManorGeometry.barrier(tree, Vector3(0.26, height_value * 0.55, 0.26), Vector3(0, height_value * 0.275, 0))
-		var canopy := MeshInstance3D.new()
-		var shape := SphereMesh.new()
-		shape.radius = 1
-		shape.height = 2
-		shape.radial_segments = 10
-		shape.rings = 5
-		canopy.mesh = shape
-		canopy.material_override = leaves[i % 2]
-		canopy.position.y = height_value * 0.72
-		canopy.scale = Vector3(height_value * 0.32, height_value * 0.40, height_value * 0.30)
-		tree.add_child(canopy)
+		tree.position = at + Vector3.UP * (ground_y - 0.01)
+		tree.rotation.y = i * 2.4
+		tree.build(rng.randf_range(3.2, 5.0), i)
