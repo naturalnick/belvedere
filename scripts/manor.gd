@@ -95,7 +95,7 @@ func _ready() -> void:
 		objective_display = ManorObjectiveDisplay.new()
 		add_child(objective_display)
 		objective_display.setup(self)
-		objective_display.refresh(objectives, true)
+		objective_display.refresh(objectives)
 		chimes = ManorChimes.new()
 		add_child(chimes)
 		ending = ManorEnding.new()

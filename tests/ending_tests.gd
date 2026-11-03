@@ -21,7 +21,10 @@ func run() -> void:
 	check(main.objective_display.lamps.size() == 7 and not main.objective_display.lamps.has(7), "exactly seven pendants, excluding Foyer")
 	check(main.objective_display.progress_lights.size() == 7, "separate Foyer chandelier tracks seven objectives")
 	check(main.objective_display.lamps[main.objectives.active].state == 1, "active room has active pendant")
-	check(main.objective_display.target.position == ManorGeometry.center(main.objectives.active), "destination marker is fixed to target slot")
+	for lamp: ManorBeacon in main.objective_display.lamps.values():
+		check(not lamp.is_processing() and lamp.globe.scale == Vector3.ONE, "objective lamps have no continuous animation or scaling")
+		for shutter in lamp.shutters:
+			check(is_equal_approx(shutter.rotation.x, -1.15), "every lamp stays open, including inactive lamps")
 	var front: ManorDoor
 	for door in main.rooms[7].doors:
 		if door.is_front:
