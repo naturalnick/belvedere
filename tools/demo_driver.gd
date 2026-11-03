@@ -26,7 +26,7 @@ func run(game: Manor) -> void:
 	# Remove this mode's outputs so stale success frames cannot survive a failed run.
 	var shot_names := ["01_spawn", "02_window", "03_lever_held", "04_mid_slide", "05_solved", "06_front_door_open"]
 	if mode == "stage3":
-		shot_names = ["01_spawn", "02_settings", "03_cross_tracks", "04_meadow", "05_landscape", "06_bedroom_entry", "07_bed_and_table", "08_wardrobe", "09_bedroom_lever", "10_bedroom_sliding"]
+		shot_names = ["01_spawn", "02_settings", "03_cross_tracks", "04_meadow", "05_landscape", "06_bedroom_entry", "07_bed_and_table", "08_wardrobe", "09_bedroom_lever", "10_bedroom_sliding", "11_dresser", "12_reading_chair"]
 	elif mode == "courtyard":
 		shot_names = ["01_spawn", "02_courtyards", "03_outside", "04_lever_held", "05_mid_slide", "06_multiple_directions", "07_shifted"]
 	elif mode == "single-gap":

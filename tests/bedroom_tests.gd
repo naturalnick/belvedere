@@ -18,7 +18,7 @@ func run() -> void:
 		check(main.rooms[id].has_node("BedroomFurnishings") == (id == 0), "exactly one room is furnished")
 	var room: ManorRoom = main.rooms[0]
 	var furniture: Node3D = room.get_node("BedroomFurnishings")
-	check(furniture.find_children("*", "MeshInstance3D", true, false).size() <= 25, "trial furniture stays within mesh budget")
+	check(furniture.find_children("*", "MeshInstance3D", true, false).size() <= 60, "trial furniture stays within mesh budget")
 	check(not furniture.is_processing(), "furniture has no ambient animation")
 	var driver: Node = load("res://tools/demo_driver.gd").new()
 	root.add_child(driver)

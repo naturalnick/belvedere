@@ -25,7 +25,7 @@ func run(driver: Node) -> void:
 		await driver.walk_direction(direction)
 	var bedroom: ManorRoom = main.rooms[0]
 	await driver.walk_to(bedroom.position + Vector3(0, 0, 2.2))
-	main.player.aim_at(bedroom.position + Vector3(-1.3, 0.9, -1.8))
+	main.player.aim_at(bedroom.position + Vector3(0, 1.05, -1.8))
 	await driver.shot("06_bedroom_entry")
 	await driver.walk_to(bedroom.position + Vector3(1.2, 0, 1.0))
 	main.player.aim_at(bedroom.position + Vector3(-1.65, 0.8, -1.9))
@@ -33,6 +33,11 @@ func run(driver: Node) -> void:
 	await driver.walk_to(bedroom.position + Vector3(0, 0, 1.1))
 	main.player.aim_at(bedroom.position + Vector3(2.5, 1.0, 1.9))
 	await driver.shot("08_wardrobe")
+	main.player.aim_at(bedroom.position + Vector3(-1.9, 1.25, 2.6))
+	await driver.shot("11_dresser")
+	await driver.walk_to(bedroom.position + Vector3(0, 0, -1.2))
+	main.player.aim_at(bedroom.position + Vector3(2.1, 0.7, -2.0))
+	await driver.shot("12_reading_chair")
 	driver._check(main.rules.player == 0, "trial bedroom is entered and walked physically")
 	for direction in driver.walk_route(7):
 		await driver.walk_direction(direction)

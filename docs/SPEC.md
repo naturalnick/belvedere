@@ -4,7 +4,7 @@ MAIN WIN: Seven room objectives, excluding Foyer. Only the current room has a li
 
 BONUS WIN: All eight rooms home simultaneously. This also awards the main win if it has not happened yet. The solid, opaque Foyer front door unlocks; its house emblem lights, the carpet appears and a rainbow fades in. Crossing that doorway eases the camera along the carpet, with small flowers continually sprouting on nearby grass, then fades to the title screen. The main win alone leaves that door locked.
 
-FURNISHING TRIAL: Only the Bedroom is furnished: bed, bedside cabinet with unlit lamp, wardrobe and rug. Other rooms remain greyboxes pending review.
+FURNISHING TRIAL: Only the Bedroom is furnished: bed, bedside cabinet with unlit lamp, wardrobe, dresser with a stylized mirror, reading chair, rug and skirting. Furnishings are distributed around the room, leaving the central lever and doorway routes clear. Other rooms remain greyboxes pending review.
 
 TITLE/PAUSE: The title screen shows “Shifting Manor” above the play icon; pause retains icons only. Both offer a speaker toggle and gear icon for settings. Icon-only settings provide FOV (60–100), sensitivity, invert-Y, camera-shake preference (off by default), and master/effects/music volumes; all persist across launches. Shake effects themselves remain deferred to the feel pass. The game is currently silent; audio will be added later.
 
