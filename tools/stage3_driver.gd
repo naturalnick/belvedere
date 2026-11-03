@@ -9,6 +9,8 @@ func run(driver: Node) -> void:
 	await click(main.play_gate.settings_panel.back)
 	driver._check(main.play_gate.mode == "pause", "real back click returns to pause")
 	main.resume_play()
+	for direction in driver.walk_route(7):
+		await driver.walk_direction(direction)
 	await driver.walk_direction(ManorRules.E)
 	await driver.walk_to(ManorGeometry.center(7) + Vector3(0, 0, 3.0))
 	main.player.aim_at(ManorGeometry.center(7) + Vector3(0, 0, -1))

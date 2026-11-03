@@ -1,11 +1,15 @@
 class_name ManorObjectives
 extends RefCounted
 
-const ROOMS := [0, 1, 2, 3, 5, 6, 8]
+const ROOMS: Array[int] = [0, 1, 2, 3, 5, 6, 8]
 var completed: Array[int] = []
 var active := -1
-var main_won := false
+var all_completed := false
 var bonus_won := false
+
+func start(state: ManorRules) -> void:
+	# A home room costs zero slides: use it to teach completion through the first visit.
+	active = nearest_goal(state, ROOMS).room
 
 func advance(state: ManorRules) -> Array[int]:
 	var earned: Array[int] = []
@@ -16,7 +20,7 @@ func advance(state: ManorRules) -> Array[int]:
 				completed.append(room)
 				earned.append(room)
 		active = -1
-	elif active >= 0 and state.board[active] != active:
+	elif active >= 0 and (state.board[active] != active or state.player != active):
 		return earned
 	else:
 		if active >= 0:
@@ -34,10 +38,10 @@ func advance(state: ManorRules) -> Array[int]:
 				if not completed.has(room):
 					pending.append(room)
 			active = nearest_goal(state, pending).room
-	main_won = completed.size() == ROOMS.size()
+	all_completed = completed.size() == ROOMS.size()
 	return earned
 
-static func nearest_goal(start: ManorRules, targets: Array[int]) -> Dictionary:
+static func nearest_goal(start: ManorRules, targets: Array[int], enter_room: bool = false) -> Dictionary:
 	# Outside walking returns to the same sole gap, so the classic walk graph is equivalent.
 	var origin := ManorRules.new(start.board, -1 if start.player == ManorRules.OUTSIDE else start.player)
 	var deque: Dictionary[int, int] = {0: origin.key()}
@@ -56,7 +60,7 @@ static func nearest_goal(start: ManorRules, targets: Array[int]) -> Dictionary:
 		closed[key] = true
 		var state := ManorRules.from_key(key)
 		for room in targets:
-			if state.board[room] == room:
+			if state.board[room] == room and (not enter_room or state.player == room):
 				var path: Array[Vector2i] = []
 				var cursor := key
 				while previous.has(cursor):

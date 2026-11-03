@@ -16,14 +16,15 @@ func run() -> void:
 	for seed_name in ["A", "B", "C"]:
 		var state := ManorRules.from_seed(seed_name)
 		var progress := ManorObjectives.new()
-		progress.advance(state)
+		progress.start(state)
+		check(progress.completed.is_empty(), "starting a game awards no coins")
 		var total_slides := 0
 		var total_walks := 0
 		var stages := 0
-		while not progress.main_won and stages < 7:
+		while not progress.all_completed and stages < 7:
 			check(progress.active != 7 and progress.active >= 0, "Foyer is never an objective")
 			var active := progress.active
-			var result := ManorObjectives.nearest_goal(state, [active])
+			var result := ManorObjectives.nearest_goal(state, [active], true)
 			var path: Array = result.path
 			var slides := 0
 			for action: Vector2i in path:
@@ -40,18 +41,20 @@ func run() -> void:
 			check(progress.completed.has(active), "active room earns completion")
 			total_slides += slides
 			stages += 1
-		check(progress.main_won and progress.completed.size() == 7, "seven objectives finish the main game")
+		check(progress.all_completed and progress.completed.size() == 7, "seven objectives earn all coin rewards")
 		print("Objectives seed %s: %d slides, %d walks, bonus=%s" % [seed_name, total_slides, total_walks, progress.bonus_won])
 	var progress := ManorObjectives.new()
 	progress.completed.assign([0, 1, 2, 3, 5, 6])
 	progress.active = 8
-	progress.advance(ManorRules.from_seed("A"))
-	check(progress.main_won and not progress.bonus_won, "main win does not require assembled house")
+	var last_room := ManorRules.from_seed("A")
+	last_room.player = 8
+	progress.advance(last_room)
+	check(progress.all_completed and not progress.bonus_won, "all room rewards do not require assembled house")
 	progress.advance(ManorRules.from_seed("B"))
-	check(progress.main_won and progress.completed.size() == 7, "main win persists after moving completed rooms away")
+	check(progress.all_completed and progress.completed.size() == 7, "earned room rewards persist after moving rooms away")
 	var early := ManorObjectives.new()
 	early.advance(ManorRules.new())
-	check(early.main_won and early.bonus_won and early.completed.size() == 7, "early full solve awards both wins")
+	check(early.all_completed and early.bonus_won and early.completed.size() == 7, "early full solve earns all room rewards and the door ending")
 	check(early.active == -1, "no further target after winning")
 	print("Objectives: %d checks, %d failures" % [checks, failures])
 	quit(1 if failures else 0)

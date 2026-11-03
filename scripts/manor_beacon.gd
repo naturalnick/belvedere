@@ -2,6 +2,7 @@ class_name ManorBeacon
 extends Node3D
 
 var globe: MeshInstance3D
+var shade: MeshInstance3D
 var light: OmniLight3D
 var state := 0
 
@@ -10,7 +11,7 @@ func _ready() -> void:
 	ManorGeometry.cylinder(self, 0.09, 0.05, Vector3(0, 0.72, 0), brass)
 	ManorGeometry.cylinder(self, 0.012, 0.43, Vector3(0, 0.48, 0), brass)
 	ManorGeometry.cylinder(self, 0.055, 0.06, Vector3(0, 0.245, 0), brass)
-	var shade := MeshInstance3D.new()
+	shade = MeshInstance3D.new()
 	var shell := CylinderMesh.new()
 	shell.top_radius = 0.10
 	shell.bottom_radius = 0.27
@@ -31,7 +32,7 @@ func _ready() -> void:
 	rim.material_override = brass
 	rim.position.y = -0.02
 	add_child(rim)
-	# A shallow frosted lens exposes the on/off state from across the room.
+	# A shallow frosted lens exposes the target/placement state from across the room.
 	globe = MeshInstance3D.new()
 	var lens := SphereMesh.new()
 	lens.radius = 0.25
@@ -49,7 +50,10 @@ func _ready() -> void:
 
 func set_state(value: int) -> void:
 	state = value
-	globe.material_override = ManorGeometry.glowing_material("FFF0DA") if value == 1 else ManorGeometry.material("77766E")
-	light.light_energy = 0.85 if value == 1 else 0.0
+	var color := "6EBFFF" if value == 1 else "FFF0DA"
+	shade.material_override = ManorGeometry.material("B4CFDF" if value == 1 else "DDD3BD", 0.006)
+	globe.material_override = ManorGeometry.glowing_material(color) if value > 0 else ManorGeometry.material("77766E")
+	light.light_color = Color(color)
+	light.light_energy = 0.85 if value > 0 else 0.0
 	# A zero-energy light is still culled and shaded per object; hiding it skips that work.
-	light.visible = value == 1
+	light.visible = value > 0

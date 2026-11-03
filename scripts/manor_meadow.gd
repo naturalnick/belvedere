@@ -46,6 +46,13 @@ func build(ground_y: float, solid: bool) -> void:
 		add_child(tree)
 		tree.position = Vector3(nearer[i].x, ground_y - 0.01, nearer[i].y)
 		tree.rotation.y = i * 1.7
+	# Frame the right Bedroom window from the opening view without hiding the trunk behind its mullion.
+	var window_tree := ManorTree.new()
+	window_tree.name = "BedroomWindowTree"
+	add_child(window_tree)
+	window_tree.position = Vector3(-17, ground_y - 0.01, -6.9)
+	window_tree.rotation.y = 0.65
+	window_tree.build(4.2, 22)
 	var bush_positions: Array[Vector2] = [Vector2(15, -14), Vector2(24, -10), Vector2(26, 5), Vector2(-19, 9), Vector2(-24, -3)]
 	for at in bush_positions:
 		var source: MeshInstance3D = _nearest(originals, at).foliage_prototype()

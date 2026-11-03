@@ -17,12 +17,15 @@ import zipfile
 source = Path(sys.argv[1])
 (source / 'LICENSE.txt').write_bytes(Path('LICENSE.txt').read_bytes())
 (source / 'CREDITS.md').write_bytes(Path('docs/CREDITS.md').read_bytes())
+font_license = source / 'assets/fonts/Fondamento-OFL.txt'
+font_license.parent.mkdir(parents=True, exist_ok=True)
+font_license.write_bytes(Path('assets/fonts/Fondamento-OFL.txt').read_bytes())
 for name in ('index.html', 'index.js', 'index.wasm', 'index.pck'):
     assert (source / name).stat().st_size > 0, f'Missing or empty export: {name}'
 files = sorted(path for path in source.rglob('*') if path.is_file())
 assert len(files) <= 1000 and sum(p.stat().st_size for p in files) <= 500_000_000
 assert all(p.stat().st_size <= 200_000_000 for p in files)
-output = Path('build/itch/shifting-manor-web.zip')
+output = Path('build/itch/belvedere-web.zip')
 with zipfile.ZipFile(output.with_suffix('.zip.tmp'), 'w', zipfile.ZIP_DEFLATED) as archive:
     for path in files:
         archive.write(path, path.relative_to(source).as_posix())

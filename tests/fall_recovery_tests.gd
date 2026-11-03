@@ -14,6 +14,7 @@ func run() -> void:
 		quit(1))
 	var main: Manor = load("res://scenes/manor.tscn").instantiate()
 	root.add_child(main)
+	main.start_play()
 	main.player.automated = true
 	# Move Bedroom to a different slot so respawning at its home or old position fails.
 	var old_slot := main.rules.board.find(0)

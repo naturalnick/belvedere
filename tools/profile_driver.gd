@@ -10,6 +10,7 @@ func run() -> void:
 			output = arg.trim_prefix("--output=")
 	var main: Manor = load("res://scenes/manor.tscn").instantiate()
 	root.add_child(main)
+	main.start_play()
 	main.player.automated = true
 	main.player.set_physics_process(false)
 	var samples: Array[Dictionary] = []

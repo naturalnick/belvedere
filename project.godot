@@ -10,7 +10,7 @@ config_version=5
 
 [application]
 
-config/name="Shifting Manor"
+config/name="Belvedere"
 run/main_scene="res://scenes/manor.tscn"
 config/features=PackedStringArray("4.7", "GL Compatibility")
 
@@ -21,6 +21,10 @@ window/size/viewport_height=720
 window/size/window_width_override=1280
 window/size/window_height_override=720
 window/stretch/mode="canvas_items"
+
+[gui]
+
+theme/custom_font="res://assets/fonts/Fondamento-Regular.ttf"
 
 [physics]
 

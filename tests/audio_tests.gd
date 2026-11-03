@@ -22,6 +22,9 @@ func run() -> void:
 		quit(1))
 	var main: Manor = load("res://scenes/manor.tscn").instantiate()
 	root.add_child(main)
+	main.start_play()
+	main.rules.player = 7
+	main.place_player_at_spawn()
 	main.player.automated = true
 	await physics_frame
 	await physics_frame
@@ -29,7 +32,7 @@ func run() -> void:
 	audio.cued.connect(func(group: String) -> void: cues.append(group))
 
 	var expected := {"step_wood": 5, "step_tile": 6, "step_grass": 5, "lever_grab": 3, "lever_blocked": 3,
-		"door_rattle": 3, "door_open": 2, "door_close": 2, "slide": 3, "wake": 1}
+		"door_rattle": 3, "door_open": 2, "door_close": 2, "slide": 3, "wake": 1, "coin_insert": 2}
 	for group in expected:
 		check(audio.streams[group].size() == expected[group], "%s has %d variants" % [group, expected[group]])
 	check(audio.music.stream.loop and audio.music.bus == "Music", "music loops on the Music bus")

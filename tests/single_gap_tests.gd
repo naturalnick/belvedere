@@ -15,6 +15,7 @@ func check(condition: bool, message: String) -> void:
 func run() -> void:
 	var main: Manor = load("res://scenes/manor.tscn").instantiate()
 	root.add_child(main)
+	main.start_play()
 	main.player.automated = true
 	await physics_frame
 	await physics_frame
@@ -25,6 +26,8 @@ func run() -> void:
 	root.add_child(driver)
 	driver.main = main
 	driver.started = Time.get_ticks_msec()
+	for direction in driver.walk_route(7):
+		await driver.walk_direction(direction)
 	await driver.walk_direction(ManorRules.E)
 	await driver.walk_to(Vector3(0, 0, 11))
 	check(main.rules.player == ManorRules.OUTSIDE and main.rules.valid(), "single gap still exits onto lawn")

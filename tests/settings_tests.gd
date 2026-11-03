@@ -11,6 +11,7 @@ func check(ok: bool, message: String) -> void:
 func run() -> void:
 	var main: Manor = load("res://scenes/manor.tscn").instantiate()
 	root.add_child(main)
+	main.start_play()
 	main.player.automated = true
 	var original := main.preferences
 	var path := "user://settings-test-%d.cfg" % OS.get_process_id()

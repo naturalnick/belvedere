@@ -106,6 +106,7 @@ def effects():
         close = source('rpg', f'doorClose_{i+1}', cutoff=3000)
         write(f'door_open_{i}', hinge, .26, release=.18)
         write(f'door_close_{i}', close, .30, release=.07)
+    coin_effects()
     write('wake', source('rpg', 'cloth2', .9, 4200), .20, .025, .12)
     for variant in range(3):
         length = 2.05
@@ -126,8 +127,17 @@ def effects():
         landing = source('impact', 'impactWood_heavy_002', .67 + variant*.015, 1000)
         latch = source('rpg', 'metalLatch', .85, 3400)
         takeup = source('impact', 'impactPlank_medium_000', .8, 1500)
-        x = mix(length, [(0, rolling, .55), (.20, creak, .17), (.95, settle, .11), (.015, takeup, .13), (1.52, landing, .44), (1.54, latch, .07)])
+        x = mix(length, [(0, rolling, .55 / 4), (.20, creak, .17 / 12), (.95, settle, .11 / 12), (.015, takeup, .13), (1.52, landing, .44), (1.54, latch, .07)])
         write(f'slide_{variant}', x, .63, .008, .18)
+
+
+def coin_effects():
+    # Recorded coin contacts keep the bright attack and natural metallic decay.
+    for i, name in enumerate(('handleCoins', 'handleCoins2')):
+        coins = source('rpg', name, cutoff=8500)
+        latch = source('rpg', 'metalClick', cutoff=3800)
+        write(f'coin_insert_{i}', mix(max(.65, len(coins) / RATE + .12),
+              [(0, latch, .14), (.10, coins, 1.)]), .34, .002, .06)
 
 
 def birds():

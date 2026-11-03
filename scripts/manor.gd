@@ -22,6 +22,12 @@ var preferences: ManorPreferences
 static var gesture_start := false
 var objectives: ManorObjectives
 var objective_display: ManorObjectiveDisplay
+var coins: ManorCoins
+var coin_hud: ManorCoinHUD
+var first_coin_guide: ManorFirstCoinGuide
+var wall_title: ManorWallTitle
+var fresh_title := true
+var coin_device: ManorCoinDevice
 var ending: ManorEnding
 var environment: Environment
 var fade: ColorRect
@@ -83,6 +89,11 @@ func _ready() -> void:
 	preferences.changed.connect(func() -> void: preferences.apply(player))
 	preferences.apply(player)
 	place_player_at_spawn()
+	if not classic and not three_gaps and seed_name == "A":
+		wall_title = ManorWallTitle.new()
+		rooms[0].add_child(wall_title)
+		rules.player = 0
+		wall_title.frame_player(player)
 	for arg in OS.get_cmdline_user_args():
 		if arg == "--invert-y":
 			preferences.invert_y = true
@@ -102,11 +113,25 @@ func _ready() -> void:
 	play_gate.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	if not classic and not three_gaps:
 		objectives = ManorObjectives.new()
-		objectives.advance(rules)
+		coins = ManorCoins.new()
+		objectives.start(rules)
 		objective_display = ManorObjectiveDisplay.new()
 		add_child(objective_display)
 		objective_display.setup(self)
-		objective_display.refresh(objectives)
+		objective_display.refresh(objectives, rules)
+		if wall_title != null:
+			wall_title.refresh(objectives.active, rules.board)
+		coin_device = ManorCoinDevice.new()
+		coin_device.manor = self
+		coin_device.position = Vector3(-1.85, 0, -2.50)
+		rooms[7].add_child(coin_device)
+		first_coin_guide = ManorFirstCoinGuide.new()
+		first_coin_guide.manor = self
+		add_child(first_coin_guide)
+		coin_hud = ManorCoinHUD.new()
+		coin_hud.manor = self
+		hud.add_child(coin_hud)
+		hud.move_child(coin_hud, 0)
 		ending = ManorEnding.new()
 		ending.player = player
 		add_child(ending)
@@ -121,10 +146,14 @@ func _ready() -> void:
 	audio = ManorAudio.new()
 	audio.manor = self
 	add_child(audio)
-	if (OS.has_feature("web") or OS.get_cmdline_user_args().has("--web-entry")) and not gesture_start:
+	if wall_title != null and not gesture_start:
+		at_title = true
+		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+		play_gate.show_mode("title")
+	elif (OS.has_feature("web") or OS.get_cmdline_user_args().has("--web-entry")) and not gesture_start:
 		release_pointer()
 	else:
-		resume_play()
+		start_play()
 	gesture_start = false
 	if demo:
 		var driver := Node.new()
@@ -142,6 +171,13 @@ func place_player_at_spawn() -> void:
 	player.aim_at(ManorGeometry.center(rules.slot()) + ManorGeometry.DIRECTIONS[gap_direction] * ManorGeometry.PITCH + Vector3.UP * 0.1)
 	player.camera.rotation.x = deg_to_rad(-16)
 
+func start_play() -> void:
+	at_title = false
+	fresh_title = false
+	if wall_title != null:
+		wall_title.lettering.hide()
+	resume_play()
+
 func resume_play() -> void:
 	if in_finale or at_title:
 		return
@@ -154,7 +190,7 @@ func release_pointer() -> void:
 	play_gate.show_mode("pause")
 
 func controls_locked() -> bool:
-	return recovering or sliding or in_finale or at_title or (play_gate != null and play_gate.visible)
+	return (first_coin_guide != null and first_coin_guide.active) or recovering or sliding or in_finale or at_title or (play_gate != null and play_gate.visible) or (coin_device != null and coin_device.releasing)
 
 func return_to_title() -> void:
 	at_title = true
@@ -165,23 +201,26 @@ func return_to_title() -> void:
 	player.velocity = Vector3.ZERO
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	fade.color.a = 0
+	if wall_title != null:
+		rules.player = 0
+		rules.gap_slot = -1
+		wall_title.frame_player(player)
 	play_gate.show_mode("title")
 
 func refresh_progress() -> void:
+	if objectives != null and first_coin_guide != null and not first_coin_guide.seen and objectives.completed.is_empty() and objectives.active >= 0 and rules.player == objectives.active and rules.board[objectives.active] == objectives.active:
+		first_coin_guide.begin()
+		return
+	if first_coin_guide != null and first_coin_guide.active and not first_coin_guide.completed:
+		return
 	if objectives == null:
 		won = rules.solved()
 	else:
-		var had_main := objectives.main_won
-		objectives.advance(rules)
-		objective_display.refresh(objectives)
+		coins.award(objectives.advance(rules))
+		objective_display.refresh(objectives, rules)
+		if wall_title != null:
+			wall_title.refresh(objectives.active, rules.board)
 		won = objectives.bonus_won
-		if objectives.main_won and not had_main:
-			var warmth := create_tween()
-			warmth.tween_property(environment, "ambient_light_energy", 0.60, 1.5)
-			player.cancel_pull()
-			player.velocity = Vector3.ZERO
-			Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
-			play_gate.show_mode("victory")
 	if won:
 		carpet.visible = true
 		for barrier in perimeter:
@@ -189,6 +228,13 @@ func refresh_progress() -> void:
 		if ending != null:
 			ending.activate()
 	refresh_doors()
+
+func show_coin_ending() -> void:
+	player.cancel_pull()
+	player.velocity = Vector3.ZERO
+	player.bot_drive = Vector3.ZERO
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	play_gate.show_mode("victory")
 
 func begin_finale() -> void:
 	if in_finale or ending == null or not won:
@@ -284,6 +330,8 @@ func update_occupant() -> void:
 	for d in 4:
 		if ManorRules.neighbor(rules.slot(), d) == new_slot and rules.can_walk(d):
 			rules.apply(ManorRules.WALK, d)
+			if objectives != null and objectives.active >= 0 and rules.player == objectives.active and rules.board[rules.player] == rules.player:
+				refresh_progress()
 			return
 	# One physics tick can cross both grid axes at a corner of connected courtyards.
 	if rules.courtyards and rules.player == -1 and rules.board[new_slot] == -1:

@@ -4,7 +4,14 @@ const NAMES := {1: "bathroom", 2: "study", 3: "kitchen", 5: "living", 6: "dining
 
 func run(driver: Node) -> void:
 	var main: Manor = driver.main
-	for id in NAMES:
+	var selected := PackedInt32Array(NAMES.keys())
+	for arg in OS.get_cmdline_user_args():
+		if arg.begins_with("--rooms="):
+			selected.clear()
+			for value in arg.trim_prefix("--rooms=").split(","):
+				selected.append(int(value))
+	for id in selected:
+		driver._check(NAMES.has(id), "selected furnishing room exists")
 		print("Furnishing gallery: ", NAMES[id], " (independent slide fixture)")
 		FIXTURE.place(main, id)
 		await get_tree().physics_frame

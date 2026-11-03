@@ -11,6 +11,7 @@ func check(ok: bool, message: String) -> void:
 func run() -> void:
 	var main: Manor = load("res://scenes/manor.tscn").instantiate()
 	root.add_child(main)
+	main.start_play()
 	main.player.automated = true
 	await physics_frame
 	await physics_frame

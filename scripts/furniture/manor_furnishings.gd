@@ -123,7 +123,7 @@ func living() -> void:
 	for x in [-0.18, 0.18]:
 		rod(fireplace, Vector3(x - 0.14, 0.17, -0.07), Vector3(x + 0.12, 0.17, 0.20), 0.08, "68503B")
 	solid(fireplace, Vector3(1.58, 1.23, 0.62), Vector3(0, 0.615, 0))
-	chair("Armchair", Vector3(-2.05, 0, 1.9), PI / 4, "A34E36", true)
+	chair("Armchair", Vector3(-2.05, 0, 1.9), 3 * PI / 4, "A34E36", true)
 	var floor_lamp := group("FloorLamp", Vector3(-2.65, 0, 2.55))
 	lamp(floor_lamp, Vector3.ZERO, 1.55)
 	solid(floor_lamp, Vector3(0.30, 1.55, 0.30), Vector3(0, 0.775, 0))
@@ -156,12 +156,12 @@ func dining() -> void:
 	bowl(serving, Vector3(0, 0.75, 0), 0.20, 0.095)
 
 func foyer() -> void:
-	var bench := table("EntryBench", Vector3(-1.85, 0, -2.50), 1.70, 0.65, 0.43)
+	var bench := table("EntryBench", Vector3(1.85, 0, -2.50), 1.70, 0.65, 0.43)
 	box(bench, Vector3(1.56, 0.08, 0.54), Vector3(0, 0.47, 0), "87958C")
 	box(bench, Vector3(1.70, 0.33, 0.08), Vector3(0, 0.65, -0.28), WOOD)
 	for x in [-0.80, 0.80]:
 		box(bench, Vector3(0.07, 0.26, 0.65), Vector3(x, 0.55, 0), WOOD)
-	var rack := group("CoatStand", Vector3(2.24, 0, -2.24))
+	var rack := group("CoatStand", Vector3(2.40, 0, 2.45))
 	cylinder(rack, 0.045, 1.82, Vector3(0, 0.91, 0), WOOD)
 	for i in 3:
 		var direction := Vector3(cos(i * TAU / 3), 0, sin(i * TAU / 3))
@@ -173,7 +173,7 @@ func foyer() -> void:
 	entry.rotation.y = PI
 	mirror(entry, Vector3(0, 1.60, -0.26), 0.86, 1.12)
 	basin(entry, Vector3(0.44, 0.76, 0), 0.22, 0.22, 0.045)
-	var umbrellas := group("UmbrellaStand", Vector3(2.40, 0, 2.45))
+	var umbrellas := group("UmbrellaStand", Vector3(1.55, 0, 2.45))
 	basin(umbrellas, Vector3.ZERO, 0.45, 0.45, 0.52)
 	for x in [-0.09, 0.10]:
 		rod(umbrellas, Vector3(x, 0.12, 0), Vector3(x * 1.5, 0.95, 0.03), 0.018, WOOD)

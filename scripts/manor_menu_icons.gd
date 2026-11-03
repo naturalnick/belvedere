@@ -6,8 +6,11 @@ static func button(side: float = 52) -> Button:
 	result.action_mode = BaseButton.ACTION_MODE_BUTTON_PRESS
 	result.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	result.size = Vector2.ONE * side
-	for style in ["normal", "hover", "pressed", "disabled"]:
+	for style in ["normal", "disabled"]:
 		result.add_theme_stylebox_override(style, StyleBoxEmpty.new())
+	result.add_theme_stylebox_override("hover", _button_state(side, 0.18, "E3C078"))
+	result.add_theme_stylebox_override("pressed", _button_state(side, 0.28, "C9A04A"))
+	result.add_theme_stylebox_override("hover_pressed", _button_state(side, 0.36, "F3D697"))
 	var focus := StyleBoxFlat.new()
 	focus.bg_color = Color.TRANSPARENT
 	focus.border_color = Color("C9A04A")
@@ -15,6 +18,14 @@ static func button(side: float = 52) -> Button:
 	focus.set_corner_radius_all(int(side / 2))
 	result.add_theme_stylebox_override("focus", focus)
 	return result
+
+static func _button_state(side: float, opacity: float, border: String) -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(Color("C9A04A"), opacity)
+	style.border_color = Color(border)
+	style.set_border_width_all(2)
+	style.set_corner_radius_all(int(side / 2))
+	return style
 
 static func draw(canvas: Control, kind: String, at: Vector2, color: Color) -> void:
 	match kind:

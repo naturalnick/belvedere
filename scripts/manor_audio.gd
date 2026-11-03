@@ -26,7 +26,7 @@ var stride := STRIDE * 0.6
 var door_events: Array[Array] = []
 
 func _ready() -> void:
-	for group in ["step_wood", "step_tile", "step_grass", "lever_grab", "lever_blocked", "door_rattle", "door_open", "door_close", "slide"]:
+	for group in ["step_wood", "step_tile", "step_grass", "lever_grab", "lever_blocked", "door_rattle", "door_open", "door_close", "slide", "coin_insert"]:
 		var variants: Array = []
 		while ResourceLoader.exists(DIR + "%s_%d.wav" % [group, variants.size()]):
 			variants.append(load(DIR + "%s_%d.wav" % [group, variants.size()]))
@@ -53,6 +53,8 @@ func _ready() -> void:
 		for door in manor.rooms[id].doors:
 			door.swung.connect(func(opening: bool) -> void: door_events.append([door, opening]))
 			door.rattled.connect(func() -> void: play_at("door_rattle", door.gate.global_position, -2.0))
+	if manor.coin_device != null:
+		manor.coin_device.coin_inserted.connect(func() -> void: play_at("coin_insert", manor.coin_device.global_position, -3.0))
 	manor.player.lever_grabbed.connect(func() -> void: play("lever_grab", -3.0))
 	manor.player.lever_returned.connect(func() -> void: play("lever_grab", -9.0, 0.88))
 	manor.slide_refused.connect(func() -> void: play("lever_blocked", -1.0))

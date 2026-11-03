@@ -25,6 +25,9 @@ func run() -> void:
 	check(last_tenth < 0.025, "last tenth of a second settles less than 2.5 cm")
 	var main: Manor = load("res://scenes/manor.tscn").instantiate()
 	root.add_child(main)
+	main.start_play()
+	main.rules.player = 7
+	main.place_player_at_spawn()
 	main.player.automated = true
 	await physics_frame
 	var room: ManorRoom = main.rooms[7]

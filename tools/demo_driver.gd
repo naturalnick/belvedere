@@ -17,15 +17,19 @@ func run(game: Manor) -> void:
 			shots_dir = arg.trim_prefix("--shots=")
 		if arg.begins_with("--mode="):
 			mode = arg.trim_prefix("--mode=")
-	if mode not in ["solve", "review", "courtyard", "single-gap", "objectives", "stage3", "furnishings", "trees", "fall"]:
-		printerr("Capture mode must be solve, review, courtyard, single-gap, objectives, stage3, furnishings, trees or fall")
+	if mode not in ["solve", "review", "courtyard", "single-gap", "objectives", "stage3", "furnishings", "trees", "fall", "coins", "title"]:
+		printerr("Capture mode must be solve, review, courtyard, single-gap, objectives, stage3, furnishings, trees, fall, coins or title")
 		get_tree().quit(1)
 		return
 	DirAccess.make_dir_recursive_absolute(shots_dir)
 	started = Time.get_ticks_msec()
 	# Remove this mode's outputs so stale success frames cannot survive a failed run.
 	var shot_names := ["01_spawn", "02_window", "03_lever_held", "04_mid_slide", "05_solved", "06_front_door_open"]
-	if mode == "fall":
+	if mode == "title":
+		shot_names = ["01_title", "02_title_small", "03_title_portrait", "03_start_fade", "04_playing", "05_grid_target", "06_title_return", "hover_play", "hover_sound", "hover_settings", "hover_invert", "hover_back", "hover_resume"]
+	elif mode == "coins":
+		shot_names = ["01_spawn", "blue_shade", "warm_shade", "coin_presented", "coin_count", "coin_device", "coin_inserting", "coin_deposited", "ending_1", "ending_1_small", "trophy_released", "coin_title", "hover_keep_playing", "hover_quit"]
+	elif mode == "fall":
 		shot_names = ["01_spawn", "02_edge", "03_underside", "04_fade_out", "05_bedside", "06_nearer_greenery"]
 	elif mode == "trees":
 		shot_names = ["01_spawn", "02_meadow", "03_tree_detail", "04_house_and_trees", "05_window_view"]
@@ -42,6 +46,9 @@ func run(game: Manor) -> void:
 		shot_names = ["01_spawn", "02_outside", "03_shifted"]
 	elif mode == "objectives":
 		shot_names = ["00_front_locked", "01_spawn", "02_active_room", "03_completed_room", "04_main_win", "05_chandelier", "06_bonus_door", "07_flowers", "08_title"]
+		shot_names.append_array(["coin_device", "coin_inserting", "coin_deposited"])
+		for room in ManorObjectives.ROOMS:
+			shot_names.append("coin_reward_%d" % room)
 		if OS.get_cmdline_user_args().has("--detail-only"):
 			shot_names = ["00_front_locked", "01_spawn"]
 		elif OS.get_cmdline_user_args().has("--ending-only"):
@@ -54,11 +61,25 @@ func run(game: Manor) -> void:
 		printerr("FAIL: capture timed out at action %d, position %s, sliding %s" % [action_number, main.player.global_position, main.sliding])
 		get_tree().quit(1))
 	await get_tree().create_timer(0.6).timeout
+	if mode == "title":
+		var title_driver: Node = load("res://tools/title_driver.gd").new()
+		add_child(title_driver)
+		await title_driver.run(self)
+		print("Title capture: %d screenshots; %d checks, %d failures" % [shot_count, checks, failures])
+		get_tree().quit(1 if failures else 0)
+		return
 	if main.play_gate.visible:
 		await shot("00_play_gate")
 		await check_pointer_input()
 	if not OS.get_cmdline_user_args().has("--ending-only"):
 		await shot("01_spawn")
+	if mode == "coins":
+		var gallery: Node = load("res://tools/coin_driver.gd").new()
+		add_child(gallery)
+		await gallery.run(self)
+		print("Coin capture: %d screenshots; %d checks, %d failures" % [shot_count, checks, failures])
+		get_tree().quit(1 if failures else 0)
+		return
 	if mode == "fall":
 		var fall_test: Node = load("res://tools/fall_driver.gd").new()
 		add_child(fall_test)
@@ -176,6 +197,8 @@ func run(game: Manor) -> void:
 	get_tree().quit(1 if failures else 0)
 
 func single_gap_views() -> void:
+	for direction in walk_route(7):
+		await walk_direction(direction)
 	_check(main.rooms.size() == 8 and main.gap_floors.size() == 1, "eight rooms and one gap")
 	await check_pointer_input()
 	await walk_direction(ManorRules.E)
@@ -269,7 +292,7 @@ func approach_lever(room: ManorRoom) -> void:
 		offset = Vector3.BACK
 	await walk_to(room.global_position + offset.normalized() * 1.25)
 
-func walk_direction(direction: int) -> void:
+func walk_direction(direction: int, stop_for_guide: bool = false) -> void:
 	var p := main.rules.slot()
 	var q := ManorRules.neighbor(p, direction)
 	_check(main.rules.can_walk(direction), "doorway is legal")
@@ -277,11 +300,17 @@ func walk_direction(direction: int) -> void:
 	var toward: Vector3 = ManorGeometry.DIRECTIONS[direction]
 	# Approach the door on its centerline without cutting through the lever.
 	await walk_to(from + toward * 1.35)
-	await walk_to(ManorGeometry.center(q) - toward * 1.35)
+	await walk_to(ManorGeometry.center(q) - toward * 1.35, stop_for_guide)
 
-func walk_to(target: Vector3) -> void:
+func walk_to(target: Vector3, stop_for_guide: bool = false) -> void:
 	var started := Time.get_ticks_msec()
 	while true:
+		if main.first_coin_guide != null and main.first_coin_guide.active:
+			main.player.bot_drive = Vector3.ZERO
+			if stop_for_guide:
+				return
+			await get_tree().physics_frame
+			continue
 		var offset := target - main.player.global_position
 		offset.y = 0
 		if offset.length() < 0.12:
@@ -367,8 +396,26 @@ func mouse_button(pressed: bool) -> void:
 	var event := InputEventMouseButton.new()
 	event.button_index = MOUSE_BUTTON_LEFT
 	event.pressed = pressed
-	event.position = get_viewport().get_visible_rect().size / 2.0
+	event.position = main.play_gate.primary.get_global_rect().get_center() if main.play_gate.visible else get_viewport().get_visible_rect().size / 2.0
 	Input.parse_input_event(event)
+
+func hover_button(button: Button, label: String) -> void:
+	await get_tree().process_frame
+	await get_tree().process_frame
+	var event := InputEventMouseMotion.new()
+	event.position = button.get_global_rect().get_center()
+	event.global_position = event.position
+	Input.parse_input_event(event)
+	await get_tree().process_frame
+	await get_tree().process_frame
+	_check(button.is_hovered(), "%s responds to pointer hover" % label)
+	await shot(label)
+	event = InputEventMouseMotion.new()
+	event.position = Vector2(4, 4)
+	event.global_position = event.position
+	Input.parse_input_event(event)
+	await get_tree().process_frame
+	_check(not button.is_hovered(), "%s clears hover when pointer leaves" % label)
 
 func mouse_motion(delta: Vector2) -> void:
 	var event := InputEventMouseMotion.new()
@@ -383,6 +430,8 @@ func check_pointer_input() -> void:
 		mouse_button(true)
 		mouse_button(false)
 		await get_tree().process_frame
+		while main.play_gate.starting:
+			await get_tree().process_frame
 	_check(Input.mouse_mode == Input.MOUSE_MODE_CAPTURED, "play starts with pointer captured")
 	var yaw := main.player.rotation.y
 	var pitch := main.player.camera.rotation.x
@@ -473,9 +522,9 @@ func objective_views() -> void:
 	if OS.get_cmdline_user_args().has("--detail-only"):
 		return
 	var first_goal := true
-	while not main.objectives.main_won:
+	while not main.objectives.all_completed:
 		var active := main.objectives.active
-		var result := ManorObjectives.nearest_goal(main.rules, [active])
+		var result := ManorObjectives.nearest_goal(main.rules, [active], true)
 		print("Objective room %d: %d slides, %d actions; t=%.2fs" % [active, result.slides, result.path.size(), elapsed()])
 		for action: Vector2i in result.path:
 			if first_goal and main.rules.player == active:
@@ -484,18 +533,25 @@ func objective_views() -> void:
 				first_goal = false
 			await objective_action(action)
 		_check(main.objectives.completed.has(active), "physical target delivery earns completion")
-		if not main.objectives.main_won:
+		if not main.coins.pending.is_empty():
+			await get_tree().create_timer(0.45).timeout
+			await shot("coin_reward_%d" % active)
+			while not main.coins.pending.is_empty():
+				await get_tree().process_frame
+		if not main.objectives.all_completed:
 			main.player.aim_at(main.rooms[active].global_position + Vector3.UP * 2.25)
 			await shot("03_completed_room")
-	_check(main.play_gate.visible and main.play_gate.mode == "victory", "main completion has explicit wordless finish screen")
+	while not main.coins.pending.is_empty():
+		await get_tree().process_frame
+	_check(main.coins.available == 7 and not main.play_gate.visible, "all room objectives earn seven coins without ending play")
+	var coin_driver: Node = load("res://tools/coin_driver.gd").new()
+	add_child(coin_driver)
+	await coin_driver.deposit_all(self)
 	await shot("04_main_win")
-	var event := InputEventMouseButton.new()
-	event.button_index = MOUSE_BUTTON_LEFT
-	event.pressed = true
-	event.position = get_viewport().get_visible_rect().size / 2 + Vector2(-62, 75)
-	Input.parse_input_event(event)
+	key_event(KEY_ENTER, true)
+	key_event(KEY_ENTER, false)
 	await get_tree().process_frame
-	_check(not main.play_gate.visible, "continue icon returns to optional bonus play")
+	_check(not main.play_gate.visible, "Keep Playing returns to optional house puzzle")
 	var solver := ManorSolver.new()
 	solver.build()
 	var classic := ManorRules.new(main.rules.board, main.rules.player)
@@ -503,7 +559,7 @@ func objective_views() -> void:
 	print("Bonus: %d actions; t=%.2fs" % [path.size(), elapsed()])
 	for action in path:
 		await objective_action(action)
-	_check(main.won and main.objectives.main_won and main.objectives.bonus_won, "full house awards bonus without losing main win")
+	_check(main.won and main.objectives.all_completed and main.objectives.bonus_won, "full house awards bonus without losing coin rewards")
 	for direction in walk_route(7):
 		await walk_direction(direction)
 	main.player.aim_at(main.rooms[7].global_position + Vector3.UP * 2.4)
@@ -526,13 +582,13 @@ func capture_exit() -> void:
 	_check(main.play_gate.visible and main.play_gate.mode == "title", "outdoor ending returns to title")
 	await shot("08_title")
 
-func objective_action(action: Vector2i) -> void:
+func objective_action(action: Vector2i, stop_for_guide: bool = false) -> void:
 	action_number += 1
 	print("Action %d %s %s | t=%.2fs room=%d" % [action_number, "walk" if action.x == ManorRules.WALK else "slide", ["N", "E", "S", "W"][action.y], elapsed(), main.rules.player])
 	var expected := main.rules.copy()
 	_check(expected.apply(action.x, action.y), "objective action is legal")
 	if action.x == ManorRules.WALK:
-		await walk_direction(action.y)
+		await walk_direction(action.y, stop_for_guide)
 	else:
 		await approach_lever(main.rooms[main.rules.player])
 		main.player.aim_at(main.rooms[main.rules.player].lever.global_position + Vector3.UP * 0.8)

@@ -39,6 +39,8 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and event.physical_keycode == KEY_ESCAPE:
 		manor.release_pointer()
 		return
+	if manor.controls_locked():
+		return
 	if Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
 		return
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
@@ -101,6 +103,9 @@ func begin_interact() -> bool:
 	if hit.is_empty():
 		return false
 	var collider: Object = hit.collider
+	if collider.has_meta("coin_device"):
+		var device: ManorCoinDevice = collider.get_meta("coin_device")
+		return device.interact()
 	if collider.has_meta("door"):
 		var door: ManorDoor = collider.get_meta("door")
 		door.rattle()

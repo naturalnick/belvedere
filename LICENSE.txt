@@ -1,7 +1,7 @@
-Shifting Manor
+Belvedere
 Copyright (c) 2026 Puzzaholics LLC. All rights reserved.
 
-Shifting Manor's original game code, artwork, audio, designs, and other
+Belvedere's original game code, artwork, audio, designs, and other
 original content are proprietary to Puzzaholics LLC. No license is granted
 to redistribute, sublicense, sell, or create derivative works without
 prior written permission from Puzzaholics LLC.

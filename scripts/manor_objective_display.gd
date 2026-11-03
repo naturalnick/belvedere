@@ -46,8 +46,8 @@ func setup(game: Manor) -> void:
 		globe.position = radial + Vector3.DOWN * 0.13
 		progress_lights.append(globe)
 
-func refresh(objectives: ManorObjectives) -> void:
+func refresh(objectives: ManorObjectives, rules: ManorRules) -> void:
 	for id in lamps:
-		lamps[id].set_state(2 if objectives.completed.has(id) else (1 if objectives.active == id else 0))
+		lamps[id].set_state(1 if objectives.active == id else (2 if rules.board[id] == id else 0))
 	for i in progress_lights.size():
-		progress_lights[i].material_override = ManorGeometry.glowing_material("FFF0DA") if objectives.completed.has(ManorObjectives.ROOMS[i]) else ManorGeometry.material("595C59")
+		progress_lights[i].material_override = ManorGeometry.glowing_material("FFF0DA") if rules.board[ManorObjectives.ROOMS[i]] == ManorObjectives.ROOMS[i] else ManorGeometry.material("595C59")

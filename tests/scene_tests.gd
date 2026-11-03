@@ -10,6 +10,7 @@ func _initialize() -> void:
 func run() -> void:
 	main = load("res://scenes/manor.tscn").instantiate()
 	root.add_child(main)
+	main.start_play()
 	main.player.automated = true
 	await physics_frame
 	await physics_frame

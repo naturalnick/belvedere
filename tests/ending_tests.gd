@@ -15,15 +15,16 @@ func check(condition: bool, message: String) -> void:
 func run() -> void:
 	var main: Manor = load("res://scenes/manor.tscn").instantiate()
 	root.add_child(main)
+	main.start_play()
 	main.player.automated = true
 	await physics_frame
 	await physics_frame
 	check(main.objective_display.lamps.size() == 7 and not main.objective_display.lamps.has(7), "exactly seven pendants, excluding Foyer")
-	check(main.objective_display.progress_lights.size() == 7, "separate Foyer chandelier tracks seven objectives")
+	check(main.objective_display.progress_lights.size() == 7, "separate Foyer chandelier tracks seven room placements")
 	check(main.objective_display.lamps[main.objectives.active].state == 1, "active room has active pendant")
 	for lamp: ManorBeacon in main.objective_display.lamps.values():
 		check(not lamp.is_processing() and lamp.globe.scale == Vector3.ONE, "objective lamps have no continuous animation or scaling")
-		check((lamp.light.light_energy > 0) == (lamp.state == 1), "only the current objective room emits light")
+		check((lamp.light.light_energy > 0) == (lamp.state > 0), "target and in-place rooms emit light")
 	var front: ManorDoor
 	for door in main.rooms[7].doors:
 		if door.is_front:
@@ -33,13 +34,25 @@ func run() -> void:
 	check(not front.opened and front.gate.collision_layer == 1, "bonus door starts locked")
 	main.objectives.completed.assign([0, 1, 2, 3, 5, 6])
 	main.objectives.active = 8
+	main.rules.player = 8
 	main.refresh_progress()
-	for lamp: ManorBeacon in main.objective_display.lamps.values():
-		check(lamp.light.light_energy == 0, "completed room lamps turn off; progress remains in Foyer")
-	check(main.objectives.main_won and not main.won, "main win can happen independently of bonus")
-	check(main.controls_locked() and main.play_gate.mode == "victory", "main victory stops input and offers explicit finish")
-	check(not front.opened and not main.carpet.visible and not main.ending.active, "main win does not unlock bonus exit")
-	check(main.play_gate.primary.has_focus() and main.play_gate.primary.accessibility_name == "Continue", "victory offers a named keyboard-focusable continue icon")
+	for id in main.objective_display.lamps:
+		var lamp: ManorBeacon = main.objective_display.lamps[id]
+		check(lamp.state == (2 if main.rules.board[id] == id else 0), "completed room lamp tracks placement, not earned progress")
+	check(main.objectives.all_completed and not main.won, "all coins can be earned independently of assembled house")
+	check(not main.controls_locked() and not main.play_gate.visible, "earning the last coin does not end play")
+	check(not front.opened and not main.carpet.visible and not main.ending.active, "coin objectives do not unlock bonus exit")
+	main.coins.award(ManorObjectives.ROOMS)
+	while not main.coins.pending.is_empty():
+		main.coin_hud._process(ManorCoinHUD.PRESENT_TIME)
+	for i in 7:
+		check(main.coin_device.interact(), "device accepts coin %d" % (i + 1))
+		while main.coin_device.busy:
+			await process_frame
+	check(main.controls_locked() and main.play_gate.mode == "victory", "seventh deposit opens the trophy ending")
+	check(main.play_gate.title_label.text == "Thanks for Playing" and main.play_gate.trophy_view.visible, "ending presents a trophy and Thanks for Playing")
+	check(not front.opened and not main.won, "trophy prize leaves the original door locked")
+	check(main.play_gate.primary.has_focus() and main.play_gate.primary.text == "Keep Playing", "ending offers a keyboard-focusable Keep Playing button")
 	var accept := InputEventKey.new()
 	accept.keycode = KEY_ENTER
 	accept.physical_keycode = KEY_ENTER
@@ -50,7 +63,7 @@ func run() -> void:
 	release.pressed = false
 	Input.parse_input_event(release)
 	await process_frame
-	check(not main.controls_locked(), "Enter continues after main victory")
+	check(not main.controls_locked(), "Enter continues after trophy victory")
 	main.rules.board = PackedInt32Array(ManorRules.HOME)
 	for id in main.rooms:
 		main.rooms[id].position = ManorGeometry.center(id)
@@ -76,7 +89,18 @@ func run() -> void:
 	await create_timer(11.6).timeout
 	check(main.at_title and main.play_gate.mode == "title", "finale returns to title")
 	check(not main.ending.is_processing(), "flower updates stop at title")
-	print("Endings: %d checks, %d failures" % [checks, failures])
 	main.queue_free()
 	await process_frame
+	var fresh: Manor = load("res://scenes/manor.tscn").instantiate()
+	root.add_child(fresh)
+	fresh.start_play()
+	fresh.player.automated = true
+	check(fresh.coins.inserted == 0 and fresh.coins.available == 0 and fresh.coins.pending.is_empty() and fresh.objectives.active == 8, "a fresh game resets the wallet, device and presentation queue")
+	fresh.rules.board = PackedInt32Array(ManorRules.HOME)
+	fresh.refresh_progress()
+	check(fresh.won and fresh.coins.awarded.size() == 7, "assembling the house first grants all outstanding room coins")
+	check(not fresh.play_gate.visible and fresh.coins.inserted == 0, "house-first ending never bypasses the trophy's coin deposits")
+	fresh.queue_free()
+	await process_frame
+	print("Endings: %d checks, %d failures" % [checks, failures])
 	quit(1 if failures else 0)
