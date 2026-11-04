@@ -3,7 +3,9 @@ extends Node
 func run(driver: Node) -> void:
 	var main: Manor = driver.main
 	var binoculars := main.binoculars
-	driver._check(binoculars.owned, "binoculars are owned at the start of this testing pass")
+	driver._check(not binoculars.owned, "binoculars start unowned")
+	# Grant them for the viewing shots; the safe reward is captured afterwards and still presents once.
+	binoculars.owned = true
 	await get_tree().create_timer(0.18).timeout
 	var original_view := main.player.camera.global_transform
 	var original_fov := main.player.camera.fov

@@ -33,8 +33,6 @@ var framed_viewport := Vector2.ZERO
 
 func setup(game: Manor, hud_layer: CanvasLayer) -> void:
 	manor = game
-	# Temporary first-pass testing grant; the flag exercises the actual safe unlock path.
-	owned = not OS.get_cmdline_user_args().has("--earn-binoculars")
 	overview_camera = Camera3D.new()
 	overview_camera.name = "ManorOverview"
 	overview_camera.projection = Camera3D.PROJECTION_ORTHOGONAL

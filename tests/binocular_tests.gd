@@ -33,7 +33,7 @@ func run() -> void:
 	var item := main.binoculars
 	item.set_process(false)
 	item.acquired.connect(func() -> void: acquisitions += 1)
-	check(item.owned == not OS.get_cmdline_user_args().has("--earn-binoculars"), "testing grant can be disabled to earn binoculars normally")
+	check(not item.owned, "binoculars start unowned until the safe opens")
 	check(not item.toggle(), "title cannot activate binoculars")
 	main.start_play()
 	main.player.automated = true

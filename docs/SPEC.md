@@ -18,7 +18,7 @@ This file holds the current design and the reasons behind non-obvious choices. E
 - Default launch = seed A `[6,2,5,0,1,3,7,-1,8]`. The game opens on the Bedroom wall title. Other seeds keep their original spawns, 1.7 m behind the lever facing the gap.
 - `--seed=B|C|random|<index>` picks from `data/accepted_14_20.json`: 1,816 states that are 14–20 optimal slides from solved, with the player's room having a doorway open to the gap. The spec's random-walk scramble was replaced because simulation (`tools/sim/`) showed random walks barely leave solved. Only 7% of boards are reachable; there are no dead states.
 - `--classic` = the original single-goal jam puzzle with a perimeter barrier (random accepted start unless `--seed`). `--courtyard` = archived six-room/three-gap experiment. Both keep their tests; don't extend them.
-- `--invert-y`, `--earn-binoculars` (see Binoculars), `--web-entry` (exercises the web play-gesture path natively).
+- `--invert-y`, `--web-entry` (exercises the web play-gesture path natively).
 
 ## Rooms and furnishings
 Accent colours: Bedroom dusty blue, Bathroom sea-glass, Study deep green, Kitchen mustard, Living terracotta, Dining plum, Foyer cream/wood with a checker floor, Laundry slate blue. The accent goes on one wall and on the door casings, so a room can be identified through any neighbour's glass.
@@ -42,7 +42,7 @@ All eight rooms home opens the red front door (3.5 s; it blocks until fully open
 - Clues: 3 apples on the Kitchen prep table, 2 separate bananas on the lower shelf of Dining's china cabinet, 4 oranges on Living's 0.90 m sideboard, 1 pear on the Bedroom dresser. Each clue renders only on pixels whose camera ray enters its own room through a window or a fully closed glass door. It is never visible indoors, through open or moving doors, or from above. No outline or shadow pass, which would leak it. Fruit stays out of static batches so its mask follows slides.
 
 ## Binoculars
-B raises them along one arc, cuts through dark to a north-up orthographic overview of the live manor, and B again returns to the exact first-person view. Overview only: room-coloured roofs replace ceilings, carrying home-order numbers 1 2 3 / 4 · 5 / 6 7 8 that move with the rooms. Door lintels are hidden. Window-wall tops get black 0.34 m borders; doorways and the front door get none. A small cream dot marks the player. Shadows stay on. Movement, interaction and slides are locked while viewing. Testing grant: the player owns the binoculars from the start, and `--earn-binoculars` disables that. The safe still presents them once either way.
+B raises them along one arc, cuts through dark to a north-up orthographic overview of the live manor, and B again returns to the exact first-person view. Overview only: room-coloured roofs replace ceilings, carrying home-order numbers 1 2 3 / 4 · 5 / 6 7 8 that move with the rooms. Door lintels are hidden. Window-wall tops get black 0.34 m borders; doorways and the front door get none. A small cream dot marks the player. Shadows stay on. Movement, interaction and slides are locked while viewing. The player starts without them; opening the Study safe is the only way to earn them.
 
 ## Exterior and fall
 - A meadow with low hills. 15 near trees, eight mixed broadleaf/pine groves plus four lone trees, and a hazy 88–104 m treeline with a gap behind the rainbow. All are composed for views from the house. Keep the Bedroom window tree at (-17, -6.9), the current minimum clearance from the house, and an open south carpet approach.
@@ -76,7 +76,6 @@ Camera shake (and its setting); pulsing, scaling or animated objective indicator
 ## Open items
 - A five-person human playtest is still owed. The original pass bar: at least 4/5 testers make their first slide within 90 s and solve in 5–20 minutes. The bot proxy in `docs/FUNTEST.md` covers classic mode only.
 - The objective guidance has not been validated with human players.
-- The binocular testing grant is temporary.
 
 ## Exports and notices
 - Web: a local itch zip via `tools/build_itch.sh`, never uploaded. macOS Unsigned Test preset: bundle id `com.puzzaholics.shiftingmanor`, signing and notarization off, local testing only. No production signing identity exists. `apple-identity.json` + `tools/check_export_identity.py` are the read-only baseline and preflight.
