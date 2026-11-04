@@ -46,6 +46,7 @@ var finale_motion: Tween
 var at_title := false
 var recovering := false
 var fall_recovery: ManorFallRecovery
+var bed_sleep: ManorBedSleep
 var audio: ManorAudio
 var pointer_watch: ManorPointerWatch
 
@@ -75,6 +76,10 @@ func _ready() -> void:
 		return
 	if not classic:
 		rules.courtyards = true
+	bed_sleep = ManorBedSleep.new()
+	bed_sleep.manor = self
+	bed_sleep.opening_rules = rules.copy()
+	add_child(bed_sleep)
 	_build_world()
 	for id in rules.board:
 		if id == -1:

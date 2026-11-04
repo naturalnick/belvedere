@@ -27,17 +27,21 @@ func run() -> void:
 	driver.started = Time.get_ticks_msec()
 	main.rules.player = 0
 	main.player.position = room.position + Vector3(0, 0.02, 1.2)
-	for i in range(1, 25):
-		var angle := i * TAU / 24.0
+	for i in range(25):
+		var angle := -PI / 2 + i * PI / 24.0
 		var at := room.position + Vector3(sin(angle), 0, cos(angle)) * 0.75
 		await driver.walk_to(at)
-		check(Vector2(main.player.position.x - at.x, main.player.position.z - at.z).length() < 0.15, "lever ring remains walkable around the centered bed")
-	for direction in ManorGeometry.DIRECTIONS:
+		check(Vector2(main.player.position.x - at.x, main.player.position.z - at.z).length() < 0.15, "east, south and west lever approaches remain walkable")
+	for direction in [Vector3.RIGHT, Vector3.BACK, Vector3.LEFT]:
 		await driver.walk_to(room.position + direction * 0.75)
 		await driver.walk_to(room.position + direction * 2.5)
-		check(main.rules.player == 0, "all four side approaches remain inside room")
+		check(main.rules.player == 0, "door and west-window approaches remain inside room")
 		await driver.walk_to(room.position + direction * 0.75)
 		await driver.walk_to(room.position + Vector3(0, 0, 1.2))
+	await driver.walk_to(room.position + Vector3(-2.0, 0, 0))
+	await driver.walk_to(room.position + Vector3(-2.0, 0, -2.0))
+	check(main.player.position.distance_to(room.position + Vector3(-2.0, 0, -2.0)) < 0.15, "west aisle reaches the north windows beside the bed and table")
+	await driver.walk_to(room.position + Vector3(-2.0, 0, 0))
 	var state := ManorRules.new([1, 2, 3, 0, -1, 5, 6, 7, 8], 0)
 	state.courtyards = true
 	main.rules = state

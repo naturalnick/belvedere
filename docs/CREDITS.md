@@ -4,7 +4,7 @@
 - Fondamento Regular: Brian J. Bonislawsky / Astigmatic (AOETI), © 2011, SIL Open Font License 1.1. Source: https://github.com/google/fonts/tree/main/ofl/fondamento . Bundled font and complete license: `assets/fonts/Fondamento-Regular.ttf`, `assets/fonts/Fondamento-OFL.txt`. Used for all game text.
 - Godot Engine 4.7: MIT license, https://godotengine.org/license/ . Third-party notices: https://godotengine.org/license/third-party/ .
 - Run, headless-test, capture, and local Web packaging workflows adapted from Nick's Castabout project with his authorization. No Castabout game art, fonts, music, or sound files are used.
-- Bedroom wall grid, objective pendants, chandelier, Bel coin tokens, HUD artwork and original stamped bell emblem (`assets/bell_engraving.svg`), trophy/cabinet, solid front door, rainbow and flower mesh: original procedural geometry and drawing code created for Belvedere.
+- Bedroom wall grid, objective pendants, chandelier, Bel coin tokens, HUD artwork and original stamped bell emblem (`assets/bell_engraving.svg`), inverted-bell trophy/cabinet, solid front door, rainbow and flower mesh: original procedural geometry and drawing code created for Belvedere.
 - Footstep, wood impact and plank recordings: Kenney, “Impact Sounds”, CC0 1.0, https://kenney.nl/assets/impact-sounds .
 - Shoe footstep, door, creak, cloth, coin, metal click and latch recordings: Kenney, “RPG Audio”, CC0 1.0, https://kenney.nl/assets/rpg-audio .
 - Birdsong: Magnesus, “Forest birds - ambient seamless loop”, CC0 1.0, https://freesound.org/people/Magnesus/sounds/723913/ .

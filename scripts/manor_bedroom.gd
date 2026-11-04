@@ -7,11 +7,11 @@ func _ready() -> void:
 	var linen := ManorGeometry.material("E7E1D4", 0.006)
 	var blue := ManorGeometry.material("6E86A8", 0.006)
 	var brass := ManorGeometry.material("B39459", 0.003)
-	ManorGeometry.box(self, Vector3(2.0, 0.006, 2.9), Vector3(-1.60, 0.004, -1.45), ManorGeometry.material("8FA3BF", 0.0))
+	ManorGeometry.box(self, Vector3(4.0, 0.006, 2.9), Vector3(0, 0.004, -1.45), ManorGeometry.material("8FA3BF", 0.0))
 	var bed := Node3D.new()
 	bed.name = "Bed"
 	add_child(bed)
-	bed.position = Vector3(-1.60, 0, -1.90)
+	bed.position = Vector3(0, 0, -1.90)
 	for x in [-0.61, 0.61]:
 		for z in [-0.88, 0.88]:
 			ManorGeometry.box(bed, Vector3(0.09, 0.23, 0.09), Vector3(x, 0.115, z), wood)
@@ -21,11 +21,12 @@ func _ready() -> void:
 	ManorGeometry.box(bed, Vector3(1.52, 0.65, 0.10), Vector3(0, 0.50, -1.0), wood)
 	for x in [-0.34, 0.34]:
 		ManorGeometry.box(bed, Vector3(0.58, 0.10, 0.34), Vector3(x, 0.60, -0.65), linen)
-	ManorGeometry.barrier(bed, Vector3(1.52, 0.75, 2.12), Vector3(0, 0.375, 0))
+	var bed_hit := ManorGeometry.barrier(bed, Vector3(1.52, 0.75, 2.12), Vector3(0, 0.375, 0))
+	bed_hit.set_meta("bed", true)
 	var bedside := Node3D.new()
 	bedside.name = "BedsideTable"
 	add_child(bedside)
-	bedside.position = Vector3(-2.70, 0, -2.60)
+	bedside.position = Vector3(-1.10, 0, -2.60)
 	ManorGeometry.box(bedside, Vector3(0.48, 0.55, 0.50), Vector3(0, 0.275, 0), wood)
 	ManorGeometry.box(bedside, Vector3(0.40, 0.16, 0.025), Vector3(0, 0.39, 0.265), ManorGeometry.material("987153", 0.004))
 	ManorGeometry.cylinder(bedside, 0.018, 0.035, Vector3(0, 0.39, 0.30), brass).rotation.x = PI / 2

@@ -6,6 +6,7 @@ var primary: Button
 var secondary: Button
 var sound_button: Button
 var title_label: Label
+var sleep_hint: Label
 var settings_button: Button
 var settings_panel: ManorSettingsPanel
 var controls_button: Button
@@ -26,6 +27,13 @@ func _ready() -> void:
 	title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title_label.add_theme_color_override("font_color", Color("EFE4D2"))
 	add_child(title_label)
+	sleep_hint = Label.new()
+	sleep_hint.text = "Sleep to reset the rooms.\nKeep your tokens and items."
+	sleep_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	sleep_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	sleep_hint.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	sleep_hint.add_theme_color_override("font_color", Color("D2C5AF"))
+	add_child(sleep_hint)
 	primary = _icon_button()
 	secondary = _icon_button()
 	controls_button = _icon_button()
@@ -50,7 +58,7 @@ func _ready() -> void:
 		_update_sound_accessibility()
 		queue_redraw())
 	primary.pressed.connect(_activate_primary)
-	secondary.pressed.connect(manor.return_to_title)
+	secondary.pressed.connect(_activate_secondary)
 	_build_trophy_view()
 	resized.connect(_layout)
 	_layout()
@@ -59,7 +67,7 @@ func show_mode(value: String) -> void:
 	mode = value
 	show()
 	_layout()
-	ManorInkButton.focus_quietly(primary)
+	ManorInkButton.focus_quietly(secondary if mode == "sleep" else primary)
 
 func _draw() -> void:
 	var center := size / 2.0
@@ -68,7 +76,7 @@ func _draw() -> void:
 		draw_rect(Rect2(Vector2.ZERO, size), Color(0.10, 0.075, 0.06, 0.97 if mode == "title" else 0.9))
 	if mode in ["settings", "controls"]:
 		return
-	if mode != "victory" and manor.wall_title == null:
+	if mode in ["title", "pause"] and manor.wall_title == null:
 		for row in 3:
 			for col in 3:
 				if row == 1 and col == 1:
@@ -122,6 +130,12 @@ func _unhandled_key_input(event: InputEvent) -> void:
 		else:
 			_close_settings()
 		get_viewport().set_input_as_handled()
+	elif visible and mode == "sleep" and ManorPlayer.is_pause_press(event):
+		if resumes_from(event.physical_keycode):
+			manor.resume_play()
+		else:
+			show_mode("pause")
+		get_viewport().set_input_as_handled()
 	elif visible and mode == "pause" and ManorPlayer.is_pause_press(event) and resumes_from(event.physical_keycode):
 		manor.resume_play()
 		get_viewport().set_input_as_handled()
@@ -140,6 +154,7 @@ func _layout() -> void:
 	primary.visible = mode not in ["settings", "controls"]
 	settings_button.visible = mode in ["title", "pause"]
 	var won := mode == "victory"
+	var sleep_prompt := mode == "sleep"
 	var wall_menu := mode == "title" and manor.wall_title != null and manor.at_title
 	var footer_width := minf(140, (size.x - 48) / 3)
 	# On the wall, ink lettering must clear the dark wardrobe edge at the right of the view.
@@ -154,13 +169,17 @@ func _layout() -> void:
 		manor.wall_title.lettering.visible = wall_menu
 	var ui_scale := minf(1.0, minf(size.y / 560.0, size.x / 320.0))
 	primary.text = "Keep Playing" if won else ("Play" if mode == "title" else "Resume")
-	secondary.text = "Quit to Menu" if won else ""
+	if sleep_prompt:
+		primary.text = "Sleep"
+	secondary.text = "Quit to Menu" if won else ("Cancel" if sleep_prompt else "")
 	secondary.size = Vector2(240, 48) * ui_scale
 	secondary.add_theme_font_size_override("font_size", int(22 * ui_scale))
 	_ink(secondary, false)
 	_ink(primary, wall_menu)
 	var primary_font := int(22 * ui_scale) if won else int(32 * ui_scale)
 	var primary_center := size / 2.0 + (Vector2(0, 130) * ui_scale if won else Vector2(0, 70 if mode == "title" else 20))
+	if sleep_prompt:
+		primary_center = size / 2.0 + Vector2(0, 35) * ui_scale
 	if wall_menu:
 		var wall := manor.wall_title
 		var camera := manor.player.camera
@@ -173,21 +192,26 @@ func _layout() -> void:
 	primary.add_theme_font_size_override("font_size", primary_font)
 	primary.size = Vector2(240 * ui_scale, 48 * ui_scale) if won else Vector2(primary.get_theme_font("font").get_string_size(primary.text, HORIZONTAL_ALIGNMENT_LEFT, -1, primary_font).x + primary_font * 2.4, primary_font * 1.6)
 	primary.position = primary_center - primary.size / 2.0
-	secondary.position = size / 2.0 + Vector2(0, 188) * ui_scale - secondary.size / 2.0
-	secondary.visible = mode == "victory"
+	secondary.position = size / 2.0 + Vector2(0, 97 if sleep_prompt else 188) * ui_scale - secondary.size / 2.0
+	secondary.visible = won or sleep_prompt
 	sound_button.visible = mode in ["title", "pause"]
-	title_label.visible = mode in ["title", "victory"] and not wall_menu
-	title_label.text = "Thanks for Playing" if won else "Belvedere"
-	title_label.position = Vector2(16, size.y / 2.0 - (218 * ui_scale if won else 36))
+	title_label.visible = mode in ["title", "victory", "sleep"] and not wall_menu
+	title_label.text = "Thanks for Playing" if won else ("Start over?" if sleep_prompt else "Belvedere")
+	title_label.position = Vector2(16, size.y / 2.0 - (218 * ui_scale if won else (125 * ui_scale if sleep_prompt else 36)))
 	title_label.size = Vector2(maxf(0, size.x - 32), 48)
 	title_label.add_theme_font_size_override("font_size", int(32 * ui_scale) if won else mini(40, maxi(20, int((size.x - 32) / 9.0))))
+	sleep_hint.visible = sleep_prompt
+	sleep_hint.add_theme_font_size_override("font_size", maxi(16, int(20 * ui_scale)))
+	var hint_width := minf(520, size.x - 48)
+	sleep_hint.position = Vector2((size.x - hint_width) / 2, size.y / 2 - 65 * ui_scale)
+	sleep_hint.size = Vector2(hint_width, 0)
 	trophy_view.visible = won
 	trophy_view.size = Vector2.ONE * 280 * ui_scale
 	trophy_view.position = size / 2.0 + Vector2(-140, -170) * ui_scale
 	trophy_viewport.render_target_update_mode = SubViewport.UPDATE_ONCE if won else SubViewport.UPDATE_DISABLED
 	_update_sound_accessibility()
 	primary.accessibility_name = primary.text
-	secondary.accessibility_name = "Quit to Menu"
+	secondary.accessibility_name = secondary.text
 	queue_redraw()
 
 func _ink(button: ManorInkButton, on_wall: bool) -> void:
@@ -234,6 +258,9 @@ func _build_trophy_view() -> void:
 func _activate_primary() -> void:
 	if starting:
 		return
+	if mode == "sleep":
+		manor.bed_sleep.sleep()
+		return
 	if mode != "title":
 		manor.resume_play()
 		return
@@ -250,6 +277,12 @@ func _activate_primary() -> void:
 	if manor.wall_title != null:
 		transition.tween_property(manor.wall_title.lettering, "modulate:a", 0.0, START_FADE_TIME)
 	transition.chain().tween_callback(_finish_start)
+
+func _activate_secondary() -> void:
+	if mode == "sleep":
+		manor.resume_play()
+	else:
+		manor.return_to_title()
 
 func _finish_start() -> void:
 	if not manor.fresh_title:

@@ -25,6 +25,7 @@ var total_spawned := 0
 var spawn_clock := 0.0
 var rng := RandomNumberGenerator.new()
 var ground_y := -0.02
+var reveal_motion: Tween
 
 func _ready() -> void:
 	set_process(false)
@@ -101,9 +102,24 @@ func activate() -> void:
 	active = true
 	set_process(true)
 	rainbow.show()
-	var fade := create_tween().set_parallel(true)
+	reveal_motion = create_tween().set_parallel(true)
 	for mesh: MeshInstance3D in rainbow.get_children():
-		fade.tween_property(mesh.material_override, "shader_parameter/reveal", 1.0, 2.5)
+		reveal_motion.tween_property(mesh.material_override, "shader_parameter/reveal", 1.0, 2.5)
+
+func reset() -> void:
+	active = false
+	set_process(false)
+	if reveal_motion != null:
+		reveal_motion.kill()
+	rainbow.hide()
+	for mesh: MeshInstance3D in rainbow.get_children():
+		mesh.material_override.set_shader_parameter("reveal", 0.0)
+	for label in [title, credit, thanks]:
+		label.hide()
+	spawned = 0
+	total_spawned = 0
+	spawn_clock = 0.0
+	flowers.multimesh.visible_instance_count = 0
 
 func _process(delta: float) -> void:
 	if not active or player == null or player.manor.play_gate.visible or player.manor.at_title:

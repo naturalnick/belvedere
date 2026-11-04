@@ -26,6 +26,10 @@ run_checked --script res://tests/pointer_tests.gd
 run_checked --script res://tests/pointer_tests.gd -- --web-entry
 run_checked --script res://tests/settings_tests.gd
 run_checked --script res://tests/bedroom_tests.gd
+run_checked --script res://tests/bed_sleep_tests.gd
+run_checked --script res://tests/bed_sleep_tests.gd -- --web-entry
+run_checked --script res://tests/bed_sleep_tests.gd -- --classic --seed=random
+run_checked --script res://tests/bed_sleep_tests.gd -- --courtyard
 run_checked --script res://tests/furnishing_tests.gd
 run_checked --script res://tests/plan_tests.gd
 run_checked --script res://tests/shadow_tests.gd

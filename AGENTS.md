@@ -10,7 +10,7 @@ Kept in `tools/`; update this list when the scripts change.
 - Stopwatch playtest (starts on the lawn beside the reachable hatch): `tools/try_stopwatch.sh`
 - Rule, solver and scene tests (headless): `tools/test.sh`
 - Classic-mode bots and geometry probes (headless): `tools/fun_test.sh` → `docs/FUNTEST.md`
-- Screenshots (real window): `tools/capture.sh [title|coins|safe|binoculars|stopwatch|fall|trees|exterior|furnishings|stage3|objectives|single-gap|courtyard|solve|review] [seed] [out_dir] [extra flags]`; furnishings accepts `--rooms=5,7`.
+- Screenshots (real window): `tools/capture.sh [title|coins|safe|binoculars|stopwatch|sleep|fall|trees|exterior|furnishings|stage3|objectives|single-gap|courtyard|solve|review] [seed] [out_dir] [extra flags]`; furnishings accepts `--rooms=5,7`.
 - QR flicker check: `tools/check_qr.sh`. Door close-up pixel check: `tools/check_doors.sh [out_dir]`. Render benchmark: `tools/profile.sh [output_json]`.
 - Web build (local zip, never uploaded): `tools/build_itch.sh`
 - Underside QR generate/verify: `tools/gen_qr.sh` (macOS)
@@ -19,7 +19,7 @@ Kept in `tools/`; update this list when the scripts change.
 - Regenerate `assets/audio/` from `tools/audio_sources/` (needs ffmpeg + oggenc): `tools/gen_audio.sh`
 
 ## Rules
-- Visible text is limited to: the title "Belvedere" and "Play"; short functional title/pause/settings/controls labels (Binoculars — B and Stopwatch — T only while owned); the binocular reward's "Binoculars" and "Press B to use"; the token reward's "Token" and "Collect them all"; the stopwatch reward's "Stopwatch", "Shows the fewest shifts needed for assembly." and "Press T to use"; the stopwatch's number-only readout; the coin HUD count; the cabinet's number-only readout; Thanks for Playing with Keep Playing / Quit to Menu; the eight overview roof numbers; and the three ending lines. No other instructions, room names, counters or taglines. All text uses bundled Fondamento Regular.
+- Visible text is limited to: the title "Belvedere" and "Play"; short functional title/pause/settings/controls labels (Binoculars — B and Stopwatch — T only while owned); the binocular reward's "Binoculars" and "Press B to use"; the token reward's "Token" and "Collect them all"; the stopwatch reward's "Stopwatch", "Shows the fewest shifts needed for assembly." and "Press T to use"; the stopwatch's number-only readout; the bed confirmation’s “Start over?”, “Sleep to reset the rooms. Keep your tokens and items.”, “Sleep” and “Cancel”; the coin HUD count; the cabinet's number-only readout; Thanks for Playing with Keep Playing / Quit to Menu; the eight overview roof numbers; and the three ending lines. No other instructions, room names, counters or taglines. All text uses bundled Fondamento Regular.
 - Audio stays quiet and physical, within the scope listed in SPEC.
 - All art and audio must be original or CC0, with an entry in `docs/CREDITS.md`.
 - Never push or publish.

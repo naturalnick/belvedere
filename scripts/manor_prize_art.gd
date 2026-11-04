@@ -30,40 +30,78 @@ static func trophy(parent: Node3D) -> Node3D:
 	ManorGeometry.cylinder(result, 0.12, 0.035, Vector3(0, 0.072, 0), gold)
 	ManorGeometry.cylinder(result, 0.035, 0.14, Vector3(0, 0.155, 0), gold)
 	var cup := MeshInstance3D.new()
-	var bowl := CylinderMesh.new()
-	bowl.top_radius = 0.19
-	bowl.bottom_radius = 0.065
-	bowl.height = 0.25
-	bowl.cap_top = false
-	bowl.radial_segments = 32
-	cup.mesh = bowl
+	cup.name = "BellCup"
+	cup.mesh = _bell_cup()
 	cup.material_override = gold
-	cup.position.y = 0.335
 	result.add_child(cup)
-	ManorGeometry.cylinder(result, 0.178, 0.012, Vector3(0, 0.442, 0), ManorGeometry.material("8D642B", 0.0))
-	for side in [-1, 1]:
+	for side in [-1.0, 1.0]:
 		var handle := MeshInstance3D.new()
-		var ring := TorusMesh.new()
-		ring.inner_radius = 0.075
-		ring.outer_radius = 0.098
-		ring.rings = 24
-		ring.ring_segments = 8
-		handle.mesh = ring
+		handle.name = "LeftHandle" if side < 0 else "RightHandle"
+		handle.mesh = _trophy_handle(side)
 		handle.material_override = gold
-		handle.rotation.x = PI / 2
-		handle.position = Vector3(side * 0.165, 0.335, 0)
 		result.add_child(handle)
 	var rim := MeshInstance3D.new()
 	var ring := TorusMesh.new()
-	ring.inner_radius = 0.178
-	ring.outer_radius = 0.195
+	ring.inner_radius = 0.194
+	ring.outer_radius = 0.211
 	ring.rings = 32
 	ring.ring_segments = 8
 	rim.mesh = ring
 	rim.material_override = bright
-	rim.position.y = 0.46
+	rim.position.y = 0.456
 	result.add_child(rim)
 	return result
+
+static func _trophy_handle(side: float) -> ArrayMesh:
+	var start := Vector3(side * 0.160, 0.418, 0)
+	var upper := Vector3(side * 0.320, 0.478, 0)
+	var lower := Vector3(side * 0.290, 0.245, 0)
+	var end := Vector3(side * 0.095, 0.275, 0)
+	var surface := SurfaceTool.new()
+	surface.begin(Mesh.PRIMITIVE_TRIANGLES)
+	for step in 25:
+		var t := step / 24.0
+		var u := 1.0 - t
+		var center := start * u * u * u + upper * 3 * u * u * t + lower * 3 * u * t * t + end * t * t * t
+		var tangent := ((upper - start) * 3 * u * u + (lower - upper) * 6 * u * t + (end - lower) * 3 * t * t).normalized()
+		var across := Vector3(-tangent.y, tangent.x, 0)
+		for segment in 8:
+			var angle := segment * TAU / 8
+			var normal := Vector3.BACK * cos(angle) + across * sin(angle)
+			surface.set_normal(normal)
+			surface.add_vertex(center + normal * 0.012)
+	for step in 24:
+		for segment in 8:
+			var a := step * 8 + segment
+			var b := step * 8 + (segment + 1) % 8
+			for index in [a, b, a + 8, b, b + 8, a + 8]:
+				surface.add_index(index)
+	return surface.commit()
+
+static func _bell_cup() -> ArrayMesh:
+	# Closed outer/inner profile: the flared bell mouth has a real hollow interior.
+	var profile: Array[Vector2] = [
+		Vector2(0, 0.210), Vector2(0.045, 0.210), Vector2(0.071, 0.225),
+		Vector2(0.085, 0.255), Vector2(0.095, 0.300), Vector2(0.110, 0.350),
+		Vector2(0.140, 0.405), Vector2(0.176, 0.435), Vector2(0.205, 0.450),
+		Vector2(0.205, 0.459), Vector2(0.191, 0.459), Vector2(0.187, 0.450),
+		Vector2(0.164, 0.435), Vector2(0.127, 0.405), Vector2(0.097, 0.350),
+		Vector2(0.081, 0.300), Vector2(0.071, 0.264), Vector2(0.052, 0.242),
+		Vector2(0, 0.240),
+	]
+	var surface := SurfaceTool.new()
+	surface.begin(Mesh.PRIMITIVE_TRIANGLES)
+	for p in range(profile.size() - 1):
+		for segment in 32:
+			var corners: Array[Vector3] = []
+			for pair: Vector2i in [Vector2i(p, segment), Vector2i(p, segment + 1), Vector2i(p + 1, segment), Vector2i(p + 1, segment + 1)]:
+				var angle := pair.y * TAU / 32
+				var section := profile[pair.x]
+				corners.append(Vector3(cos(angle) * section.x, section.y, sin(angle) * section.x))
+			for index in [0, 1, 2, 1, 3, 2]:
+				surface.add_vertex(corners[index])
+	surface.generate_normals()
+	return surface.commit()
 
 static func coin(parent: Node3D) -> Node3D:
 	var result := Node3D.new()

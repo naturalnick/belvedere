@@ -128,6 +128,8 @@ func begin_interact() -> bool:
 	if hit.is_empty():
 		return false
 	var collider: Object = hit.collider
+	if collider.has_meta("bed"):
+		return manor.bed_sleep.interact()
 	if collider.has_meta("foundation_hatch"):
 		return collider.get_meta("foundation_hatch").interact()
 	if collider.has_meta("safe"):
