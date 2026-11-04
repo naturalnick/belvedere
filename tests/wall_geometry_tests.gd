@@ -47,7 +47,8 @@ func collect(node: Node, boxes: Array[Dictionary]) -> void:
 	if node is Node3D and not node.is_visible_in_tree():
 		return
 	var mesh: Mesh = node.mesh if node is MeshInstance3D else (node.multimesh.mesh if node is MultiMeshInstance3D else null)
-	if mesh is BoxMesh and node.material_override is ShaderMaterial:
+	# Outline shells deliberately coincide with the geometry they ink.
+	if mesh is BoxMesh and node.material_override is ShaderMaterial and not ManorStaticBatch.is_outline_shell(node):
 		# Lever geometry is unrelated; this fixture isolates architecture and joinery.
 		var ancestor := node.get_parent()
 		var room: ManorRoom

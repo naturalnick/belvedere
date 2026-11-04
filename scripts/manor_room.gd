@@ -72,6 +72,7 @@ func build(id: int) -> void:
 	var furniture: Node3D = ManorBedroom.new() if id == 0 else ManorFurnishings.new(id)
 	add_child(furniture)
 	ManorStaticBatch.combine(furniture)
+	ManorSunReach.trim_casters(self, furniture)
 	# These pieces change visibility independently in the binocular overview.
 	var skip: Array[Node] = [lever, furniture, ceiling, overview_edges, overview_roof]
 	skip.append_array(door_headers)

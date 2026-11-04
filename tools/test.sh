@@ -24,6 +24,7 @@ run_checked --script res://tests/title_tests.gd
 run_checked --script res://tests/settings_tests.gd
 run_checked --script res://tests/bedroom_tests.gd
 run_checked --script res://tests/furnishing_tests.gd
+run_checked --script res://tests/shadow_tests.gd
 run_checked --script res://tests/vegetation_tests.gd
 run_checked --script res://tests/slide_motion_tests.gd
 run_checked --script res://tests/door_motion_tests.gd

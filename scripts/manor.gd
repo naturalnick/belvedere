@@ -295,7 +295,7 @@ func _build_world() -> void:
 	world.environment = environment
 	add_child(world)
 	var sun := DirectionalLight3D.new()
-	sun.rotation_degrees = Vector3(-28, 235, 0)
+	sun.rotation_degrees = ManorGeometry.SUN_ROTATION_DEGREES
 	sun.light_color = Color("FFD9A8")
 	sun.light_energy = 1.6
 	sun.shadow_enabled = true

@@ -4,11 +4,16 @@ extends RefCounted
 const PITCH := 6.25
 const DIRECTIONS := [Vector3.FORWARD, Vector3.RIGHT, Vector3.BACK, Vector3.LEFT]
 const ACCENTS := {0: "7D97B8", 1: "8FC1B0", 2: "3F6B4F", 3: "D8A73A", 5: "C46A4A", 6: "7A4A6E", 7: "E6D3B0", 8: "5F7891"}
+# Fixed late-afternoon sun; rooms only translate, so per-room sun reach is precomputed.
+const SUN_ROTATION_DEGREES := Vector3(-28, 235, 0)
 const FLOORS := {0: "B07A4E", 1: "E8E6DF", 2: "6E4A33", 3: "C47A54", 5: "B07A4E", 6: "8E4E36", 7: "A8724A", 8: "B8B4AA"}
 static var materials: Dictionary[String, Material] = {}
 static var boxes: Dictionary[Vector3, BoxMesh] = {}
 static var cylinders: Dictionary[Vector2, CylinderMesh] = {}
 static var grain: NoiseTexture2D
+
+static func to_sun() -> Vector3:
+	return Basis.from_euler(SUN_ROTATION_DEGREES * PI / 180.0).z
 
 static func center(slot: int) -> Vector3:
 	return Vector3((slot % 3 - 1) * PITCH, 0, (slot / 3 - 1) * PITCH)

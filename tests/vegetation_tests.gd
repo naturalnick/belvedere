@@ -17,45 +17,63 @@ func run() -> void:
 	root.add_child(meadow)
 	meadow.build(-0.04, true)
 	await process_frame
-	var trees := meadow.find_children("*", "ManorTree", true, false)
-	check(trees.size() == 59, "expanded layout contains 59 trees")
-	check(trees.filter(func(tree: ManorTree) -> bool: return tree.flat).size() == 44, "most trees use flat silhouettes")
-	var added := 0
-	for tree: ManorTree in trees:
-		check(tree.find_children("*", "CollisionShape3D", true, false).size() == 1, "tree trunk collision survives visual batching")
-		if tree.has_meta("added_tree"):
-			added += 1
-			var edge_distance := Vector2(maxf(absf(tree.position.x) - 9.375, 0), maxf(absf(tree.position.z) - 9.375, 0)).length()
-			check(edge_distance >= 7.625, "added trees stay outside the closest existing tree's house clearance")
-			check(Vector2(tree.position.x, tree.position.z).length() >= Vector2(-17, -6.9).length(), "added trees stay beyond the closest existing radius")
-			if tree.flat:
-				check(tree.position.z <= 0 or absf(tree.position.x) >= 24, "distant additions keep the south approach open")
-	check(added == 32, "eight nearer trees and 24 distant trees were added")
+	var trees: Array[ManorTree] = meadow.trees
+	check(trees.size() == meadow.find_children("*", "ManorTree", true, false).size(), "every tree marker is tracked")
+	check(trees.size() == 65, "15 near trees, 46 grove trees and four lone trees")
+	var pines := trees.filter(func(tree: ManorTree) -> bool: return tree.kind == ManorTree.Kind.PINE).size()
+	check(pines >= 15 and pines <= trees.size() - 30, "pines add variety without replacing broadleaf trees")
+	for i in ManorMeadow.NEAR_TREES.size():
+		var data := ManorMeadow.NEAR_TREES[i]
+		check(trees.any(func(tree: ManorTree) -> bool: return tree.position.x == data.x and tree.position.z == data.y), "near tree %d keeps its composed position" % i)
 	var window_tree: ManorTree = meadow.find_child("BedroomWindowTree", true, false)
-	check(window_tree != null and not window_tree.flat and window_tree.position.is_equal_approx(Vector3(-17, -0.05, -6.9)), "opening window keeps its original closest 3D tree")
-	var instances: Dictionary[int, int] = {}
-	var resources: Dictionary[int, bool] = {}
-	for chunk in meadow.tree_chunks.values():
-		for geometry in chunk.find_children("*", "GeometryInstance3D", true, false):
-			var mesh: Mesh = geometry.multimesh.mesh if geometry is MultiMeshInstance3D else geometry.mesh
-			var count: int = geometry.multimesh.instance_count if geometry is MultiMeshInstance3D else 1
-			var id := mesh.get_instance_id()
-			instances[id] = instances.get(id, 0) + count
-			resources[id] = true
-			check(geometry.material_override.next_pass == null, "vegetation does not add outline passes")
-			if mesh == ManorTree.shared_mesh(true):
-				check(geometry.cast_shadow == GeometryInstance3D.SHADOW_CASTING_SETTING_OFF, "flat distant trees add no shadow passes")
-				var bounds: AABB = geometry.multimesh.custom_aabb if geometry is MultiMeshInstance3D else geometry.custom_aabb
-				check(bounds.size.z > 0.9, "billboard bounds cover rotation rather than just the flat mesh")
-	check(resources.size() == 3, "all vegetation shares one solid tree, one flat tree and one bush mesh")
-	check(instances.get(ManorTree.shared_mesh(false).get_instance_id(), 0) == 15, "all 15 solid trees survive batching")
-	check(instances.get(ManorTree.shared_mesh(true).get_instance_id(), 0) == 44, "all 44 flat trees survive batching")
-	check(instances.get(ManorTree.bush_mesh().get_instance_id(), 0) == 5, "all five bushes survive batching")
-	for flat in [false, true]:
-		var mesh := ManorTree.shared_mesh(flat)
-		var triangles := mesh.surface_get_array_len(0) / 3
-		check(triangles <= (20 if flat else 200), "tree mesh stays within its geometry budget")
-		print("%s tree: %d triangles" % ["Flat" if flat else "Solid", triangles])
+	check(window_tree != null and window_tree.kind == ManorTree.Kind.BROADLEAF and window_tree.casts_shadow and window_tree.position.is_equal_approx(Vector3(-17, -0.05, -6.9)), "opening window keeps its original closest broadleaf tree")
+	var closest_edge := 7.625
+	for tree in trees:
+		check(tree.find_children("*", "CollisionShape3D", true, false).size() == 1, "every tree keeps a trunk collision")
+		var flat := Vector2(tree.position.x, tree.position.z)
+		var edge_distance := Vector2(maxf(absf(flat.x) - 9.375, 0), maxf(absf(flat.y) - 9.375, 0)).length()
+		check(edge_distance >= closest_edge, "no tree is closer to the house than the original closest tree")
+		check(tree.casts_shadow == (flat.length() < ManorMeadow.SHADOW_RADIUS), "only trees within shadow range cast shadows")
+		if flat.length() > 30:
+			check(flat.y <= 0 or absf(flat.x) >= 24, "groves keep the south approach open")
+			if tree.casts_shadow:
+				for other in trees:
+					if other != tree and other.casts_shadow:
+						check(not ManorMeadow.shaded_by(other, tree.crown().center, 0.0), "casting grove trees do not stand in another tree's shadow")
+	check(meadow.bushes.size() >= 12, "shrubs ground the near trees and groves")
+	for bush in meadow.bushes:
+		var flat := Vector2(bush.origin.x, bush.origin.z)
+		check(not meadow.shaded(bush.origin + Vector3.UP * 0.4, 0.5), "shrub at %s sits in sunlight, clear of tree and house shadows" % flat)
+		check(flat.y <= 0 or absf(flat.x) >= 15, "shrubs keep the carpet approach open")
+	check(meadow.treeline.size() >= 200, "a woodland band closes the horizon")
+	for place in meadow.treeline:
+		var flat := Vector2(place.origin.x, place.origin.z)
+		check(flat.length() > 84 and flat.length() < 108, "treeline stays inside the island edge")
+		check(absf(angle_difference(atan2(flat.x, flat.y), 0.0)) >= ManorMeadow.SOUTH_GAP, "treeline leaves the sky behind the rainbow open")
+	var trunks := 0
+	for body in meadow.get_children():
+		if body is StaticBody3D and str(body.name).begins_with("Treeline"):
+			trunks += body.get_child_count()
+	check(trunks == meadow.treeline.size(), "treeline trunks keep simple collisions")
+	var triangles := 0
+	for geometry in meadow.find_children("*", "GeometryInstance3D", true, false):
+		if geometry.material_override == ManorTree.shared_material():
+			check(meadow.vegetation.has(geometry), "foliage renders only through merged meshes")
+	check(meadow.vegetation.size() <= 32, "merged foliage stays within its draw budget")
+	for mesh in meadow.vegetation:
+		triangles += mesh.mesh.surface_get_array_len(0) / 3
+		check(mesh.material_override.next_pass == null, "vegetation adds no outline passes")
+		var bounds := mesh.get_aabb()
+		var far := Vector2(bounds.get_center().x, bounds.get_center().z).length() > ManorMeadow.SHADOW_RADIUS + ManorMeadow.CELL_SIZE
+		if str(mesh.name).begins_with("Vegetation_treeline") or far:
+			check(mesh.cast_shadow == GeometryInstance3D.SHADOW_CASTING_SETTING_OFF, "distant foliage adds no shadow passes")
+	for kind in [ManorTree.Kind.BROADLEAF, ManorTree.Kind.PINE]:
+		for far in [false, true]:
+			var count := ManorTree.tree_model(kind, 0, far).surface_get_array_len(0) / 3
+			check(count <= (140 if far else 360), "tree model stays within its geometry budget")
+			print("%s %s: %d triangles" % ["Pine" if kind == ManorTree.Kind.PINE else "Broadleaf", "far" if far else "near", count])
+	check(triangles <= 60000, "all foliage stays within its triangle budget")
+	print("Vegetation: %d trees, %d treeline, %d shrubs, %d meshes, %d triangles" % [trees.size(), meadow.treeline.size(), meadow.bushes.size(), meadow.vegetation.size(), triangles])
 	meadow.queue_free()
 	await process_frame
 	print("Vegetation: %d checks, %d failures" % [checks, failures])
