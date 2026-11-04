@@ -4,8 +4,10 @@
 /build/
 *.tmp
 
-# Reviewer captures (kept locally, not part of the game)
+# Reviewer and tool captures (kept locally, not part of the game)
 /review/
+/screenshots/*
+!/screenshots/.gdignore
 
 # OS
 .DS_Store
