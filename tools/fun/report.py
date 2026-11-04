@@ -43,8 +43,8 @@ assert human_median is not None and 8 <= human_median <= 20, 'Planner moved outs
 planner_minutes = sorted(r['human_seconds'] / 60 for r in all_planner if r['solved'])
 randoms = [r for r in results if r['seed'] not in ('A', 'B', 'C')]
 lines = [
-    '# Fun-test proxy — Stage 2', '',
-    '**Historical classic-mode results:** These measurements describe the eight-room/one-gap puzzle launched with `--classic`, not the current open-lawn prototype. The current default has seven persistent room objectives and an optional assembled-house bonus; these old timings do not measure the new main game.', '',
+    '# Fun-test proxy (classic mode)', '',
+    'These measurements cover the single-goal puzzle launched with `--classic`. They do not measure the default game with seven room objectives.', '',
     '**A real five-person human playtest is still owed to Nick.** Pass bar: at least 4/5 solve in 5–20 minutes and make their first slide within 90 seconds. Bot results cannot establish this.', '',
     'Run `tools/fun_test.sh` from any working directory. It runs entirely headlessly and regenerates this report. Raw per-run results and probe failures are local files in `build/fun/` (git-ignored).', '',
     '## Method', '',
