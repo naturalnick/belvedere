@@ -45,6 +45,7 @@ var at_title := false
 var recovering := false
 var fall_recovery: ManorFallRecovery
 var audio: ManorAudio
+var pointer_watch: ManorPointerWatch
 
 func _ready() -> void:
 	set_process(false)
@@ -178,6 +179,10 @@ func _ready() -> void:
 	audio = ManorAudio.new()
 	audio.manor = self
 	add_child(audio)
+	if OS.has_feature("web") or OS.get_cmdline_user_args().has("--web-entry"):
+		pointer_watch = ManorPointerWatch.new()
+		pointer_watch.manor = self
+		add_child(pointer_watch)
 	if wall_title != null and not gesture_start:
 		at_title = true
 		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE

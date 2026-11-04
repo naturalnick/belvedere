@@ -21,6 +21,7 @@ run_checked --script res://tests/safe_tests.gd
 run_checked --script res://tests/binocular_tests.gd
 run_checked --script res://tests/ending_tests.gd
 run_checked --script res://tests/title_tests.gd
+run_checked --script res://tests/pointer_tests.gd -- --web-entry
 run_checked --script res://tests/settings_tests.gd
 run_checked --script res://tests/bedroom_tests.gd
 run_checked --script res://tests/furnishing_tests.gd
