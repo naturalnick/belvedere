@@ -114,6 +114,18 @@ func watch_pointer(main: Manor) -> void:
 	check(not watch.resume_on_click, "the next click requests pointer capture")
 	lock = true
 	await wait(0.1)
+	var stopwatch := main.stopwatch
+	stopwatch.owned = true
+	stopwatch.claimed = true
+	stopwatch.model.reparent(stopwatch, true)
+	check(stopwatch.toggle(), "web stopwatch raises while pointer is locked")
+	await wait(0.5)
+	lock = false
+	await wait(0.5)
+	check(stopwatch.phase == ManorStopwatch.Phase.IDLE and not main.play_gate.visible and watch.resume_on_click, "browser Escape lowers stopwatch without pausing")
+	watch._input(click)
+	lock = true
+	await wait(0.1)
 	main.player.automated = true
 	await wait(1.3)
 	check(not main.play_gate.visible, "automated runs are left alone")

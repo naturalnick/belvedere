@@ -17,15 +17,17 @@ func run(game: Manor) -> void:
 			shots_dir = arg.trim_prefix("--shots=")
 		if arg.begins_with("--mode="):
 			mode = arg.trim_prefix("--mode=")
-	if mode not in ["solve", "review", "courtyard", "single-gap", "objectives", "stage3", "furnishings", "trees", "exterior", "fall", "coins", "title", "safe", "binoculars"]:
-		printerr("Capture mode must be solve, review, courtyard, single-gap, objectives, stage3, furnishings, trees, exterior, fall, coins, title, safe or binoculars")
+	if mode not in ["solve", "review", "courtyard", "single-gap", "objectives", "stage3", "furnishings", "trees", "exterior", "fall", "coins", "title", "safe", "binoculars", "stopwatch"]:
+		printerr("Capture mode must be solve, review, courtyard, single-gap, objectives, stage3, furnishings, trees, exterior, fall, coins, title, safe, binoculars or stopwatch")
 		get_tree().quit(1)
 		return
 	DirAccess.make_dir_recursive_absolute(shots_dir)
 	started = Time.get_ticks_msec()
 	# Remove this mode's outputs so stale success frames cannot survive a failed run.
 	var shot_names := ["01_spawn", "02_window", "03_lever_held", "04_mid_slide", "05_solved", "06_front_door_open"]
-	if mode == "binoculars":
+	if mode == "stopwatch":
+		shot_names = ["stopwatch_approach", "stopwatch_hatch_closed", "stopwatch_hatch_opening", "stopwatch_hatch_open", "stopwatch_lifting", "stopwatch_flying", "stopwatch_reward", "stopwatch_hatch_reclosed", "stopwatch_reward_portrait", "stopwatch_inventory", "stopwatch_inventory_all", "stopwatch_view", "stopwatch_near_wall", "stopwatch_view_800x800", "stopwatch_view_640x900", "stopwatch_view_360x640", "stopwatch_controls"]
+	elif mode == "binoculars":
 		shot_names = ["binoculars_raising", "binoculars_approaching", "binoculars_eyecups", "binoculars_overview", "binoculars_800x800", "binoculars_640x900", "binoculars_lowering", "binoculars_returned", "binoculars_safe_pop", "binoculars_reward", "binoculars_reward_800x800", "binoculars_reward_640x900", "binoculars_acquired", "binoculars_from_study"]
 	elif mode == "safe":
 		shot_names = ["safe_closed", "safe_entered", "safe_open", "safe_room"]
@@ -82,6 +84,13 @@ func run(game: Manor) -> void:
 		await check_pointer_input()
 	if not OS.get_cmdline_user_args().has("--ending-only"):
 		await shot("01_spawn")
+	if mode == "stopwatch":
+		var gallery: Node = load("res://tools/stopwatch_driver.gd").new()
+		add_child(gallery)
+		await gallery.run(self)
+		print("Stopwatch capture: %d screenshots; %d checks, %d failures" % [shot_count, checks, failures])
+		get_tree().quit(1 if failures else 0)
+		return
 	if mode == "binoculars":
 		var gallery: Node = load("res://tools/binocular_driver.gd").new()
 		add_child(gallery)

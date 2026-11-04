@@ -33,9 +33,9 @@ func _process(delta: float) -> void:
 		return
 	if resume_on_click:
 		return
-	if locked and manor.binoculars != null and manor.binoculars.close():
+	if locked and ((manor.binoculars != null and manor.binoculars.close()) or (manor.stopwatch != null and manor.stopwatch.close())):
 		# Browser Escape releases pointer lock without forwarding the key. Lower the
-		# binoculars now; browsers require a later click to capture the pointer again.
+		# held item now; browsers require a later click to capture the pointer again.
 		locked = false
 		waiting = 0.0
 		resume_on_click = true

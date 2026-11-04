@@ -48,11 +48,11 @@ func run() -> void:
 	main.binoculars.owned = false
 	main.play_gate._open_controls()
 	var controls: ManorControlsPanel = main.play_gate.controls_panel
-	check(not controls.rows.back().visible, "unearned binoculars are absent from controls")
+	check(not controls.rows[ManorControlsPanel.ACTIONS.find("Binoculars")].visible, "unearned binoculars are absent from controls")
 	main.play_gate._close_controls()
 	main.binoculars.owned = true
 	main.play_gate._open_controls()
-	check(controls.rows.back().visible, "owned binoculars reveal the B control")
+	check(controls.rows[ManorControlsPanel.ACTIONS.find("Binoculars")].visible, "owned binoculars reveal the B control")
 	for dimensions in [Vector2(1280, 720), Vector2(640, 480), Vector2(360, 640)]:
 		controls.size = dimensions
 		controls._layout()

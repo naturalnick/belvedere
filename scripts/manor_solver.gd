@@ -5,23 +5,39 @@ extends RefCounted
 var distance: Dictionary[int, int] = {}
 var toward_goal: Dictionary[int, Vector2i] = {}
 
+var _deque: Dictionary[int, int] = {}
+var _head := 0
+var _tail := 0
+var ready := false
+
 func build() -> void:
+	begin_build()
+	while not build_step(4096):
+		pass
+
+func begin_build() -> void:
 	distance.clear()
 	toward_goal.clear()
 	# Integer-indexed deque avoids O(n) array shifts during exhaustive traversal.
-	var deque: Dictionary[int, int] = {}
-	var head := 0
-	var tail := 0
+	_deque.clear()
+	_head = 0
+	_tail = 0
+	ready = false
 	for occupant in ManorRules.HOME:
 		var state := ManorRules.new(PackedInt32Array(ManorRules.HOME), occupant)
 		var k := state.key()
 		distance[k] = 0
-		deque[tail] = k
-		tail += 1
-	while head < tail:
-		var key: int = deque[head]
-		deque.erase(head)
-		head += 1
+		_deque[_tail] = k
+		_tail += 1
+
+# The live hint builds in bounded slices, including on single-threaded Web exports.
+func build_step(max_states: int = 128) -> bool:
+	var processed := 0
+	while _head < _tail and processed < max_states:
+		processed += 1
+		var key: int = _deque[_head]
+		_deque.erase(_head)
+		_head += 1
 		var state := ManorRules.from_key(key)
 		for action in state.moves():
 			var next := state.copy()
@@ -33,11 +49,21 @@ func build() -> void:
 			distance[nk] = cost
 			toward_goal[nk] = Vector2i(action.x, ManorRules.opposite(action.y))
 			if action.x == ManorRules.WALK:
-				head -= 1
-				deque[head] = nk
+				_head -= 1
+				_deque[_head] = nk
 			else:
-				deque[tail] = nk
-				tail += 1
+				_deque[_tail] = nk
+				_tail += 1
+
+	ready = _head >= _tail
+	return ready
+
+func assembly_distance(state: ManorRules) -> int:
+	if not ready:
+		return -1
+	# With one gap the lawn reconnects only to that gap; walking outside is free.
+	var classic := ManorRules.new(state.board, -1 if state.player == ManorRules.OUTSIDE else state.player)
+	return distance.get(classic.key(), -1)
 
 func solution(start: ManorRules, minimize_walks: bool = false) -> Array[Vector2i]:
 	if minimize_walks:

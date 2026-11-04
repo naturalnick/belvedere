@@ -34,6 +34,8 @@ var fresh_title := true
 var coin_device: ManorCoinDevice
 var study_safe: ManorSafe
 var fruit_clues: Array[ManorFruitClue] = []
+var foundation_hatch: ManorFoundationHatch
+var stopwatch: ManorStopwatch
 var binoculars: ManorBinoculars
 var ending: ManorEnding
 var environment: Environment
@@ -170,6 +172,12 @@ func _ready() -> void:
 		binoculars = ManorBinoculars.new()
 		add_child(binoculars)
 		binoculars.setup(self, hud)
+		foundation_hatch = ManorFoundationHatch.new()
+		foundation_hatch.manor = self
+		add_child(foundation_hatch)
+		stopwatch = ManorStopwatch.new()
+		add_child(stopwatch)
+		stopwatch.setup(self, hud)
 	fade = ColorRect.new()
 	fade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	fade.color = Color(0.06, 0.045, 0.035, 0)
@@ -234,12 +242,14 @@ func release_pointer() -> void:
 		finale_motion.pause()
 		fade.hide()
 
-func controls_locked() -> bool:
-	return (binoculars != null and binoculars.locks_player()) or (first_coin_guide != null and first_coin_guide.active) or (coin_hud != null and coin_hud.presenting()) or recovering or sliding or in_finale or at_title or (play_gate != null and play_gate.visible) or (coin_device != null and coin_device.releasing)
+func controls_locked(for_movement := false) -> bool:
+	return (foundation_hatch != null and foundation_hatch.busy) or (stopwatch != null and stopwatch.locks_player(for_movement)) or (binoculars != null and binoculars.locks_player()) or (first_coin_guide != null and first_coin_guide.active) or (coin_hud != null and coin_hud.presenting()) or recovering or sliding or in_finale or at_title or (play_gate != null and play_gate.visible) or (coin_device != null and coin_device.releasing)
 
 func return_to_title() -> void:
 	at_title = true
 	fade.show()
+	if stopwatch != null:
+		stopwatch.reset_view()
 	if binoculars != null:
 		binoculars.reset_view()
 	set_process(false)

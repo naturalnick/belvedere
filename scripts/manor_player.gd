@@ -41,6 +41,9 @@ func _unhandled_input(event: InputEvent) -> void:
 	if manor.play_gate != null and manor.play_gate.visible:
 		return
 	if is_pause_press(event):
+		if event.physical_keycode == KEY_ESCAPE and manor.stopwatch != null and manor.stopwatch.close():
+			get_viewport().set_input_as_handled()
+			return
 		if event.physical_keycode == KEY_ESCAPE and manor.binoculars != null and manor.binoculars.close():
 			get_viewport().set_input_as_handled()
 			return
@@ -53,7 +56,13 @@ func _unhandled_input(event: InputEvent) -> void:
 		if manor.binoculars != null and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 			manor.binoculars.toggle()
 		return
-	if manor.controls_locked():
+	if event is InputEventKey and event.pressed and not event.echo and event.physical_keycode == KEY_T:
+		if manor.stopwatch != null and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
+			manor.stopwatch.toggle()
+		return
+	# Walking and looking resume during the watch's lowering animation;
+	# interactions still wait until it is fully stowed.
+	if manor.controls_locked(event is InputEventMouseMotion):
 		return
 	if Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
 		return
@@ -81,18 +90,20 @@ func _physics_process(delta: float) -> void:
 		velocity.y -= 15.0 * delta
 		move_and_slide()
 		return
-	if manor.controls_locked():
-		velocity = Vector3.ZERO
-		return
 	var input := Vector2.ZERO
 	if not automated and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 		input = Vector2(float(Input.is_physical_key_pressed(KEY_D)) - float(Input.is_physical_key_pressed(KEY_A)), float(Input.is_physical_key_pressed(KEY_S)) - float(Input.is_physical_key_pressed(KEY_W)))
+	var direction := bot_drive if automated else (global_basis * Vector3(input.x, 0, input.y)).normalized()
+	if direction.length_squared() > 0.01 and manor.stopwatch != null:
+		manor.stopwatch.close()
+	if manor.controls_locked(true):
+		velocity = Vector3.ZERO
+		return
 	if held:
 		if input.length() > 0.1:
 			select_pull(_screen_direction(input))
 		velocity = Vector3.ZERO
 		return
-	var direction := bot_drive if automated else (global_basis * Vector3(input.x, 0, input.y)).normalized()
 	velocity.x = move_toward(velocity.x, direction.x * 3.0, 30.0 * delta)
 	velocity.z = move_toward(velocity.z, direction.z * 3.0, 30.0 * delta)
 	velocity.y = 0.0 if is_on_floor() else velocity.y - 15.0 * delta
@@ -117,6 +128,8 @@ func begin_interact() -> bool:
 	if hit.is_empty():
 		return false
 	var collider: Object = hit.collider
+	if collider.has_meta("foundation_hatch"):
+		return collider.get_meta("foundation_hatch").interact()
 	if collider.has_meta("safe"):
 		var safe: ManorSafe = collider.get_meta("safe")
 		return safe.interact(int(collider.get_meta("safe_button")))

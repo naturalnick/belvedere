@@ -100,7 +100,7 @@ func _open_controls() -> void:
 		return
 	previous_mode = mode
 	mode = "controls"
-	controls_panel.set_owned(manor.binoculars != null and manor.binoculars.owned)
+	controls_panel.set_owned(manor.binoculars != null and manor.binoculars.owned, manor.stopwatch != null and manor.stopwatch.owned)
 	_layout()
 	ManorInkButton.focus_quietly(controls_panel.back)
 
