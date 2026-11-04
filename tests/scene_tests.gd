@@ -15,7 +15,7 @@ func run() -> void:
 	await physics_frame
 	await physics_frame
 	_check(main.rules.key() == ManorRules.from_seed("A").key(), "scene starts from requested seed A")
-	_check(main.player.camera.fov == 75 and is_equal_approx(main.player.camera.position.y, 1.65), "first-person scale")
+	_check(main.player.camera.fov == main.preferences.fov and is_equal_approx(main.player.camera.position.y, 1.65), "first-person scale respects saved FOV")
 	for id in main.rooms:
 		var room: ManorRoom = main.rooms[id]
 		_check(room.position == ManorGeometry.center(main.rules.board.find(id)), "room is at its logical slot")

@@ -30,6 +30,9 @@ func _refresh() -> void:
 
 func _process(delta: float) -> void:
 	visible = not manor.at_title and not manor.in_finale and not manor.recovering and not manor.play_gate.visible
+	if manor.binoculars != null and manor.binoculars.locks_player():
+		queue_redraw()
+		return
 	# Pause, room slides and fall recovery retain the queued reward presentation.
 	if not visible or manor.sliding or manor.first_coin_guide.holding_reward():
 		return
@@ -44,7 +47,7 @@ func _process(delta: float) -> void:
 func _draw() -> void:
 	var destination := Vector2(size.x - 94, 40)
 	ManorPrizeArt.draw_coin(self, destination, 15)
-	if manor.coins.pending.is_empty() or manor.first_coin_guide.holding_reward():
+	if manor.coins.pending.is_empty() or manor.first_coin_guide.holding_reward() or (manor.binoculars != null and manor.binoculars.locks_player()):
 		return
 	var enter := smoothstep(0.0, 0.3, presentation)
 	var travel := smoothstep(1.15, PRESENT_TIME, presentation)

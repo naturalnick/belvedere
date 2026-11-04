@@ -39,7 +39,7 @@ func run() -> void:
 	await create_timer(0.2).timeout
 	check(main.fall_recovery.elapsed == elapsed and main.player.position == paused_position, "pause suspends both the fall and its timer")
 	main.resume_play()
-	check(main.player.position.y < -150, "rounded underside does not catch falling player")
+	check(main.player.position.y < -150, "flat underside does not catch falling player")
 	var drop_y := main.player.position.y
 	await create_timer(0.4).timeout
 	check(main.recovering and main.fade.color.a > 0, "fall fades out after fifteen seconds")

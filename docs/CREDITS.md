@@ -10,5 +10,6 @@
 - Birdsong: Magnesus, “Forest birds - ambient seamless loop”, CC0 1.0, https://freesound.org/people/Magnesus/sounds/723913/ .
 - These recordings (including RPG Audio’s handleCoins and handleCoins2 for the cabinet insertion) are trimmed, filtered, layered and mixed by `tools/gen_audio.py`; originals and checksums are in `tools/audio_sources/`. The room-slide rumble and the piano music loop are original, synthesized for Belvedere.
 - No models or textures were downloaded; paper grain is generated at runtime.
-- Stage 3 meadow, hills, trees, flush track pattern and settings icons: original procedural geometry and drawing code created for Belvedere.
-- All eight rooms’ furniture, rugs, ceramic basins, globe, coats and floor patterns: original procedural geometry and shader code made for Belvedere; no downloaded models or textures.
+- Underside QR code: generated from https://puzzaholics.com/belvedere-assembly using macOS Core Image, verified using Vision; no downloaded artwork. Regenerate with `tools/gen_qr.sh`.
+- Stage 3 meadow, hills, shared low-poly tree/bush meshes, flat tree silhouettes, flush track pattern and settings icons: original procedural geometry and drawing code created for Belvedere.
+- All eight rooms’ furniture, rugs, ceramic basins, globe, coats, floor patterns, Study safe, brass/leather binocular model and inventory icon, overview colored roofs and wall caps, and modeled apple/banana/orange/pear window clues: original procedural geometry and shader code made for Belvedere; no downloaded models or textures.

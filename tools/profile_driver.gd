@@ -24,6 +24,7 @@ func run() -> void:
 		await create_timer(2.0).timeout
 		var process_ms: Array[float] = []
 		var draws := 0
+		var primitives := 0
 		for frame in 180:
 			await process_frame
 			var started := Time.get_ticks_usec()
@@ -31,8 +32,9 @@ func run() -> void:
 			RenderingServer.force_draw(false)
 			process_ms.append((Time.get_ticks_usec() - started) / 1000.0)
 			draws += int(Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME))
+			primitives += int(Performance.get_monitor(Performance.RENDER_TOTAL_PRIMITIVES_IN_FRAME))
 		process_ms.sort()
-		var item := {"view": view, "median_render_submit_ms": process_ms[process_ms.size() / 2], "p95_render_submit_ms": process_ms[int(process_ms.size() * 0.95)], "draw_calls": draws / float(process_ms.size()), "nodes": int(Performance.get_monitor(Performance.OBJECT_NODE_COUNT))}
+		var item := {"view": view, "median_render_submit_ms": process_ms[process_ms.size() / 2], "p95_render_submit_ms": process_ms[int(process_ms.size() * 0.95)], "draw_calls": draws / float(process_ms.size()), "primitives": primitives / float(process_ms.size()), "trees": main.find_children("*", "ManorTree", true, false).size(), "nodes": int(Performance.get_monitor(Performance.OBJECT_NODE_COUNT))}
 		samples.append(item)
 		print(JSON.stringify(item))
 	var path := ProjectSettings.globalize_path(output)

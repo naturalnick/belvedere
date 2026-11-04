@@ -32,8 +32,13 @@ func run(driver: Node) -> void:
 			main.player.aim_at(room.position + Vector3(2.60, 1.15, 1.9))
 			await driver.shot("dining_shelf_detail")
 			await driver.walk_to(room.position + Vector3(-0.6, 0, 2.0))
-			main.player.aim_at(room.position + Vector3(-1.85, 0.80, 2.65))
-			await driver.shot("dining_bowl_detail")
+			main.player.aim_at(room.position + Vector3(-1.60, 0.95, 2.56))
+			await driver.shot("dining_serving_table")
+		if id == 7:
+			for side in [-1, 1]:
+				await driver.walk_to(main.coin_device.to_global(Vector3(side * 0.80, 0, 1.15)))
+				main.player.aim_at(main.coin_device.to_global(Vector3(0, 1.48, 0)))
+				await driver.shot("trophy_case_left" if side < 0 else "trophy_case_right")
 		await driver.approach_lever(room)
 		main.player.aim_at(room.lever.global_position + Vector3.UP * 0.8)
 		await get_tree().physics_frame

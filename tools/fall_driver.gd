@@ -10,7 +10,7 @@ func run(driver: Node) -> void:
 	main.player.bot_drive = Vector3.BACK
 	while main.fall_recovery.elapsed < 4.3:
 		if main.player.position.y < -42:
-			main.player.aim_at(Vector3(0, -39, 0))
+			main.player.aim_at(Vector3(0, -ManorIsland.DEPTH, 0))
 		await get_tree().physics_frame
 	main.player.automated = false
 	var yaw := main.player.rotation.y
@@ -22,7 +22,7 @@ func run(driver: Node) -> void:
 	driver._check(main.player.rotation.y != yaw, "real mouse look remains active during the fall")
 	main.player.automated = true
 	driver._check(not main.recovering and main.player.position.y < -120, "early drop stays free and passes the underside")
-	main.player.aim_at(Vector3(0, -39, 0))
+	main.player.aim_at(Vector3(0, -ManorIsland.DEPTH, 0))
 	await driver.shot("03_underside")
 	while not main.recovering:
 		await get_tree().physics_frame

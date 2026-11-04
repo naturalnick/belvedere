@@ -27,6 +27,10 @@ func _ready() -> void:
 	ManorGeometry.box(self, Vector3(0.96, 0.09, 0.64), Vector3(0, 1.92, 0), wood)
 	ManorGeometry.box(self, Vector3(0.88, 0.025, 0.58), Vector3(0, 1.98, 0), brass)
 	glass = ManorGeometry.box(self, Vector3(0.77, 0.77, 0.012), Vector3(0, 1.48, 0.256), ManorGeometry.glass())
+	for side in [-1, 1]:
+		var pane := ManorGeometry.box(self, Vector3(0.012, 0.77, 0.46), Vector3(side * 0.41, 1.48, 0), ManorGeometry.glass())
+		pane.name = "LeftGlass" if side < 0 else "RightGlass"
+		pane.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	prize_tray = Node3D.new()
 	add_child(prize_tray)
 	prize_tray.position.y = 1.065

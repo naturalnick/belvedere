@@ -28,6 +28,9 @@ var first_coin_guide: ManorFirstCoinGuide
 var wall_title: ManorWallTitle
 var fresh_title := true
 var coin_device: ManorCoinDevice
+var study_safe: ManorSafe
+var fruit_clues: Array[ManorFruitClue] = []
+var binoculars: ManorBinoculars
 var ending: ManorEnding
 var environment: Environment
 var fade: ColorRect
@@ -125,6 +128,17 @@ func _ready() -> void:
 		coin_device.manor = self
 		coin_device.position = Vector3(-1.85, 0, -2.50)
 		rooms[7].add_child(coin_device)
+		study_safe = ManorSafe.new()
+		study_safe.manor = self
+		study_safe.position = Vector3(2.61, 0, 0)
+		study_safe.rotation.y = -PI / 2
+		rooms[2].add_child(study_safe)
+		for kind in ManorFruitClue.ROOMS.size():
+			var clue := ManorFruitClue.new()
+			clue.kind = kind
+			clue.room = rooms[ManorFruitClue.ROOMS[kind]]
+			clue.room.add_child(clue)
+			fruit_clues.append(clue)
 		first_coin_guide = ManorFirstCoinGuide.new()
 		first_coin_guide.manor = self
 		add_child(first_coin_guide)
@@ -135,6 +149,9 @@ func _ready() -> void:
 		ending = ManorEnding.new()
 		ending.player = player
 		add_child(ending)
+		binoculars = ManorBinoculars.new()
+		add_child(binoculars)
+		binoculars.setup(self, hud)
 	fade = ColorRect.new()
 	fade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	fade.color = Color(0.06, 0.045, 0.035, 0)
@@ -190,10 +207,12 @@ func release_pointer() -> void:
 	play_gate.show_mode("pause")
 
 func controls_locked() -> bool:
-	return (first_coin_guide != null and first_coin_guide.active) or recovering or sliding or in_finale or at_title or (play_gate != null and play_gate.visible) or (coin_device != null and coin_device.releasing)
+	return (binoculars != null and binoculars.locks_player()) or (first_coin_guide != null and first_coin_guide.active) or recovering or sliding or in_finale or at_title or (play_gate != null and play_gate.visible) or (coin_device != null and coin_device.releasing)
 
 func return_to_title() -> void:
 	at_title = true
+	if binoculars != null:
+		binoculars.reset_view()
 	set_process(false)
 	if ending != null:
 		ending.set_process(false)

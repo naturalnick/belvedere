@@ -29,13 +29,19 @@ static func combine(assembly: Node3D, skip: Array[Node] = []) -> void:
 		batch.cast_shadow = first.cast_shadow
 		assembly.add_child(batch)
 		var transforms: Array[Transform3D] = []
+		var bounds := AABB()
 		for i in pieces.size():
 			var piece: MeshInstance3D = pieces[i]
 			var transform := assembly.global_transform.affine_inverse() * piece.global_transform
 			transforms.append(transform)
 			instances.set_instance_transform(i, transform)
+			var local_bounds := piece.custom_aabb if piece.custom_aabb.size != Vector3.ZERO else piece.mesh.get_aabb()
+			var piece_bounds: AABB = transform * local_bounds
+			bounds = piece_bounds if i == 0 else bounds.merge(piece_bounds)
 			piece.get_parent().remove_child(piece)
 			piece.queue_free()
+		# Preserve shader-expanded bounds, such as trees rotating to face the camera.
+		instances.custom_aabb = bounds
 		# The headless dummy renderer does not retain MultiMesh instance transforms.
 		if DisplayServer.get_name() == "headless":
 			batch.set_meta("test_transforms", transforms)

@@ -48,7 +48,9 @@ func run() -> void:
 			if id == 6 and direction == Vector3.LEFT:
 				continue
 			await driver.walk_to(room.position + direction * 1.2)
-			await driver.walk_to(room.position + direction * 2.5)
+			# The Study's east wall now has the safe; its standing approach is in front.
+			var approach := 1.60 if id == 2 and direction == Vector3.RIGHT else 2.5
+			await driver.walk_to(room.position + direction * approach)
 			check(main.rules.player == id, "room %d clear side approach" % id)
 			await driver.walk_to(room.position + direction * 1.2)
 			await driver.walk_to(room.position + Vector3(0, 0, 1.2))

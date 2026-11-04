@@ -127,9 +127,9 @@ func living() -> void:
 	var floor_lamp := group("FloorLamp", Vector3(-2.65, 0, 2.55))
 	lamp(floor_lamp, Vector3.ZERO, 1.55)
 	solid(floor_lamp, Vector3(0.30, 1.55, 0.30), Vector3(0, 0.775, 0))
-	var console := cabinet("LowSideboard", Vector3(2.56, 0, 1.85), 1.45, 0.74, 0.52, WOOD, -PI / 2)
+	var console := cabinet("LowSideboard", Vector3(2.56, 0, 1.60), 1.45, 0.90, 0.52, WOOD, -PI / 2)
 	for i in 2:
-		box(console, Vector3(0.38, 0.045, 0.26), Vector3(-0.34, 0.768 + i * 0.047, 0), "768D80" if i == 0 else "AA8865", 0.003)
+		box(console, Vector3(0.38, 0.045, 0.26), Vector3(-0.34, 0.928 + i * 0.047, 0.16), "768D80" if i == 0 else "AA8865", 0.003)
 
 func dining() -> void:
 	var dining_table := table("DiningTable", Vector3(-1.55, 0, 0), 0.80, 2.30, 0.75, "6A3A2A")
@@ -148,12 +148,10 @@ func dining() -> void:
 		box(china, Vector3(0.09, 1.95, 0.48), Vector3(x, 0.975, 0), "6A3A2A")
 	for y in [0.10, 0.65, 1.25, 1.92]:
 		box(china, Vector3(1.20, 0.06, 0.48), Vector3(0, y, 0), "6A3A2A")
-	for y in [0.68, 1.28]:
-		for x in [-0.37, 0, 0.37]:
-			bowl(china, Vector3(x, y, 0.025), 0.125, 0.075)
+	for x in [-0.37, 0, 0.37]:
+		bowl(china, Vector3(x, 1.28, 0.025), 0.125, 0.075)
 	solid(china, Vector3(1.44, 1.95, 0.48), Vector3(0, 0.975, 0))
-	var serving := table("ServingTable", Vector3(-1.85, 0, 2.65), 1.30, 0.56, 0.75, "6A3A2A")
-	bowl(serving, Vector3(0, 0.75, 0), 0.20, 0.095)
+	table("ServingTable", Vector3(-1.60, 0, 2.56), 1.30, 0.48, 0.90, "6A3A2A")
 
 func foyer() -> void:
 	var bench := table("EntryBench", Vector3(1.85, 0, -2.50), 1.70, 0.65, 0.43)

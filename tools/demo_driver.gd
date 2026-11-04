@@ -17,24 +17,31 @@ func run(game: Manor) -> void:
 			shots_dir = arg.trim_prefix("--shots=")
 		if arg.begins_with("--mode="):
 			mode = arg.trim_prefix("--mode=")
-	if mode not in ["solve", "review", "courtyard", "single-gap", "objectives", "stage3", "furnishings", "trees", "fall", "coins", "title"]:
-		printerr("Capture mode must be solve, review, courtyard, single-gap, objectives, stage3, furnishings, trees, fall, coins or title")
+	if mode not in ["solve", "review", "courtyard", "single-gap", "objectives", "stage3", "furnishings", "trees", "fall", "coins", "title", "safe", "binoculars"]:
+		printerr("Capture mode must be solve, review, courtyard, single-gap, objectives, stage3, furnishings, trees, fall, coins, title, safe or binoculars")
 		get_tree().quit(1)
 		return
 	DirAccess.make_dir_recursive_absolute(shots_dir)
 	started = Time.get_ticks_msec()
 	# Remove this mode's outputs so stale success frames cannot survive a failed run.
 	var shot_names := ["01_spawn", "02_window", "03_lever_held", "04_mid_slide", "05_solved", "06_front_door_open"]
-	if mode == "title":
+	if mode == "binoculars":
+		shot_names = ["binoculars_raising", "binoculars_approaching", "binoculars_eyecups", "binoculars_overview", "binoculars_800x800", "binoculars_640x900", "binoculars_paused", "binoculars_lowering", "binoculars_returned", "binoculars_safe_pop", "binoculars_reward", "binoculars_acquired", "binoculars_from_study"]
+	elif mode == "safe":
+		shot_names = ["safe_closed", "safe_entered", "safe_open", "safe_room"]
+		for kind in 4:
+			for view in ["window", "window_empty", "inside", "door"]:
+				shot_names.append("fruit_%d_%s" % [kind, view])
+	elif mode == "title":
 		shot_names = ["01_title", "02_title_small", "03_title_portrait", "03_start_fade", "04_playing", "05_grid_target", "06_title_return", "hover_play", "hover_sound", "hover_settings", "hover_invert", "hover_back", "hover_resume"]
 	elif mode == "coins":
 		shot_names = ["01_spawn", "blue_shade", "warm_shade", "coin_presented", "coin_count", "coin_device", "coin_inserting", "coin_deposited", "ending_1", "ending_1_small", "trophy_released", "coin_title", "hover_keep_playing", "hover_quit"]
 	elif mode == "fall":
 		shot_names = ["01_spawn", "02_edge", "03_underside", "04_fade_out", "05_bedside", "06_nearer_greenery"]
 	elif mode == "trees":
-		shot_names = ["01_spawn", "02_meadow", "03_tree_detail", "04_house_and_trees", "05_window_view"]
+		shot_names = ["01_spawn", "02_meadow", "03_tree_detail", "04_house_and_trees", "05_window_view", "06_north_window", "07_east_window", "08_south_window"]
 	elif mode == "furnishings":
-		shot_names = ["01_spawn", "kitchen_bowl_detail", "dining_shelf_detail", "dining_bowl_detail"]
+		shot_names = ["01_spawn", "kitchen_bowl_detail", "dining_shelf_detail", "dining_serving_table", "trophy_case_left", "trophy_case_right"]
 		for room_name in ["bathroom", "study", "kitchen", "living", "dining", "foyer", "laundry"]:
 			for view in ["north", "south", "slide"]:
 				shot_names.append(room_name + "_" + view)
@@ -73,6 +80,20 @@ func run(game: Manor) -> void:
 		await check_pointer_input()
 	if not OS.get_cmdline_user_args().has("--ending-only"):
 		await shot("01_spawn")
+	if mode == "binoculars":
+		var gallery: Node = load("res://tools/binocular_driver.gd").new()
+		add_child(gallery)
+		await gallery.run(self)
+		print("Binocular capture: %d screenshots; %d checks, %d failures" % [shot_count, checks, failures])
+		get_tree().quit(1 if failures else 0)
+		return
+	if mode == "safe":
+		var gallery: Node = load("res://tools/safe_driver.gd").new()
+		add_child(gallery)
+		await gallery.run(self)
+		print("Safe capture: %d screenshots; %d checks, %d failures" % [shot_count, checks, failures])
+		get_tree().quit(1 if failures else 0)
+		return
 	if mode == "coins":
 		var gallery: Node = load("res://tools/coin_driver.gd").new()
 		add_child(gallery)

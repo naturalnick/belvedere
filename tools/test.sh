@@ -17,11 +17,14 @@ run_checked --script res://tests/wall_geometry_tests.gd
 run_checked --script res://tests/door_geometry_tests.gd
 run_checked --script res://tests/objective_tests.gd
 run_checked --script res://tests/coin_tests.gd
+run_checked --script res://tests/safe_tests.gd
+run_checked --script res://tests/binocular_tests.gd
 run_checked --script res://tests/ending_tests.gd
 run_checked --script res://tests/title_tests.gd
 run_checked --script res://tests/settings_tests.gd
 run_checked --script res://tests/bedroom_tests.gd
 run_checked --script res://tests/furnishing_tests.gd
+run_checked --script res://tests/vegetation_tests.gd
 run_checked --script res://tests/slide_motion_tests.gd
 run_checked --script res://tests/door_motion_tests.gd
 run_checked --script res://tests/reticle_tests.gd

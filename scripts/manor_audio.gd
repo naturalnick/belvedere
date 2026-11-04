@@ -55,6 +55,9 @@ func _ready() -> void:
 			door.rattled.connect(func() -> void: play_at("door_rattle", door.gate.global_position, -2.0))
 	if manor.coin_device != null:
 		manor.coin_device.coin_inserted.connect(func() -> void: play_at("coin_insert", manor.coin_device.global_position, -3.0))
+	if manor.study_safe != null:
+		manor.study_safe.button_pressed.connect(func() -> void: play_at("lever_grab", manor.study_safe.global_position, -12.0))
+		manor.study_safe.handle_tried.connect(func(success: bool) -> void: play_at("door_open" if success else "door_rattle", manor.study_safe.global_position, -8.0))
 	manor.player.lever_grabbed.connect(func() -> void: play("lever_grab", -3.0))
 	manor.player.lever_returned.connect(func() -> void: play("lever_grab", -9.0, 0.88))
 	manor.slide_refused.connect(func() -> void: play("lever_blocked", -1.0))
