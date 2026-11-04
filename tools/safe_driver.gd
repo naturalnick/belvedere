@@ -100,8 +100,7 @@ func run(driver: Node) -> void:
 	main.player.automated = true
 	await get_tree().create_timer(1.2).timeout
 	driver._check(safe.unlocked and not safe.busy, "native handle interaction opens safe")
-	while main.binoculars.presenting:
-		await get_tree().process_frame
+	await driver.accept_rewards()
 	main.player.aim_at(safe.to_global(Vector3(0, 0.48, 0)))
 	await driver.shot("safe_open")
 	main.player.position = main.rooms[2].position + Vector3(-0.6, 0.02, 1.1)

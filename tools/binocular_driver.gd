@@ -68,9 +68,10 @@ func run(driver: Node) -> void:
 	await driver.shot("binoculars_safe_pop")
 	await get_tree().create_timer(0.65).timeout
 	await driver.shot("binoculars_reward")
-	while binoculars.presenting:
-		await get_tree().process_frame
-	driver._check(binoculars.reward_claimed and binoculars.owned and not binoculars.reward.visible, "safe reward is acquired automatically once")
+	await get_tree().create_timer(1.5).timeout
+	driver._check(binoculars.presenting and not binoculars.reward_claimed and binoculars.reward.visible, "binocular reward waits in view for a press")
+	await driver.accept_rewards()
+	driver._check(binoculars.reward_claimed and binoculars.owned and not binoculars.reward.visible, "a key press sends the safe reward to inventory once")
 	await driver.shot("binoculars_acquired")
 	await _press_b(driver)
 	await get_tree().create_timer(1.1).timeout

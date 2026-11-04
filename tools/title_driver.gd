@@ -20,6 +20,14 @@ func run(driver: Node) -> void:
 	await driver.hover_button(main.play_gate.primary, "hover_play")
 	await driver.hover_button(main.play_gate.sound_button, "hover_sound")
 	await driver.hover_button(main.play_gate.settings_button, "hover_settings")
+	var gate := main.play_gate
+	driver._check(gate.primary.text == "Play" and not ManorInkButton.keyboard_nav, "wall Play is lettering and only the hovered button is marked")
+	gate.primary.grab_focus()
+	driver.key_event(KEY_SHIFT, true)
+	driver.key_event(KEY_SHIFT, false)
+	await get_tree().process_frame
+	driver._check(ManorInkButton.keyboard_nav and gate.primary.has_focus(), "keyboard input tints the focused button")
+	await driver.shot("focus_keyboard")
 	main.play_gate._open_settings()
 	await driver.hover_button(main.play_gate.settings_panel.toggles["invert_y"], "hover_invert")
 	await driver.hover_button(main.play_gate.settings_panel.back, "hover_back")

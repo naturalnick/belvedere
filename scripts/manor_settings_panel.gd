@@ -24,6 +24,7 @@ func _ready() -> void:
 		if key == "invert_y":
 			var toggle := ManorMenuIcons.button(48)
 			toggle.size.x = 80
+			toggle.marked_changed.connect(queue_redraw)
 			toggle.toggle_mode = true
 			toggle.accessibility_name = "Invert vertical mouse look"
 			toggle.toggled.connect(func(value: bool) -> void:
@@ -39,7 +40,14 @@ func _ready() -> void:
 			slider.accessibility_name = {"fov": "Field of view", "sensitivity": "Mouse sensitivity", "master": "Master volume", "effects": "Effects volume", "music": "Music volume"}[key]
 			slider.value_changed.connect(func(value: float) -> void:
 				if not syncing:
-					preferences.update(key, value))
+					preferences.update(key, value)
+					# Arrow-key steps preview the new level; drags preview once on release.
+					if key in ["master", "effects"] and ManorInkButton.keyboard_nav:
+						ManorInkButton.click(self))
+			if key in ["master", "effects"]:
+				slider.drag_ended.connect(func(changed: bool) -> void:
+					if changed:
+						ManorInkButton.click(self))
 			add_child(slider)
 			sliders[key] = slider
 	back = ManorMenuIcons.button()
@@ -66,7 +74,7 @@ func sync() -> void:
 func open() -> void:
 	show()
 	sync()
-	sliders["fov"].grab_focus()
+	ManorInkButton.focus_quietly(sliders["fov"])
 
 func _layout() -> void:
 	var width_value := minf(520, size.x - 48)
@@ -94,11 +102,14 @@ func _draw() -> void:
 		if toggles.has(key):
 			var at := control.position + Vector2(40, 24)
 			var on: bool = preferences.get(key)
-			draw_style_box(_toggle_track(on), Rect2(at - Vector2(27, 12), Vector2(54, 24)))
-			draw_circle(at + Vector2(15 if on else -15, 0), 8, color)
+			var marked: bool = toggles[key].is_marked()
+			draw_style_box(_toggle_track(on, marked), Rect2(at - Vector2(27, 12), Vector2(54, 24)))
+			draw_circle(at + Vector2(15 if on else -15, 0), 8, Color("F3D697") if marked else color)
 
-func _toggle_track(on: bool) -> StyleBoxFlat:
+func _toggle_track(on: bool, marked: bool) -> StyleBoxFlat:
 	var track := StyleBoxFlat.new()
 	track.bg_color = Color("897246") if on else Color("4D4840")
+	if marked:
+		track.bg_color = track.bg_color.lightened(0.15)
 	track.set_corner_radius_all(12)
 	return track

@@ -54,12 +54,8 @@ func apply(player: ManorPlayer) -> void:
 	player.camera.fov = fov
 	player.sensitivity = sensitivity
 	player.invert_y = invert_y
-	for bus_name in ["Effects", "Music"]:
-		if AudioServer.get_bus_index(bus_name) == -1:
-			AudioServer.add_bus()
-			var index := AudioServer.bus_count - 1
-			AudioServer.set_bus_name(index, bus_name)
-			AudioServer.set_bus_send(index, "Master")
+	# Effects and Music come from default_bus_layout.tres. Buses added at runtime stay silent in
+	# web builds, whose browser-side sample playback only mirrors the startup layout.
 	for bus_name in ["Master", "Effects", "Music"]:
 		var index := AudioServer.get_bus_index(bus_name)
 		var level := master if bus_name == "Master" else (effects if bus_name == "Effects" else music)

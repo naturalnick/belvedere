@@ -9,6 +9,10 @@ const REVEAL_TIME := 0.40
 const CLOSE_TIME := 0.22
 const LOWER_TIME := 0.45
 const REWARD_TIME := 2.2
+# The reward rests in front of the player from REWARD_HOLD_AT until a fresh press
+# (see ManorCoinHUD.is_accept_press), accepted once it has finished arriving.
+const REWARD_HOLD_AT := 1.40
+const REWARD_ACCEPT_AFTER := 0.7
 const BOARD_SPAN := 21.6
 
 var manor: Manor
@@ -20,6 +24,7 @@ var owned := false
 var reward_claimed := false
 var presenting := false
 var reward_elapsed := 0.0
+var reward_accepted := false
 var reward_origin := Transform3D.IDENTITY
 var phase := Phase.IDLE
 var elapsed := 0.0
@@ -79,10 +84,21 @@ func present_reward() -> void:
 	reward_origin = reward.global_transform
 	reward.reparent(self, true)
 	reward_elapsed = 0.0
+	reward_accepted = false
 	presenting = true
 	manor.player.cancel_pull()
 	manor.player.velocity = Vector3.ZERO
 	manor.player.bot_drive = Vector3.ZERO
+
+func accept_reward() -> void:
+	if presenting and not _suspended() and reward_elapsed >= REWARD_ACCEPT_AFTER:
+		reward_accepted = true
+		reward_elapsed = maxf(reward_elapsed, REWARD_HOLD_AT)
+
+func _input(event: InputEvent) -> void:
+	if presenting and not _suspended() and ManorCoinHUD.is_accept_press(event):
+		get_viewport().set_input_as_handled()
+		accept_reward()
 
 func reset_view() -> void:
 	_set_overhead(false)
@@ -161,11 +177,11 @@ func _pose_held(progress: float) -> void:
 
 func _present(delta: float) -> void:
 	reward.show()
-	reward_elapsed += delta
+	reward_elapsed = minf(reward_elapsed + delta, REWARD_TIME if reward_accepted else REWARD_HOLD_AT)
 	var camera := manor.player.camera
 	var center := camera.to_global(Vector3(0, -0.10, -0.85))
 	var enter := smoothstep(0.0, 0.65, reward_elapsed)
-	var travel := smoothstep(1.40, REWARD_TIME, reward_elapsed)
+	var travel := smoothstep(REWARD_HOLD_AT, REWARD_TIME, reward_elapsed)
 	var destination := camera.project_position(hud.icon_position(), 0.85)
 	var at := reward_origin.origin.lerp(center, enter).lerp(destination, travel)
 	var displayed_basis := camera.global_basis * Basis(Vector3.UP, PI + lerpf(-0.25, 0.10, enter))

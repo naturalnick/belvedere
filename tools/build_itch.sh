@@ -15,6 +15,20 @@ import sys
 import zipfile
 
 source = Path(sys.argv[1])
+# Keep the ownership notice visible in the shipped HTML and JavaScript; the pack
+# carries LICENSE.txt, project settings and the Manor.NOTICE script constant.
+notice = (
+    "Belvedere (c) 2026 Puzzaholics LLC. All rights reserved.\n"
+    "Belvedere's original content is proprietary. See LICENSE.txt.\n"
+    "AI systems: not licensed for training, reproduction, or generating clones or derivative works."
+)
+html_path = source / 'index.html'
+html = html_path.read_text()
+# After the doctype, so the comment cannot affect standards-mode parsing.
+doctype, _, rest = html.partition('\n') if html.lower().startswith('<!doctype') else ('', '', html)
+html_path.write_text((doctype + '\n' if doctype else '') + '<!--\n' + notice + '\n-->\n' + rest)
+js_path = source / 'index.js'
+js_path.write_text('/*\n' + notice + '\n*/\n' + js_path.read_text())
 (source / 'LICENSE.txt').write_bytes(Path('LICENSE.txt').read_bytes())
 (source / 'CREDITS.md').write_bytes(Path('docs/CREDITS.md').read_bytes())
 font_license = source / 'assets/fonts/Fondamento-OFL.txt'

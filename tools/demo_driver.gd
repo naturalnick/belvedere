@@ -330,6 +330,13 @@ func walk_to(target: Vector3, stop_for_guide: bool = false) -> void:
 			main.player.bot_drive = Vector3.ZERO
 			if stop_for_guide:
 				return
+			press_if_reward_ready()
+			await get_tree().physics_frame
+			continue
+		if rewards_waiting():
+			# Presented rewards hold the player until accepted.
+			main.player.bot_drive = Vector3.ZERO
+			press_if_reward_ready()
 			await get_tree().physics_frame
 			continue
 		var offset := target - main.player.global_position
@@ -412,6 +419,22 @@ func key_event(key: Key, pressed: bool) -> void:
 	event.physical_keycode = key
 	event.pressed = pressed
 	Input.parse_input_event(event)
+
+# Presented coins and binoculars wait in view until a fresh press.
+func accept_rewards() -> void:
+	while rewards_waiting():
+		press_if_reward_ready()
+		await get_tree().process_frame
+
+func rewards_waiting() -> bool:
+	return not main.coins.pending.is_empty() or main.binoculars.presenting
+
+func press_if_reward_ready() -> void:
+	var coin_ready := main.coin_hud.showing() and not main.coin_hud.accepted and main.coin_hud.presentation >= ManorCoinHUD.HOLD_AT
+	var binoculars_ready := main.binoculars.presenting and not main.binoculars.reward_accepted and main.binoculars.reward_elapsed >= ManorBinoculars.REWARD_HOLD_AT
+	if coin_ready or binoculars_ready:
+		key_event(KEY_SPACE, true)
+		key_event(KEY_SPACE, false)
 
 func mouse_button(pressed: bool) -> void:
 	var event := InputEventMouseButton.new()
@@ -557,13 +580,11 @@ func objective_views() -> void:
 		if not main.coins.pending.is_empty():
 			await get_tree().create_timer(0.45).timeout
 			await shot("coin_reward_%d" % active)
-			while not main.coins.pending.is_empty():
-				await get_tree().process_frame
+			await accept_rewards()
 		if not main.objectives.all_completed:
 			main.player.aim_at(main.rooms[active].global_position + Vector3.UP * 2.25)
 			await shot("03_completed_room")
-	while not main.coins.pending.is_empty():
-		await get_tree().process_frame
+	await accept_rewards()
 	_check(main.coins.available == 7 and not main.play_gate.visible, "all room objectives earn seven coins without ending play")
 	var coin_driver: Node = load("res://tools/coin_driver.gd").new()
 	add_child(coin_driver)

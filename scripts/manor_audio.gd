@@ -9,6 +9,9 @@ const MUSIC_DUCK_DB := -6.0
 const BIRDS_DB := -33.0
 const MUSIC_DELAY := 3.0
 const MUSIC_FADE_IN := 5.0
+# Menu press sound: "ui_click" (brass latch) or "ui_tap" (muted wooden tap).
+const MENU_CLICK := "ui_click"
+const MENU_CLICK_DB := -4.0
 
 signal cued(group: String)
 
@@ -25,17 +28,19 @@ var birds_on := false
 var birds_fade: Tween
 var music_fade: Tween
 var music_intro := 0.0
+var music_started_ms := -1
 var music_duck_db := 0.0
 var stride := STRIDE * 0.6
 var door_events: Array[Array] = []
 
 func _ready() -> void:
-	for group in ["step_wood", "step_tile", "step_grass", "lever_grab", "lever_blocked", "door_rattle", "door_open", "door_close", "slide", "coin_insert", "coin_acquired"]:
+	for group in ["step_wood", "step_tile", "step_grass", "lever_grab", "lever_blocked", "door_rattle", "door_open", "door_close", "slide", "coin_insert", "coin_acquired", "ui_click", "ui_tap"]:
 		var variants: Array = []
 		while ResourceLoader.exists(DIR + "%s_%d.wav" % [group, variants.size()]):
 			variants.append(load(DIR + "%s_%d.wav" % [group, variants.size()]))
 		streams[group] = variants
 	streams["wake"] = [load(DIR + "wake.wav")]
+	add_to_group("menu_audio")
 	for i in 6:
 		var voice := AudioStreamPlayer.new()
 		voice.bus = "Effects"
@@ -55,9 +60,9 @@ func _ready() -> void:
 	var intro := create_tween()
 	intro.tween_interval(MUSIC_DELAY)
 	intro.tween_callback(func() -> void:
+		music_started_ms = Time.get_ticks_msec()
 		if audible:
 			music.play())
-	intro.tween_property(self, "music_intro", 1.0, MUSIC_FADE_IN).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 	if manor.coins != null:
 		manor.coins.received.connect(func() -> void: play("coin_acquired", -4.0))
 	for id in manor.rooms:
@@ -75,6 +80,10 @@ func _ready() -> void:
 	manor.slide_started.connect(_on_slide_started)
 	manor.slide_finished.connect(func() -> void: _duck_music(0.0, 1.4))
 	manor.fall_recovery.woke.connect(func() -> void: play("wake", -4.0))
+
+# Called deferred through the "menu_audio" group, so a Sound: On press is heard after unmuting.
+func menu_click() -> void:
+	play(MENU_CLICK, MENU_CLICK_DB)
 
 func play(group: String, volume_db: float = 0.0, pitch: float = 1.0) -> void:
 	var stream := _pick(group)
@@ -146,6 +155,11 @@ func surface() -> String:
 	return "step_grass"
 
 func _process(_delta: float) -> void:
+	if music_started_ms >= 0 and music_intro < 1.0:
+		# Browsers hold audio until the first click while the music is already queued. Following the
+		# heard position (still 0 while held) keeps the fade-in for that moment instead of a jump.
+		var heard := music.get_playback_position() if music.playing else (Time.get_ticks_msec() - music_started_ms) / 1000.0
+		music_intro = maxf(music_intro, 0.5 - 0.5 * cos(PI * clampf(heard / MUSIC_FADE_IN, 0.0, 1.0)))
 	# Startup gain and slide ducking are independent, so an early slide cannot skip the fade.
 	music.volume_db = linear_to_db(maxf(0.001, music_intro)) + music_duck_db
 	_flush_doors()

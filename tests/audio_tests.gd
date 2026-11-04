@@ -32,13 +32,27 @@ func run() -> void:
 	audio.cued.connect(func(group: String) -> void: cues.append(group))
 
 	var expected := {"step_wood": 5, "step_tile": 6, "step_grass": 5, "lever_grab": 3, "lever_blocked": 3,
-		"door_rattle": 3, "door_open": 2, "door_close": 2, "slide": 3, "wake": 1, "coin_insert": 2, "coin_acquired": 1}
+		"door_rattle": 3, "door_open": 2, "door_close": 2, "slide": 3, "wake": 1, "coin_insert": 2, "coin_acquired": 1, "ui_click": 3, "ui_tap": 3}
 	for group in expected:
 		check(audio.streams[group].size() == expected[group], "%s has %d variants" % [group, expected[group]])
 	check(audio.music.stream.loop and audio.music.bus == "Music", "music loops on the Music bus")
 	check(audio.birds.stream.loop, "forest birds loop")
 	check(audio.voices.all(func(voice: AudioStreamPlayer) -> bool: return voice.bus == "Effects") and audio.birds.bus == "Effects", "effects use the Effects bus")
+	var layout: AudioBusLayout = load(ProjectSettings.get_setting("audio/buses/default_bus_layout"))
+	check(layout != null and layout.get("bus/1/name") == &"Effects" and layout.get("bus/2/name") == &"Music", "volume buses come from the startup layout (runtime buses are silent on the web)")
 	check(AudioServer.get_bus_index("Effects") > 0 and AudioServer.get_bus_index("Music") > 0, "volume buses exist")
+
+	var menu_button := ManorInkButton.new()
+	root.add_child(menu_button)
+	menu_button.pressed.emit()
+	check(count(ManorAudio.MENU_CLICK) == 0, "menu click waits until after the press handlers run")
+	await process_frame
+	check(count(ManorAudio.MENU_CLICK) == 1, "menu buttons click once when pressed")
+	menu_button.mouse_entered.emit()
+	await process_frame
+	check(count(ManorAudio.MENU_CLICK) == 1, "hovering a menu button is silent")
+	menu_button.queue_free()
+	cues.clear()
 
 	check(audio.music_intro == 0.0 and audio.music.volume_db < -59.0, "music starts silent during its delay")
 	main.coins.award([0])

@@ -13,6 +13,19 @@ func check(ok: bool, message: String) -> void:
 		failures += 1
 		printerr("FAIL: ", message)
 
+
+func press(key: Key = KEY_SPACE) -> InputEventKey:
+	var event := InputEventKey.new()
+	event.physical_keycode = key
+	event.keycode = key
+	event.pressed = true
+	return event
+
+func receive_coin(main: Manor) -> void:
+	main.coin_hud._process(ManorCoinHUD.HOLD_AT)
+	main.coin_hud._input(press())
+	main.coin_hud._process(ManorCoinHUD.PRESENT_TIME)
+
 func run() -> void:
 	create_timer(40).timeout.connect(func() -> void: quit(1))
 	var coins := ManorCoins.new()
@@ -93,10 +106,21 @@ func run() -> void:
 	check(main.coin_hud.presentation == before and main.coins.available == 0 and not main.coin_hud.visible, "pause hides and preserves coin presentation")
 	main.resume_play()
 	main.coin_hud.presentation = 0.0
-	main.coin_hud._process(0.6)
+	main.coin_hud._process(0.2)
+	main.coin_hud._input(press())
+	check(not main.coin_hud.accepted, "a press while the coin is still arriving is ignored")
+	main.coin_hud._process(0.4)
 	check(main.coins.available == 0 and main.coin_hud.presentation > 0.5, "coin is presented before inventory increments")
-	main.coin_hud._process(1.3)
-	check(main.coins.available == 1 and main.coin_hud.count.text == "1", "coin arrives at the visible inventory count")
+	main.coin_hud._process(5.0)
+	check(main.coins.available == 0 and main.coin_hud.presentation == ManorCoinHUD.HOLD_AT and main.controls_locked(), "presented coin waits in view, with the player held, until a press")
+	main.coin_hud._input(press(KEY_ESCAPE))
+	check(not main.coin_hud.accepted, "Escape does not accept the coin")
+	var click := InputEventMouseButton.new()
+	click.button_index = MOUSE_BUTTON_LEFT
+	click.pressed = true
+	main.coin_hud._input(click)
+	main.coin_hud._process(ManorCoinHUD.PRESENT_TIME - ManorCoinHUD.HOLD_AT)
+	check(main.coins.available == 1 and main.coin_hud.count.text == "1", "a mouse press sends the coin to the visible inventory count")
 	guide._process(0.0)
 	guide.set_process(true)
 	check(not guide.active and not main.controls_locked(), "control returns only after the token arrives in the wallet")
@@ -136,7 +160,7 @@ func run() -> void:
 	await create_timer(0.75).timeout
 	check(clinks == 1 and not main.coin_device.token.visible, "accepted insertion produces one recorded coin clink")
 	main.coins.award([0])
-	main.coin_hud._process(ManorCoinHUD.PRESENT_TIME)
+	receive_coin(main)
 	main.player.begin_interact()
 	check(not main.player.begin_interact(), "device rejects overlapping insertions while its slot is occupied")
 	main.player.release_interact()

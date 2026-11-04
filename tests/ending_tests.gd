@@ -12,6 +12,19 @@ func check(condition: bool, message: String) -> void:
 		failures += 1
 		printerr("FAIL: ", message)
 
+
+func press(key: Key = KEY_SPACE) -> InputEventKey:
+	var event := InputEventKey.new()
+	event.physical_keycode = key
+	event.keycode = key
+	event.pressed = true
+	return event
+
+func receive_coin(main: Manor) -> void:
+	main.coin_hud._process(ManorCoinHUD.HOLD_AT)
+	main.coin_hud._input(press())
+	main.coin_hud._process(ManorCoinHUD.PRESENT_TIME)
+
 func run() -> void:
 	var main: Manor = load("res://scenes/manor.tscn").instantiate()
 	root.add_child(main)
@@ -40,11 +53,13 @@ func run() -> void:
 		var lamp: ManorBeacon = main.objective_display.lamps[id]
 		check(lamp.state == (2 if main.rules.board[id] == id else 0), "completed room lamp tracks placement, not earned progress")
 	check(main.objectives.all_completed and not main.won, "all coins can be earned independently of assembled house")
+	while not main.coins.pending.is_empty():
+		receive_coin(main)
 	check(not main.controls_locked() and not main.play_gate.visible, "earning the last coin does not end play")
 	check(not front.opened and not main.carpet.visible and not main.ending.active, "coin objectives do not unlock bonus exit")
 	main.coins.award(ManorObjectives.ROOMS)
 	while not main.coins.pending.is_empty():
-		main.coin_hud._process(ManorCoinHUD.PRESENT_TIME)
+		receive_coin(main)
 	for i in 7:
 		check(main.coin_device.interact(), "device accepts coin %d" % (i + 1))
 		while main.coin_device.busy:

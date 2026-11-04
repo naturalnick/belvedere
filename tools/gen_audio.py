@@ -107,6 +107,7 @@ def effects():
         write(f'door_open_{i}', hinge, .26, release=.18)
         write(f'door_close_{i}', close, .30, release=.07)
     coin_effects()
+    menu_effects()
     write('wake', source('rpg', 'cloth2', .9, 4200), .20, .025, .12)
     for variant in range(3):
         length = 2.05
@@ -129,6 +130,17 @@ def effects():
         takeup = source('impact', 'impactPlank_medium_000', .8, 1500)
         x = mix(length, [(0, rolling, .55 / 4), (.20, creak, .17 / 12), (.95, settle, .11 / 12), (.015, takeup, .13), (1.52, landing, .44), (1.54, latch, .07)])
         write(f'slide_{variant}', x, .63, .008, .18)
+
+
+def menu_effects():
+    # Menu presses: a small brass latch click, shorter and well below the lever grab.
+    # ui_tap (a muted wooden tap) is the alternative; ManorAudio.MENU_CLICK selects one.
+    for i in range(3):
+        click = source('rpg', 'metalClick', 1.0 + i*.035, 5000)[:int(.16 * RATE)]
+        write(f'ui_click_{i}', click, .16, .002, .06)
+        tap = source('impact', 'impactWood_light_000', 1.02 + i*.035, 3200)[:int(.16 * RATE)]
+        # The tap carries more body than the click; this peak matches their loudness.
+        write(f'ui_tap_{i}', tap, .085, .002, .06)
 
 
 def coin_effects():

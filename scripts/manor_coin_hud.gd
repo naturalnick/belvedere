@@ -2,9 +2,23 @@ class_name ManorCoinHUD
 extends Control
 
 const PRESENT_TIME := 1.8
+# The presented coin rests at HOLD_AT until a fresh key or mouse press sends it to the
+# wallet; presses before ACCEPT_AFTER (while it is still arriving) are swallowed.
+const HOLD_AT := 1.15
+const ACCEPT_AFTER := 0.4
 var manor: Manor
 var count: Label
 var presentation := 0.0
+var accepted := false
+
+# Any fresh key, mouse button or gamepad button accepts a presented reward. Escape still
+# pauses, and wheel or mouse motion never accept.
+static func is_accept_press(event: InputEvent) -> bool:
+	if event is InputEventKey:
+		return event.pressed and not event.echo and event.physical_keycode != KEY_ESCAPE
+	if event is InputEventMouseButton:
+		return event.pressed and event.button_index in [MOUSE_BUTTON_LEFT, MOUSE_BUTTON_RIGHT, MOUSE_BUTTON_MIDDLE]
+	return event is InputEventJoypadButton and event.pressed
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -34,23 +48,40 @@ func _process(delta: float) -> void:
 		queue_redraw()
 		return
 	# Pause, room slides and fall recovery retain the queued reward presentation.
-	if not visible or manor.sliding or manor.first_coin_guide.holding_reward():
+	if not showing():
 		return
-	if manor.coins.pending.is_empty():
-		return
-	presentation += delta
-	if presentation >= PRESENT_TIME:
+	presentation = minf(presentation + delta, PRESENT_TIME if accepted else HOLD_AT)
+	if accepted and presentation >= PRESENT_TIME:
 		presentation = 0.0
+		accepted = false
 		manor.coins.receive_next()
 	queue_redraw()
+
+# A coin is waiting to be shown or accepted; the player stays still until it reaches the wallet.
+func presenting() -> bool:
+	return not manor.coins.pending.is_empty()
+
+func showing() -> bool:
+	return visible and presenting() and not manor.sliding and not manor.first_coin_guide.holding_reward() and not (manor.binoculars != null and manor.binoculars.locks_player())
+
+func accept() -> void:
+	if showing() and presentation >= ACCEPT_AFTER:
+		accepted = true
+		# The coin is at rest until HOLD_AT, so its flight starts on the press.
+		presentation = maxf(presentation, HOLD_AT)
+
+func _input(event: InputEvent) -> void:
+	if showing() and is_accept_press(event):
+		get_viewport().set_input_as_handled()
+		accept()
 
 func _draw() -> void:
 	var destination := Vector2(size.x - 94, 40)
 	ManorPrizeArt.draw_coin(self, destination, 15)
-	if manor.coins.pending.is_empty() or manor.first_coin_guide.holding_reward() or (manor.binoculars != null and manor.binoculars.locks_player()):
+	if not presenting() or manor.sliding or manor.first_coin_guide.holding_reward() or (manor.binoculars != null and manor.binoculars.locks_player()):
 		return
 	var enter := smoothstep(0.0, 0.3, presentation)
-	var travel := smoothstep(1.15, PRESENT_TIME, presentation)
+	var travel := smoothstep(HOLD_AT, PRESENT_TIME, presentation)
 	var origin := size * Vector2(0.5, 0.59) + Vector2(0, 24 * (1 - enter))
 	var radius := lerpf(minf(size.y * 0.115, 82) * lerpf(0.65, 1.0, enter), 15.0, travel)
 	var at := origin.lerp(destination, travel)

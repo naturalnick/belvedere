@@ -13,6 +13,19 @@ func check(ok: bool, message: String) -> void:
 		failures += 1
 		printerr("FAIL: ", message)
 
+
+func press(key: Key = KEY_SPACE) -> InputEventKey:
+	var event := InputEventKey.new()
+	event.physical_keycode = key
+	event.keycode = key
+	event.pressed = true
+	return event
+
+func receive_coin(main: Manor) -> void:
+	main.coin_hud._process(ManorCoinHUD.HOLD_AT)
+	main.coin_hud._input(press())
+	main.coin_hud._process(ManorCoinHUD.PRESENT_TIME)
+
 func run() -> void:
 	create_timer(35).timeout.connect(func() -> void: quit(1))
 	var main: Manor = load("res://scenes/manor.tscn").instantiate()
@@ -87,10 +100,11 @@ func run() -> void:
 	check(item.toggle(), "second use starts lowering")
 	item._process(0.25)
 	item._process(0.50)
-	check(item.phase == ManorBinoculars.Phase.IDLE and main.player.camera.is_current() and not main.controls_locked(), "lowering restores play")
+	check(item.phase == ManorBinoculars.Phase.IDLE and main.player.camera.is_current() and not item.locks_player(), "lowering restores play")
+	check(main.controls_locked() and main.coin_hud.showing(), "the queued coin then holds the player until accepted")
 	check(main.player.camera.global_transform.is_equal_approx(view) and main.player.camera.fov == fov, "return restores exact aim, location and configured FOV")
 	check(original_shadows.keys().all(func(light: Light3D) -> bool: return light.shadow_enabled == original_shadows[light]), "lowering restores the original per-light shadow settings")
-	main.coin_hud._process(ManorCoinHUD.PRESENT_TIME)
+	receive_coin(main)
 	check(main.coins.available == 1 and main.coins.pending.is_empty(), "pending coin presentation resumes after lowering")
 	for room in main.rooms.values():
 		check(room.ceiling.visible and not room.overview_edges.visible and not room.overview_roof.visible, "normal room rendering is restored")
@@ -124,7 +138,10 @@ func run() -> void:
 	item._process(1.0)
 	check(item.reward_elapsed == reward_time and not item.owned, "reward presentation pauses without granting early")
 	main.resume_play()
-	item._process(1.6)
+	item._process(5.0)
+	check(item.presenting and not item.owned and item.reward.visible and item.reward_elapsed == ManorBinoculars.REWARD_HOLD_AT, "binocular reward waits in view until a press")
+	item._input(press(KEY_W))
+	item._process(ManorBinoculars.REWARD_TIME - ManorBinoculars.REWARD_HOLD_AT)
 	check(item.owned and item.reward_claimed and not item.presenting and not item.reward.visible and acquisitions == 1, "reward arrives in inventory without a pickup")
 	item.present_reward()
 	check(not item.presenting and acquisitions == 1, "safe reward is granted only once")

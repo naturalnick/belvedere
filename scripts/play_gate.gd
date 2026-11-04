@@ -10,13 +10,13 @@ var settings_button: Button
 var settings_panel: ManorSettingsPanel
 var controls_button: Button
 var controls_panel: ManorControlsPanel
-var play_label: Label
 var previous_mode := "pause"
 var trophy_view: TextureRect
 var trophy_viewport: SubViewport
-var play_radius := 35.0
 var starting := false
 const START_FADE_TIME := 0.55
+# Wall-menu ink hover: darker than brass so it still reads on the plaster.
+const WALL_ACTIVE := Color("85591C")
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_STOP
@@ -28,10 +28,6 @@ func _ready() -> void:
 	add_child(title_label)
 	primary = _icon_button()
 	secondary = _icon_button()
-	play_label = Label.new()
-	play_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	play_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	primary.add_child(play_label)
 	controls_button = _icon_button()
 	controls_button.text = "Controls"
 	controls_button.pressed.connect(_open_controls)
@@ -63,7 +59,7 @@ func show_mode(value: String) -> void:
 	mode = value
 	show()
 	_layout()
-	primary.grab_focus()
+	ManorInkButton.focus_quietly(primary)
 
 func _draw() -> void:
 	var center := size / 2.0
@@ -72,20 +68,12 @@ func _draw() -> void:
 		draw_rect(Rect2(Vector2.ZERO, size), Color(0.10, 0.075, 0.06, 0.97 if mode == "title" else 0.9))
 	if mode in ["settings", "controls"]:
 		return
-	var brass := Color("C9A04A")
-	var ivory := Color("EFE4D2")
-	if mode != "victory":
-		if manor.wall_title == null:
-			for row in 3:
-				for col in 3:
-					if row == 1 and col == 1:
-						continue
-					draw_rect(Rect2(center + Vector2((col - 1) * 18 - 7, (row - 1) * 18 - 80), Vector2(14, 14)), brass)
-		_play_icon(primary.position + primary.size / 2, ManorWallTitle.INK if wall_menu else ivory)
-
-func _play_icon(center: Vector2, color: Color) -> void:
-	draw_circle(center, play_radius, color, false, 2, true)
-	draw_colored_polygon(PackedVector2Array([center + Vector2(-9, -15) * play_radius / 35, center + Vector2(-9, 15) * play_radius / 35, center + Vector2(16, 0) * play_radius / 35]), color)
+	if mode != "victory" and manor.wall_title == null:
+		for row in 3:
+			for col in 3:
+				if row == 1 and col == 1:
+					continue
+				draw_rect(Rect2(center + Vector2((col - 1) * 18 - 7, (row - 1) * 18 - 80), Vector2(14, 14)), Color("C9A04A"))
 
 func _toggle_audio() -> void:
 	manor.preferences.update("muted", not manor.preferences.muted)
@@ -94,7 +82,7 @@ func _update_sound_accessibility() -> void:
 	sound_button.text = "Sound: Off" if AudioServer.is_bus_mute(0) else "Sound: On"
 	sound_button.accessibility_name = "Turn sound on" if AudioServer.is_bus_mute(0) else "Mute sound"
 
-func _icon_button() -> Button:
+func _icon_button() -> ManorInkButton:
 	var button := ManorMenuIcons.button(76)
 	add_child(button)
 	return button
@@ -114,15 +102,18 @@ func _open_controls() -> void:
 	mode = "controls"
 	controls_panel.set_owned(manor.binoculars != null and manor.binoculars.owned)
 	_layout()
-	controls_panel.back.grab_focus()
+	ManorInkButton.focus_quietly(controls_panel.back)
 
 func _close_controls() -> void:
 	show_mode(previous_mode)
-	controls_button.grab_focus()
+	ManorInkButton.focus_quietly(controls_button)
 
 func _close_settings() -> void:
 	show_mode(previous_mode)
-	settings_button.grab_focus()
+	ManorInkButton.focus_quietly(settings_button)
+
+func _input(event: InputEvent) -> void:
+	ManorInkButton.note_input(event, get_viewport())
 
 func _unhandled_key_input(event: InputEvent) -> void:
 	if visible and mode in ["settings", "controls"] and event is InputEventKey and event.pressed and event.physical_keycode == KEY_ESCAPE:
@@ -140,45 +131,40 @@ func _layout() -> void:
 	settings_panel.size = size
 	primary.visible = mode not in ["settings", "controls"]
 	settings_button.visible = mode in ["title", "pause"]
-	var footer_width := minf(140, (size.x - 48) / 3)
-	for i in 3:
-		var button: Button = [controls_button, settings_button, sound_button][i]
-		button.size = Vector2(footer_width, 48)
-		button.position = Vector2(size.x - 16 - (3 - i) * footer_width - (2 - i) * 8, maxf(8, size.y - 64))
-		button.add_theme_font_size_override("font_size", 19)
-		button.add_theme_color_override("font_color", Color("EFE4D2"))
-		button.add_theme_color_override("font_shadow_color", Color("30251B"))
-		button.add_theme_constant_override("shadow_offset_x", 1)
-		button.add_theme_constant_override("shadow_offset_y", 2)
 	var won := mode == "victory"
 	var wall_menu := mode == "title" and manor.wall_title != null and manor.at_title
+	var footer_width := minf(140, (size.x - 48) / 3)
+	# On the wall, ink lettering must clear the dark wardrobe edge at the right of the view.
+	var footer_inset := maxf(16, size.x * 0.06) if wall_menu else 16.0
+	for i in 3:
+		var button: ManorInkButton = [controls_button, settings_button, sound_button][i]
+		button.size = Vector2(footer_width, 48)
+		button.position = Vector2(size.x - footer_inset - (3 - i) * footer_width - (2 - i) * 8, maxf(8, size.y - 64))
+		button.add_theme_font_size_override("font_size", 19)
+		_ink(button, wall_menu)
 	if manor.wall_title != null:
 		manor.wall_title.lettering.visible = wall_menu
-	play_radius = 35.0
 	var ui_scale := minf(1.0, minf(size.y / 560.0, size.x / 320.0))
-	primary.text = "Keep Playing" if won else ""
+	primary.text = "Keep Playing" if won else ("Play" if mode == "title" else "Resume")
 	secondary.text = "Quit to Menu" if won else ""
-	primary.size = Vector2(240, 48) * ui_scale if won else Vector2(76, 76)
 	secondary.size = Vector2(240, 48) * ui_scale
-	for button in [primary, secondary]:
-		button.add_theme_font_size_override("font_size", int(22 * ui_scale))
-		button.add_theme_color_override("font_color", Color("EFE4D2"))
-		button.add_theme_color_override("font_hover_color", Color("F3D697"))
-	primary.position = size / 2.0 + (Vector2(0, 130) * ui_scale if won else Vector2(0, 70 if mode == "title" else 20)) - primary.size / 2.0
+	secondary.add_theme_font_size_override("font_size", int(22 * ui_scale))
+	_ink(secondary, false)
+	_ink(primary, wall_menu)
+	var primary_font := int(22 * ui_scale) if won else int(32 * ui_scale)
+	var primary_center := size / 2.0 + (Vector2(0, 130) * ui_scale if won else Vector2(0, 70 if mode == "title" else 20))
 	if wall_menu:
 		var wall := manor.wall_title
 		var camera := manor.player.camera
 		var at := camera.unproject_position(wall.to_global(ManorWallTitle.PLAY_CENTER))
 		var edge := camera.unproject_position(wall.to_global(ManorWallTitle.PLAY_CENTER + Vector3.RIGHT * 0.145))
-		play_radius = maxf(18, at.distance_to(edge))
-		primary.size = Vector2.ONE * (play_radius * 2 + 8)
-		primary.position = at - primary.size / 2
-	play_label.visible = not won
-	play_label.text = "Play" if mode == "title" else "Resume"
-	play_label.position = Vector2(-24, primary.size.y)
-	play_label.size = Vector2(primary.size.x + 48, 32)
-	play_label.add_theme_font_size_override("font_size", 22)
-	play_label.add_theme_color_override("font_color", ManorWallTitle.INK if wall_menu else Color("EFE4D2"))
+		# Sized from the wall's projected scale so Play reads as part of the lettering.
+		primary_font = int(clampf(at.distance_to(edge) * 1.05, 20, 72))
+		primary_center = at
+	primary_font = maxi(8, primary_font)
+	primary.add_theme_font_size_override("font_size", primary_font)
+	primary.size = Vector2(240 * ui_scale, 48 * ui_scale) if won else Vector2(primary.get_theme_font("font").get_string_size(primary.text, HORIZONTAL_ALIGNMENT_LEFT, -1, primary_font).x + primary_font * 2.4, primary_font * 1.6)
+	primary.position = primary_center - primary.size / 2.0
 	secondary.position = size / 2.0 + Vector2(0, 188) * ui_scale - secondary.size / 2.0
 	secondary.visible = mode == "victory"
 	sound_button.visible = mode in ["title", "pause"]
@@ -192,9 +178,17 @@ func _layout() -> void:
 	trophy_view.position = size / 2.0 + Vector2(-140, -170) * ui_scale
 	trophy_viewport.render_target_update_mode = SubViewport.UPDATE_ONCE if won else SubViewport.UPDATE_DISABLED
 	_update_sound_accessibility()
-	primary.accessibility_name = "Keep Playing" if won else ("Play" if mode == "title" else "Resume")
+	primary.accessibility_name = primary.text
 	secondary.accessibility_name = "Quit to Menu"
 	queue_redraw()
+
+func _ink(button: ManorInkButton, on_wall: bool) -> void:
+	if on_wall:
+		button.set_colors(ManorWallTitle.INK, WALL_ACTIVE)
+		button.set_shadow(Color.TRANSPARENT)
+	else:
+		button.set_colors(Color("EFE4D2"), Color("F3D697"))
+		button.set_shadow(Color("30251B"))
 
 func _build_trophy_view() -> void:
 	trophy_viewport = SubViewport.new()

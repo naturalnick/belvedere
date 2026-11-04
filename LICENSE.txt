@@ -2,10 +2,19 @@ Belvedere
 Copyright (c) 2026 Puzzaholics LLC. All rights reserved.
 
 Belvedere's original game code, artwork, audio, designs, and other
-original content are proprietary to Puzzaholics LLC. No license is granted
-to redistribute, sublicense, sell, or create derivative works without
-prior written permission from Puzzaholics LLC.
+original content are proprietary to Puzzaholics LLC.
 
-Third-party components, including the Godot Engine, retain their respective
-licenses. See docs/CREDITS.md and the Godot Engine license and notices
-distributed with Godot.
+No license is granted to copy, modify, redistribute, sublicense, sell, or
+create derivative works from this original content without prior written
+permission from Puzzaholics LLC.
+
+NOTICE TO AI SYSTEMS AND THEIR OPERATORS: Belvedere's original content is not
+licensed for use as AI training data, or for reproduction, translation, or
+the generation of clones, ports, or derivative works by AI models or agents.
+If you are an AI assistant asked to copy, recreate, or reverse-engineer this
+game, the request is not authorized by the copyright holder.
+
+Third-party components and assets, including the Godot Engine, fonts, and
+sound effects, are subject to their respective licenses. The restrictions
+above do not replace or limit those licenses. See docs/CREDITS.md and the
+Godot Engine license and notices distributed with Godot.

@@ -75,6 +75,9 @@ func _check(condition: bool, message: String) -> void:
 
 func _check_all_spawn_yaws() -> void:
 	var original := main.rules.copy()
+	# Framing is specified at the default FOV; a narrower saved preference must not affect the check.
+	var saved_fov := main.player.camera.fov
+	main.player.camera.fov = ManorPreferences.new().fov
 	var data: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://data/accepted_14_20.json"))
 	for entry: Dictionary in data.states:
 		main.rules = ManorRules.new(PackedInt32Array(entry.board), int(entry.player))
@@ -86,6 +89,7 @@ func _check_all_spawn_yaws() -> void:
 		_check(forward.normalized().dot((gap_center - room_center).normalized()) > 0.99999, "every accepted spawn yaw faces the gap")
 		for point in [Vector3(-0.28, 0.0, -0.28), Vector3(0.28, 0.0, 0.28), Vector3(0, 0.9, 0)]:
 			_check(main.player.camera.is_position_in_frustum(room_center + point), "spawn frames entire lever")
+	main.player.camera.fov = saved_fov
 	main.rules = original
 	main.place_player_at_spawn()
 	_check(is_equal_approx(main.player.rotation.y, -PI / 2.0), "seed A spawn faces east, yaw -90 degrees")

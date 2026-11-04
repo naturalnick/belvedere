@@ -24,8 +24,9 @@ func run(driver: Node) -> void:
 	driver._check(main.coins.pending == [first_room] and main.objectives.active != first_room, "entering home room presents first coin and changes target")
 	await get_tree().create_timer(0.35).timeout
 	await driver.shot("coin_presented")
-	while not main.coins.pending.is_empty():
-		await get_tree().process_frame
+	await get_tree().create_timer(1.5).timeout
+	driver._check(main.coins.pending == [first_room] and main.coins.available == 0 and main.coin_hud.presentation == ManorCoinHUD.HOLD_AT, "presented coin waits in view for a press")
+	await driver.accept_rewards()
 	while main.first_coin_guide.active:
 		await get_tree().process_frame
 	main.player.aim_at(main.rooms[first_room].global_position + Vector3.UP * 2.4)
@@ -34,8 +35,7 @@ func run(driver: Node) -> void:
 	await driver.shot("warm_shade")
 	await driver.shot("coin_count")
 	main.coins.award(ManorObjectives.ROOMS)
-	while not main.coins.pending.is_empty():
-		await get_tree().process_frame
+	await driver.accept_rewards()
 	await deposit_all(driver)
 	await driver.shot("ending_1")
 	await driver.hover_button(main.play_gate.primary, "hover_keep_playing")
