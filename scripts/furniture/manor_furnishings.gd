@@ -1,6 +1,8 @@
 class_name ManorFurnishings
 extends FurnitureKit
 
+const PLAN_SIZE := 1.2
+const PLAN_FRAME := 0.045
 var room_id: int
 
 func _init(id: int = 1) -> void:
@@ -214,6 +216,24 @@ func laundry() -> void:
 			var sleeve := box(coats, Vector3(0.10, 0.45, 0.05), Vector3(x + side * 0.20, 1.58, 0.16), color)
 			sleeve.rotation.z = side * 0.25
 		box(coats, Vector3(0.018, 0.57, 0.008), Vector3(x, 1.535, 0.193), "656B62", 0.0)
+	house_plan()
 	var folding := table("FoldingTable", Vector3(1.95, 0, 2.55), 1.35, 0.65, 0.75)
 	for towel in 3:
 		box(folding, Vector3(0.52, 0.065, 0.38), Vector3(-0.25, 0.784 + towel * 0.067, 0), CREAM if towel % 2 == 0 else "A6B9B5")
+
+func house_plan() -> void:
+	# Straight ahead from the Foyer door, behind the first blue lamp, on the slide's own axis.
+	var plan := group("HousePlan", Vector3(2.995, 1.62, 0), -PI / 2)
+	var sheet := QuadMesh.new()
+	sheet.size = Vector2.ONE * PLAN_SIZE
+	var paper := MeshInstance3D.new()
+	paper.name = "Sheet"
+	paper.mesh = sheet
+	paper.material_override = ManorGeometry.printed_material(preload("res://assets/house_plan.svg"))
+	paper.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	plan.add_child(paper)
+	paper.position.z = 0.012
+	var bar := PLAN_FRAME
+	for side in [-1, 1]:
+		box(plan, Vector3(PLAN_SIZE + 2 * bar, bar, 0.04), Vector3(0, side * (PLAN_SIZE + bar) / 2, 0.02), WOOD)
+		box(plan, Vector3(bar, PLAN_SIZE, 0.04), Vector3(side * (PLAN_SIZE + bar) / 2, 0, 0.02), WOOD)

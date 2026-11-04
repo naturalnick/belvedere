@@ -24,6 +24,9 @@ uniform vec4 siding_color : source_color = vec4(0.66, 0.645, 0.62, 1.0);
 uniform vec4 siding_base : source_color = vec4(0.36, 0.345, 0.33, 1.0);
 uniform vec4 siding_trim : source_color = vec4(0.937, 0.894, 0.824, 1.0);
 uniform sampler2D paper_grain : repeat_enable, filter_linear_mipmap;
+// A printed sheet: same grain and lighting as its surroundings, with the sheet as its colour.
+uniform bool printed = false;
+uniform sampler2D print_map : source_color, repeat_disable, filter_linear_mipmap_anisotropic;
 varying vec3 surface_position;
 varying vec3 surface_normal;
 void vertex() {
@@ -45,6 +48,9 @@ void fragment() {
 			+ texture(paper_grain, surface_position.xy * 0.7).r * weights.z;
 	}
 	ALBEDO = base_color.rgb * mix(0.92, 1.0, grain) * (vertex_colors ? COLOR.rgb : vec3(1.0));
+	if (printed) {
+		ALBEDO *= texture(print_map, UV).rgb;
+	}
 	if ((floor_pattern == 1 || floor_pattern == 2) && surface_normal.y > 0.5) {
 		vec2 tile = surface_position.xz / tile_size;
 		vec2 edge = min(fract(tile), 1.0 - fract(tile)) * tile_size;
@@ -99,7 +105,7 @@ void fragment() {
 		ALBEDO = mix(ALBEDO, track_groove.rgb, groove);
 		ALBEDO = mix(ALBEDO, track_steel.rgb * mix(0.96, 1.0, grain), steel);
 	}
-	EMISSION = base_color.rgb * self_light;
+	EMISSION = (printed ? ALBEDO : base_color.rgb) * self_light;
 	ROUGHNESS = 0.75;
 	SPECULAR = 0.25;
 }

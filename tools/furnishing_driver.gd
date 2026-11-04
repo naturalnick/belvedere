@@ -1,5 +1,6 @@
 extends Node
 const FIXTURE = preload("res://tools/furnishing_fixture.gd")
+const PLAN_VIEWS := {"plan_doorway": Vector3(-2.65, 0, 0), "plan_lever": Vector3(-1.25, 0, 0), "plan_near": Vector3(1.6, 0, 0)}
 const NAMES := {1: "bathroom", 2: "study", 3: "kitchen", 5: "living", 6: "dining", 7: "foyer", 8: "laundry"}
 
 func run(driver: Node) -> void:
@@ -39,6 +40,12 @@ func run(driver: Node) -> void:
 				await driver.walk_to(main.coin_device.to_global(Vector3(side * 0.80, 0, 1.15)))
 				main.player.aim_at(main.coin_device.to_global(Vector3(0, 1.48, 0)))
 				await driver.shot("trophy_case_left" if side < 0 else "trophy_case_right")
+		if id == 8:
+			var plan := room.position + Vector3(2.99, 1.62, 0)
+			for shot_name: String in PLAN_VIEWS:
+				await driver.walk_to(room.position + PLAN_VIEWS[shot_name])
+				main.player.aim_at(plan)
+				await driver.shot(shot_name)
 		await driver.approach_lever(room)
 		main.player.aim_at(room.lever.global_position + Vector3.UP * 0.8)
 		await get_tree().physics_frame

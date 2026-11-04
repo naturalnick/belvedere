@@ -13,6 +13,7 @@ Kept in `tools/`; update this list when the scripts change.
 - QR flicker check: `tools/check_qr.sh`. Door close-up pixel check: `tools/check_doors.sh [out_dir]`. Render benchmark: `tools/profile.sh [output_json]`.
 - Web build (local zip, never uploaded): `tools/build_itch.sh`
 - Underside QR generate/verify: `tools/gen_qr.sh` (macOS)
+- Laundry wall plan: `python3 tools/gen_plan.py` writes `assets/house_plan.svg`
 - Export scope/identity preflight (read-only): `python3 tools/check_export_identity.py`
 - Regenerate `assets/audio/` from `tools/audio_sources/` (needs ffmpeg + oggenc): `tools/gen_audio.sh`
 

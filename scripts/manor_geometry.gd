@@ -53,6 +53,14 @@ static func material(hex: String, outline: float = 0.012) -> Material:
 	materials[key] = result
 	return result
 
+static func printed_material(sheet: Texture2D) -> Material:
+	var result: ShaderMaterial = material("FFFFFF", 0.0).duplicate()
+	result.set_shader_parameter("printed", true)
+	result.set_shader_parameter("print_map", sheet)
+	# White paper under warm room light otherwise reads as gray beside the cream plaster.
+	result.set_shader_parameter("self_light", 0.22)
+	return result
+
 static func floor_material(id: int) -> Material:
 	var key := "floor_%d" % id
 	if not materials.has(key):
