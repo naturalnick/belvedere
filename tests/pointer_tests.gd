@@ -16,10 +16,59 @@ func wait(seconds: float) -> void:
 	await create_timer(seconds).timeout
 	await process_frame
 
+func key(code: Key, echo := false) -> InputEventKey:
+	var event := InputEventKey.new()
+	event.physical_keycode = code
+	event.keycode = code
+	event.pressed = true
+	event.echo = echo
+	return event
+
+func press(code: Key, echo := false) -> void:
+	root.push_input(key(code, echo))
+	await process_frame
+
 func run() -> void:
-	# Run with --web-entry; headless has no real pointer lock, so the test supplies it.
 	var main: Manor = load("res://scenes/manor.tscn").instantiate()
 	root.add_child(main)
+	if OS.get_cmdline_user_args().has("--web-entry"):
+		await watch_pointer(main)
+	else:
+		check(main.pointer_watch == null, "desktop runs do not watch pointer lock")
+		main.start_play()
+	await pause_keys(main)
+	main.queue_free()
+	await process_frame
+	print("Pointer and pause keys: %d checks, %d failures" % [checks, failures])
+	quit(1 if failures else 0)
+
+func pause_keys(main: Manor) -> void:
+	var web := main.pointer_watch != null
+	lock = true
+	main.player.automated = false
+	await press(KEY_P)
+	check(main.play_gate.visible and main.play_gate.mode == "pause", "P pauses play")
+	await press(KEY_P)
+	check(not main.play_gate.visible, "P resumes from the pause menu")
+	await press(KEY_ESCAPE)
+	check(main.play_gate.visible and main.play_gate.mode == "pause", "Escape pauses play")
+	await press(KEY_ESCAPE, true)
+	check(main.play_gate.visible, "a held Escape does not resume")
+	await press(KEY_ESCAPE)
+	if web:
+		check(main.play_gate.visible, "web Escape leaves the menu up, since browsers refuse pointer lock from it")
+		await press(KEY_P)
+	check(not main.play_gate.visible, "Escape resumes on desktop; P resumes on the web")
+	await press(KEY_P)
+	main.play_gate._open_settings()
+	await press(KEY_P)
+	check(main.play_gate.visible and main.play_gate.mode == "settings", "P does not leave settings")
+	main.play_gate._close_settings()
+	main.resume_play()
+	check(not ManorCoinHUD.is_accept_press(key(KEY_P)) and ManorCoinHUD.is_accept_press(key(KEY_E)), "P pauses instead of accepting a presented reward")
+
+# Headless has no real pointer lock, so the test supplies it.
+func watch_pointer(main: Manor) -> void:
 	var watch := main.pointer_watch
 	check(watch != null, "web entry installs the pointer watch")
 	watch.captured = func() -> bool: return lock
@@ -50,7 +99,3 @@ func run() -> void:
 	main.player.automated = true
 	await wait(1.3)
 	check(not main.play_gate.visible, "automated runs are left alone")
-	main.queue_free()
-	await process_frame
-	print("Pointer watch: %d checks, %d failures" % [checks, failures])
-	quit(1 if failures else 0)

@@ -3,7 +3,7 @@ extends Control
 
 signal closed
 const ACTIONS := ["Move", "Look", "Interact", "Pull lever", "Pause", "Binoculars"]
-const BINDINGS := ["W A S D", "Mouse", "E / Left click", "Hold E + WASD", "Esc", "B"]
+const BINDINGS := ["W A S D", "Mouse", "E / Left click", "Hold E + WASD", "Esc / P", "B"]
 var rows: Array[Control] = []
 var back: Button
 var heading: Label

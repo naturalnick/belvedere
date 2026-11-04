@@ -122,6 +122,14 @@ func _unhandled_key_input(event: InputEvent) -> void:
 		else:
 			_close_settings()
 		get_viewport().set_input_as_handled()
+	elif visible and mode == "pause" and ManorPlayer.is_pause_press(event) and resumes_from(event.physical_keycode):
+		manor.resume_play()
+		get_viewport().set_input_as_handled()
+
+# Browsers never grant pointer lock from Escape (it is not a user-activation key), so on the web
+# Escape would hide the menu only for the failed lock to bring it back; P and Resume still work.
+func resumes_from(key: Key) -> bool:
+	return key != KEY_ESCAPE or not (OS.has_feature("web") or OS.get_cmdline_user_args().has("--web-entry"))
 
 func _layout() -> void:
 	controls_panel.visible = mode == "controls"

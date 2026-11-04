@@ -13,6 +13,10 @@ var sensitivity := 0.0022
 var held := false
 var selected_direction := -1
 var drag := Vector2.ZERO
+const PAUSE_KEYS: Array[Key] = [KEY_ESCAPE, KEY_P]
+
+static func is_pause_press(event: InputEvent) -> bool:
+	return event is InputEventKey and event.pressed and not event.echo and event.physical_keycode in PAUSE_KEYS
 
 func _ready() -> void:
 	var shape := CollisionShape3D.new()
@@ -36,8 +40,9 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if manor.play_gate != null and manor.play_gate.visible:
 		return
-	if event is InputEventKey and event.pressed and event.physical_keycode == KEY_ESCAPE:
+	if is_pause_press(event):
 		manor.release_pointer()
+		get_viewport().set_input_as_handled()
 		return
 	if manor.in_finale:
 		return

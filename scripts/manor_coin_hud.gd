@@ -11,11 +11,11 @@ var count: Label
 var presentation := 0.0
 var accepted := false
 
-# Any fresh key, mouse button or gamepad button accepts a presented reward. Escape still
-# pauses, and wheel or mouse motion never accept.
+# Any fresh key, mouse button or gamepad button accepts a presented reward. The pause keys
+# still pause, and wheel or mouse motion never accept.
 static func is_accept_press(event: InputEvent) -> bool:
 	if event is InputEventKey:
-		return event.pressed and not event.echo and event.physical_keycode != KEY_ESCAPE
+		return event.pressed and not event.echo and not event.physical_keycode in ManorPlayer.PAUSE_KEYS
 	if event is InputEventMouseButton:
 		return event.pressed and event.button_index in [MOUSE_BUTTON_LEFT, MOUSE_BUTTON_RIGHT, MOUSE_BUTTON_MIDDLE]
 	return event is InputEventJoypadButton and event.pressed
