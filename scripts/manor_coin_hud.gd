@@ -8,6 +8,8 @@ const HOLD_AT := 1.15
 const ACCEPT_AFTER := 0.4
 var manor: Manor
 var count: Label
+var reward_title: Label
+var reward_hint: Label
 var presentation := 0.0
 var accepted := false
 
@@ -31,6 +33,10 @@ func _ready() -> void:
 	count.add_theme_constant_override("shadow_offset_x", 1)
 	count.add_theme_constant_override("shadow_offset_y", 2)
 	add_child(count)
+	reward_title = ManorPrizeArt.reward_label(self, "Token")
+	reward_hint = ManorPrizeArt.reward_label(self, "Collect them all")
+	reward_title.hide()
+	reward_hint.hide()
 	manor.coins.changed.connect(_refresh)
 	resized.connect(_refresh)
 	_refresh()
@@ -40,10 +46,12 @@ func _refresh() -> void:
 	count.accessibility_name = "%d Bel coins" % manor.coins.available
 	count.position = Vector2(size.x - 70, 22)
 	count.size = Vector2(46, 36)
+	ManorPrizeArt.layout_reward_text(size, reward_title, reward_hint)
 	queue_redraw()
 
 func _process(delta: float) -> void:
 	visible = not manor.at_title and not manor.in_finale and not manor.recovering and not manor.play_gate.visible
+	_refresh_caption()
 	if manor.binoculars != null and manor.binoculars.locks_player():
 		queue_redraw()
 		return
@@ -55,7 +63,14 @@ func _process(delta: float) -> void:
 		presentation = 0.0
 		accepted = false
 		manor.coins.receive_next()
+	_refresh_caption()
 	queue_redraw()
+
+func _refresh_caption() -> void:
+	var alpha := smoothstep(0.10, 0.35, presentation) * (1.0 - smoothstep(HOLD_AT, HOLD_AT + 0.25, presentation))
+	for label in [reward_title, reward_hint]:
+		label.visible = showing()
+		label.modulate.a = alpha
 
 # A coin is waiting to be shown or accepted; the player stays still until it reaches the wallet.
 func presenting() -> bool:
@@ -82,7 +97,7 @@ func _draw() -> void:
 		return
 	var enter := smoothstep(0.0, 0.3, presentation)
 	var travel := smoothstep(HOLD_AT, PRESENT_TIME, presentation)
-	var origin := size * Vector2(0.5, 0.59) + Vector2(0, 24 * (1 - enter))
-	var radius := lerpf(minf(size.y * 0.115, 82) * lerpf(0.65, 1.0, enter), 15.0, travel)
+	var origin := size * Vector2(0.32, 0.5) + Vector2(0, 24 * (1 - enter))
+	var radius := lerpf(minf(size.y * 0.15, 110) * lerpf(0.65, 1.0, enter), 15.0, travel)
 	var at := origin.lerp(destination, travel)
 	ManorPrizeArt.draw_coin(self, at, radius, lerpf(-0.85, 0.0, enter), radius > 30)

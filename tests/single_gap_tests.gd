@@ -20,12 +20,13 @@ func run() -> void:
 	await physics_frame
 	await physics_frame
 	check(main.rooms.size() == 8 and main.gap_floors.size() == 1, "default launch is eight rooms, one gap")
-	check(main.rules.board == ManorRules.from_seed("A").board, "default retains familiar seed A arrangement")
+	check(main.rules.board == ManorRules.opening_start().board, "default starts with Laundry bottom-center")
 	check(main.rules.valid() and main.rules.courtyards and main.perimeter.is_empty(), "outdoor access remains enabled")
 	var driver: Node = load("res://tools/demo_driver.gd").new()
 	root.add_child(driver)
 	driver.main = main
 	driver.started = Time.get_ticks_msec()
+	await driver.complete_opening_slide()
 	for direction in driver.walk_route(7):
 		await driver.walk_direction(direction)
 	await driver.walk_direction(ManorRules.E)

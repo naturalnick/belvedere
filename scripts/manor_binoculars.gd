@@ -30,6 +30,7 @@ var phase := Phase.IDLE
 var elapsed := 0.0
 var overhead := false
 var framed_viewport := Vector2.ZERO
+var close_blackout := 0.0
 
 func setup(game: Manor, hud_layer: CanvasLayer) -> void:
 	manor = game
@@ -61,9 +62,7 @@ func toggle() -> bool:
 	if not owned or presenting or _suspended():
 		return false
 	if phase == Phase.OVERVIEW:
-		phase = Phase.CLOSING
-		elapsed = 0.0
-		return true
+		return close()
 	if phase != Phase.IDLE or manor.controls_locked() or not manor.player.is_on_floor():
 		return false
 	manor.player.cancel_pull()
@@ -73,6 +72,15 @@ func toggle() -> bool:
 	elapsed = 0.0
 	_pose_held(0.0)
 	held_model.show()
+	return true
+
+func close() -> bool:
+	if phase == Phase.IDLE or _suspended():
+		return false
+	if phase not in [Phase.CLOSING, Phase.LOWERING]:
+		close_blackout = hud.blackout
+		phase = Phase.CLOSING
+		elapsed = 0.0
 	return true
 
 func present_reward() -> void:
@@ -112,6 +120,7 @@ func _suspended() -> bool:
 func _process(delta: float) -> void:
 	if manor == null:
 		return
+	hud.refresh_reward()
 	if manor.at_title or manor.in_finale or manor.recovering:
 		if phase != Phase.IDLE:
 			reset_view()
@@ -124,6 +133,7 @@ func _process(delta: float) -> void:
 		return
 	if presenting:
 		_present(delta)
+		hud.refresh_reward()
 		hud.queue_redraw()
 		return
 	elapsed += delta
@@ -142,7 +152,7 @@ func _process(delta: float) -> void:
 				phase = Phase.OVERVIEW
 				hud.blackout = 0.0
 		Phase.CLOSING:
-			hud.blackout = smoothstep(0.0, CLOSE_TIME, elapsed)
+			hud.blackout = lerpf(close_blackout, 1.0, smoothstep(0.0, CLOSE_TIME, elapsed))
 			if elapsed >= CLOSE_TIME:
 				_set_overhead(false)
 				held_model.show()
@@ -177,15 +187,17 @@ func _present(delta: float) -> void:
 	reward.show()
 	reward_elapsed = minf(reward_elapsed + delta, REWARD_TIME if reward_accepted else REWARD_HOLD_AT)
 	var camera := manor.player.camera
-	var center := camera.to_global(Vector3(0, -0.10, -0.85))
+	var center := camera.project_position(hud.reward_position(), 0.85)
 	var enter := smoothstep(0.0, 0.65, reward_elapsed)
 	var travel := smoothstep(REWARD_HOLD_AT, REWARD_TIME, reward_elapsed)
 	var destination := camera.project_position(hud.icon_position(), 0.85)
 	var at := reward_origin.origin.lerp(center, enter).lerp(destination, travel)
-	var displayed_basis := camera.global_basis * Basis(Vector3.UP, PI + lerpf(-0.25, 0.10, enter))
+	var displayed_basis := camera.global_basis * Basis.from_euler(Vector3(-0.30, PI + lerpf(0.30, 0.60, enter), -0.10))
 	var start_rotation := reward_origin.basis.orthonormalized().get_rotation_quaternion()
 	var rotation_value := start_rotation.slerp(displayed_basis.get_rotation_quaternion(), enter)
-	reward.global_transform = Transform3D(Basis(rotation_value).scaled(Vector3.ONE * lerpf(0.85, 0.13, travel)), at)
+	var display_scale := camera.project_position(Vector2(hud.reward_width(), 0), 0.85).distance_to(camera.project_position(Vector2.ZERO, 0.85)) / 0.36
+	var scale_value := lerpf(lerpf(0.85, display_scale, enter), 0.13, travel)
+	reward.global_transform = Transform3D(Basis(rotation_value).scaled(Vector3.ONE * scale_value), at)
 	if reward_elapsed >= REWARD_TIME:
 		owned = true
 		reward_claimed = true

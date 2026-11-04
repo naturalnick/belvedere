@@ -16,6 +16,13 @@ varying vec3 world_position;
 uniform vec4 track_groove : source_color = vec4(0.239, 0.271, 0.278, 1.0);
 uniform vec4 track_steel : source_color = vec4(0.545, 0.573, 0.557, 1.0);
 uniform vec4 shadow_tint : source_color = vec4(0.35, 0.28, 0.25, 1.0);
+// Room wall boxes face outward along mesh -Z (interior trims sit on +Z).
+uniform bool exterior_siding = false;
+// Bit 1: the +X end face is a house corner; bit 2: the -X end. Other ends are opening reveals.
+uniform int siding_corners = 0;
+uniform vec4 siding_color : source_color = vec4(0.66, 0.645, 0.62, 1.0);
+uniform vec4 siding_base : source_color = vec4(0.36, 0.345, 0.33, 1.0);
+uniform vec4 siding_trim : source_color = vec4(0.937, 0.894, 0.824, 1.0);
 uniform sampler2D paper_grain : repeat_enable, filter_linear_mipmap;
 varying vec3 surface_position;
 varying vec3 surface_normal;
@@ -60,6 +67,26 @@ void fragment() {
 		float seam = 1.0 - smoothstep(0.001 - aa, 0.001 + aa, seam_distance);
 		// Keep the existing palette; these are quiet joinery marks, not dark outlines.
 		ALBEDO *= mix(1.0, 0.98, mod(row, 2.0)) * mix(1.0, 0.92, seam);
+	}
+	bool corner_end = (surface_normal.x > 0.5 && (siding_corners & 1) != 0) || (surface_normal.x < -0.5 && (siding_corners & 2) != 0);
+	if (exterior_siding && surface_normal.z < 0.5) {
+		if (surface_normal.z > -0.5 && !corner_end) {
+			// Door jambs and window reveals read as cream casings.
+			ALBEDO = siding_trim.rgb * mix(0.92, 1.0, grain);
+		} else {
+			// Board lines use world height: rooms only slide horizontally, so the courses
+			// stay fixed and line up across separately built wall pieces and rooms.
+			float course = (world_position.y - 0.3) / 0.18;
+			float from_top = (1.0 - fract(course)) * 0.18;
+			float aa = max(fwidth(world_position.y), 0.0005);
+			// Keep lap lines at least a pixel wide and lighten them to match, so distant walls
+			// average out instead of breaking into jagged streaks.
+			float width = max(0.016, aa * 1.5);
+			float lap = (1.0 - smoothstep(width - aa, width + aa, from_top)) * (0.016 / width);
+			vec3 boards = siding_color.rgb * mix(1.0, 0.93, fract(course)) * mix(1.0, 0.72, lap);
+			float base = 1.0 - smoothstep(0.3 - aa, 0.3 + aa, world_position.y);
+			ALBEDO = mix(boards, siding_base.rgb, base) * mix(0.92, 1.0, grain);
+		}
 	}
 	if (meadow) {
 		ALBEDO = mix(base_color.rgb, meadow_far.rgb, smoothstep(18.0, 90.0, length(world_position.xz)));

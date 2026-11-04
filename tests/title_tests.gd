@@ -19,9 +19,11 @@ func run() -> void:
 	check(main.at_title and main.play_gate.mode == "title" and main.controls_locked(), "new game waits on the wall title")
 	check(main.rules.player == 0 and main.rules.valid(), "Bedroom start has valid occupancy")
 	check(wall.tiles.size() == 9 and wall.get_parent() == main.rooms[0], "nine squares are attached to the Bedroom")
-	check(wall.tiles.slice(0, 8).all(func(tile: MeshInstance3D) -> bool: return tile.material_override == ManorGeometry.material(ManorWallTitle.TILE_COLOR, 0.0)), "all non-target squares share one dark color")
-	check(wall.tiles[8].material_override == wall.blue_material and main.coins.awarded.is_empty(), "initial blue corner grants no coin")
-	check(wall.tiles[8].position.is_equal_approx(Vector3(-0.235, 1.945, 0)), "southeast starting target appears bottom-left when facing west")
+	for slot in 9:
+		if slot != 7:
+			check(wall.tiles[slot].material_override == ManorGeometry.material(ManorWallTitle.TILE_COLOR, 0.0), "non-target square stays dark")
+	check(wall.tiles[7].material_override == wall.blue_material and main.coins.awarded.is_empty(), "bottom-center target grants no starting coin")
+	check(wall.tiles[7].position.is_equal_approx(Vector3(-0.235, 2.18, 0)), "south-center starting target appears middle-left when facing west")
 	check(wall.tiles[0].position.is_equal_approx(Vector3(0.235, 2.415, 0)), "northwest board corner appears top-right on the wall map")
 	var opening_view := main.player.camera.global_transform
 	main.play_gate._open_settings()

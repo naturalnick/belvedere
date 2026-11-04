@@ -17,8 +17,8 @@ func run(game: Manor) -> void:
 			shots_dir = arg.trim_prefix("--shots=")
 		if arg.begins_with("--mode="):
 			mode = arg.trim_prefix("--mode=")
-	if mode not in ["solve", "review", "courtyard", "single-gap", "objectives", "stage3", "furnishings", "trees", "fall", "coins", "title", "safe", "binoculars"]:
-		printerr("Capture mode must be solve, review, courtyard, single-gap, objectives, stage3, furnishings, trees, fall, coins, title, safe or binoculars")
+	if mode not in ["solve", "review", "courtyard", "single-gap", "objectives", "stage3", "furnishings", "trees", "exterior", "fall", "coins", "title", "safe", "binoculars"]:
+		printerr("Capture mode must be solve, review, courtyard, single-gap, objectives, stage3, furnishings, trees, exterior, fall, coins, title, safe or binoculars")
 		get_tree().quit(1)
 		return
 	DirAccess.make_dir_recursive_absolute(shots_dir)
@@ -26,7 +26,7 @@ func run(game: Manor) -> void:
 	# Remove this mode's outputs so stale success frames cannot survive a failed run.
 	var shot_names := ["01_spawn", "02_window", "03_lever_held", "04_mid_slide", "05_solved", "06_front_door_open"]
 	if mode == "binoculars":
-		shot_names = ["binoculars_raising", "binoculars_approaching", "binoculars_eyecups", "binoculars_overview", "binoculars_800x800", "binoculars_640x900", "binoculars_paused", "binoculars_lowering", "binoculars_returned", "binoculars_safe_pop", "binoculars_reward", "binoculars_acquired", "binoculars_from_study"]
+		shot_names = ["binoculars_raising", "binoculars_approaching", "binoculars_eyecups", "binoculars_overview", "binoculars_800x800", "binoculars_640x900", "binoculars_lowering", "binoculars_returned", "binoculars_safe_pop", "binoculars_reward", "binoculars_reward_800x800", "binoculars_reward_640x900", "binoculars_acquired", "binoculars_from_study"]
 	elif mode == "safe":
 		shot_names = ["safe_closed", "safe_entered", "safe_open", "safe_room"]
 		for kind in 4:
@@ -40,6 +40,8 @@ func run(game: Manor) -> void:
 		shot_names = ["01_spawn", "02_edge", "03_underside", "04_fade_out", "05_bedside", "06_nearer_greenery"]
 	elif mode == "trees":
 		shot_names = ["01_spawn", "02_meadow", "03_tree_detail", "04_house_and_trees", "05_window_view", "06_north_window", "07_east_window", "08_south_window"]
+	elif mode == "exterior":
+		shot_names = ["01_spawn", "01_south_facade", "02_southwest_corner", "03_wall_close", "04_gap", "05_north_facade", "06_east_facade", "07_interior_window", "08_window_onto_neighbour"]
 	elif mode == "furnishings":
 		shot_names = ["01_spawn", "kitchen_bowl_detail", "dining_shelf_detail", "dining_serving_table", "trophy_case_left", "trophy_case_right"]
 		for room_name in ["bathroom", "study", "kitchen", "living", "dining", "foyer", "laundry"]:
@@ -113,6 +115,13 @@ func run(game: Manor) -> void:
 		add_child(trial)
 		await trial.run(self)
 		print("Tree capture: %d screenshots; %d checks, %d failures" % [shot_count, checks, failures])
+		get_tree().quit(1 if failures else 0)
+		return
+	if mode == "exterior":
+		var exterior: Node = load("res://tools/exterior_driver.gd").new()
+		add_child(exterior)
+		await exterior.run(self)
+		print("Exterior capture: %d screenshots; %d checks, %d failures" % [shot_count, checks, failures])
 		get_tree().quit(1 if failures else 0)
 		return
 	if mode == "furnishings":
@@ -218,6 +227,7 @@ func run(game: Manor) -> void:
 	get_tree().quit(1 if failures else 0)
 
 func single_gap_views() -> void:
+	await complete_opening_slide()
 	for direction in walk_route(7):
 		await walk_direction(direction)
 	_check(main.rooms.size() == 8 and main.gap_floors.size() == 1, "eight rooms and one gap")
@@ -427,7 +437,7 @@ func accept_rewards() -> void:
 		await get_tree().process_frame
 
 func rewards_waiting() -> bool:
-	return not main.coins.pending.is_empty() or main.binoculars.presenting
+	return (main.coins != null and not main.coins.pending.is_empty()) or (main.binoculars != null and main.binoculars.presenting)
 
 func press_if_reward_ready() -> void:
 	var coin_ready := main.coin_hud.showing() and not main.coin_hud.accepted and main.coin_hud.presentation >= ManorCoinHUD.HOLD_AT
@@ -645,6 +655,16 @@ func capture_exit() -> void:
 	_check(main.play_gate.visible and main.play_gate.mode == "title", "outdoor ending returns to title")
 	await shot("08_title")
 
+func complete_opening_slide() -> void:
+	if main.rules.board != ManorRules.opening_start().board:
+		return
+	var path := ManorObjectives.nearest_goal(main.rules, [8], true)
+	for action: Vector2i in path.path:
+		await objective_action(action)
+	while main.first_coin_guide.active or rewards_waiting():
+		press_if_reward_ready()
+		await get_tree().process_frame
+
 func objective_action(action: Vector2i, stop_for_guide: bool = false) -> void:
 	action_number += 1
 	print("Action %d %s %s | t=%.2fs room=%d" % [action_number, "walk" if action.x == ManorRules.WALK else "slide", ["N", "E", "S", "W"][action.y], elapsed(), main.rules.player])
@@ -656,9 +676,15 @@ func objective_action(action: Vector2i, stop_for_guide: bool = false) -> void:
 		await approach_lever(main.rooms[main.rules.player])
 		main.player.aim_at(main.rooms[main.rules.player].lever.global_position + Vector3.UP * 0.8)
 		await get_tree().physics_frame
-		var keyboard := main.slides % 2 == 0
-		await hold_lever_input(action.y, keyboard)
-		release_lever_input(keyboard)
+		if DisplayServer.get_name() == "headless":
+			# The headless display cannot capture the pointer for native input events.
+			_check(main.player.begin_interact(), "interaction ray reaches objective lever")
+			main.player.select_pull(action.y)
+			main.player.release_interact()
+		else:
+			var keyboard := main.slides % 2 == 0
+			await hold_lever_input(action.y, keyboard)
+			release_lever_input(keyboard)
 		_check(main.sliding, "input starts objective slide")
 		while main.sliding:
 			await get_tree().process_frame

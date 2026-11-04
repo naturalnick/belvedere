@@ -28,7 +28,7 @@ func run(driver: Node) -> void:
 	var window_size := get_window().size
 	for dimensions in [Vector2i(800, 800), Vector2i(640, 900)]:
 		get_window().size = dimensions
-		await get_tree().process_frame
+		await get_tree().create_timer(0.2).timeout
 		await get_tree().process_frame
 		await driver.shot("binoculars_%dx%d" % [dimensions.x, dimensions.y])
 		_check_framing(driver)
@@ -38,15 +38,12 @@ func run(driver: Node) -> void:
 	driver.key_event(KEY_ESCAPE, true)
 	driver.key_event(KEY_ESCAPE, false)
 	await get_tree().process_frame
-	driver._check(main.play_gate.visible and binoculars.overhead, "Escape pauses the overhead view")
-	await driver.shot("binoculars_paused")
-	main.resume_play()
+	driver._check(not main.play_gate.visible and binoculars.phase == ManorBinoculars.Phase.CLOSING, "Escape lowers binoculars without pausing")
 	main.player.automated = true
-	await _press_b(driver)
 	await get_tree().create_timer(0.34).timeout
 	await driver.shot("binoculars_lowering")
 	await get_tree().create_timer(0.40).timeout
-	driver._check(binoculars.phase == ManorBinoculars.Phase.IDLE and main.player.camera.is_current(), "B restores first-person camera")
+	driver._check(binoculars.phase == ManorBinoculars.Phase.IDLE and main.player.camera.is_current(), "Escape restores first-person camera")
 	driver._check(main.player.camera.global_transform.is_equal_approx(original_view) and main.player.camera.fov == original_fov, "position, aim and FOV survive binocular use")
 	await driver.shot("binoculars_returned")
 	var safe := main.study_safe
@@ -70,6 +67,13 @@ func run(driver: Node) -> void:
 	await driver.shot("binoculars_safe_pop")
 	await get_tree().create_timer(0.65).timeout
 	await driver.shot("binoculars_reward")
+	for dimensions in [Vector2i(800, 800), Vector2i(640, 900)]:
+		get_window().size = dimensions
+		await get_tree().create_timer(0.2).timeout
+		await get_tree().process_frame
+		await driver.shot("binoculars_reward_%dx%d" % [dimensions.x, dimensions.y])
+	get_window().size = window_size
+	await get_tree().process_frame
 	await get_tree().create_timer(1.5).timeout
 	driver._check(binoculars.presenting and not binoculars.reward_claimed and binoculars.reward.visible, "binocular reward waits in view for a press")
 	await driver.accept_rewards()

@@ -9,6 +9,7 @@ func run(driver: Node) -> void:
 	await click(main.play_gate.settings_panel.back)
 	driver._check(main.play_gate.mode == "pause", "real back click returns to pause")
 	main.resume_play()
+	await driver.complete_opening_slide()
 	for direction in driver.walk_route(7):
 		await driver.walk_direction(direction)
 	await driver.walk_direction(ManorRules.E)

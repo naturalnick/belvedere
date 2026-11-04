@@ -23,8 +23,7 @@ func run() -> void:
 	var main: Manor = load("res://scenes/manor.tscn").instantiate()
 	root.add_child(main)
 	main.start_play()
-	main.rules.player = 7
-	main.place_player_at_spawn()
+	preload("res://tools/furnishing_fixture.gd").place(main, 7)
 	main.player.automated = true
 	await physics_frame
 	await physics_frame

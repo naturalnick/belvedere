@@ -11,5 +11,5 @@ godot --headless --path . --import > /tmp/shifting-manor-import.log 2>&1 || { ca
 if grep -E 'SCRIPT ERROR|Parse Error|Compile Error' /tmp/shifting-manor-import.log; then exit 1; fi
 CLASSIC="--classic"
 if [ "$MODE" = "courtyard" ]; then CLASSIC="--courtyard"; fi
-if [ "$MODE" = "single-gap" ] || [ "$MODE" = "objectives" ] || [ "$MODE" = "stage3" ] || [ "$MODE" = "furnishings" ] || [ "$MODE" = "trees" ] || [ "$MODE" = "fall" ] || [ "$MODE" = "coins" ] || [ "$MODE" = "title" ] || [ "$MODE" = "safe" ] || [ "$MODE" = "binoculars" ]; then CLASSIC=""; fi
+if [ "$MODE" = "single-gap" ] || [ "$MODE" = "objectives" ] || [ "$MODE" = "stage3" ] || [ "$MODE" = "furnishings" ] || [ "$MODE" = "trees" ] || [ "$MODE" = "exterior" ] || [ "$MODE" = "fall" ] || [ "$MODE" = "coins" ] || [ "$MODE" = "title" ] || [ "$MODE" = "safe" ] || [ "$MODE" = "binoculars" ]; then CLASSIC=""; fi
 exec godot --path . -- $CLASSIC --demo --mode="$MODE" --seed="$SEED" --shots="$OUT" "$@"

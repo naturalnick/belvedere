@@ -48,6 +48,7 @@ func run() -> void:
 	main.objectives.completed.assign([0, 1, 2, 3, 5, 6])
 	main.objectives.active = 8
 	main.rules.player = 8
+	check(main.rules.apply(ManorRules.SLIDE, ManorRules.E), "last objective slides home in the ending fixture")
 	main.refresh_progress()
 	for id in main.objective_display.lamps:
 		var lamp: ManorBeacon = main.objective_display.lamps[id]

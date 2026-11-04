@@ -96,6 +96,24 @@ func watch_pointer(main: Manor) -> void:
 	await wait(0.1)
 	check(main.play_gate.visible and main.play_gate.mode == "pause", "the pause menu appears after the slide")
 	main.resume_play()
+	lock = true
+	await wait(0.1)
+	var item := main.binoculars
+	item.owned = true
+	check(item.toggle(), "web binoculars can open while the pointer is locked")
+	await wait(1.1)
+	lock = false
+	await wait(0.9)
+	check(item.phase == ManorBinoculars.Phase.IDLE and not main.play_gate.visible and watch.resume_on_click, "browser Escape lowers binoculars instead of opening pause")
+	await wait(1.2)
+	check(not main.play_gate.visible, "waiting for a recapture click does not open pause")
+	var click := InputEventMouseButton.new()
+	click.button_index = MOUSE_BUTTON_LEFT
+	click.pressed = true
+	watch._input(click)
+	check(not watch.resume_on_click, "the next click requests pointer capture")
+	lock = true
+	await wait(0.1)
 	main.player.automated = true
 	await wait(1.3)
 	check(not main.play_gate.visible, "automated runs are left alone")

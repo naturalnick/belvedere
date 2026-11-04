@@ -8,7 +8,7 @@ var all_completed := false
 var bonus_won := false
 
 func start(state: ManorRules) -> void:
-	# A home room costs zero slides: use it to teach completion through the first visit.
+	# Even a zero-slide target waits for a visit before earning its coin.
 	active = nearest_goal(state, ROOMS).room
 
 func advance(state: ManorRules) -> Array[int]:

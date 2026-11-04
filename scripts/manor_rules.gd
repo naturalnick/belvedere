@@ -140,6 +140,10 @@ static func courtyard_start() -> ManorRules:
 	result.courtyards = true
 	return result
 
+static func opening_start() -> ManorRules:
+	# Laundry must slide home before the first coin; keep archived classic seeds intact.
+	return ManorRules.new(PackedInt32Array([6, 2, 5, 0, 1, 3, 7, 8, -1]), 0)
+
 static func from_seed(seed_name: String) -> ManorRules:
 	match seed_name:
 		"A": return ManorRules.new(PackedInt32Array([6, 2, 5, 0, 1, 3, 7, -1, 8]), 7)

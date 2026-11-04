@@ -41,6 +41,9 @@ func _unhandled_input(event: InputEvent) -> void:
 	if manor.play_gate != null and manor.play_gate.visible:
 		return
 	if is_pause_press(event):
+		if event.physical_keycode == KEY_ESCAPE and manor.binoculars != null and manor.binoculars.close():
+			get_viewport().set_input_as_handled()
+			return
 		manor.release_pointer()
 		get_viewport().set_input_as_handled()
 		return

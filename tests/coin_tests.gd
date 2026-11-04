@@ -53,15 +53,15 @@ func run() -> void:
 			clinks += 1)
 	await physics_frame
 	await physics_frame
-	check(main.coins.pending.is_empty() and main.coins.available == 0 and main.objectives.active == 8, "already-home room starts blue with no queued or owned coin")
+	check(main.coins.pending.is_empty() and main.coins.available == 0 and main.objectives.active == 8 and main.rules.board[7] == 8 and main.rules.board[8] == -1, "Laundry starts blue at bottom-center with the gap to its right and no coin")
 	main.coin_hud._process(3.0)
 	main.refresh_progress()
-	check(main.coins.pending.is_empty() and main.coins.available == 0, "waiting or refreshing from the Foyer cannot earn the first coin")
+	check(main.coins.pending.is_empty() and main.coins.available == 0, "waiting or refreshing cannot earn the first coin")
 	var target := main.objectives.active
 	var lamp := main.objective_display.lamps[target]
-	check(lamp.light.light_color == Color("6EBFFF") and lamp.state == 1, "in-place starting target overrides warm light with blue")
+	check(lamp.light.light_color == Color("6EBFFF") and lamp.state == 1, "starting target is blue before its slide home")
 	check(lamp.shade.material_override == ManorGeometry.material("B4CFDF", 0.006), "active shade has a subtle blue tint")
-	check(main.objective_display.progress_lights[6].material_override == ManorGeometry.glowing_material("FFF0DA"), "Foyer still shows initial room placement independently of target")
+	check(main.objective_display.progress_lights[6].material_override == ManorGeometry.material("595C59"), "Foyer shows Laundry is not yet home")
 	var driver: Node = load("res://tools/demo_driver.gd").new()
 	root.add_child(driver)
 	driver.main = main
@@ -70,7 +70,10 @@ func run() -> void:
 		await driver.walk_direction(direction, true)
 	var guide := main.first_coin_guide
 	guide.set_process(false)
-	check(guide.active and main.controls_locked() and lamp.state == 1 and main.coins.pending.is_empty(), "first entry holds blue light and locks controls before awarding")
+	main.refresh_progress()
+	check(main.rules.player == 8 and not guide.active and not main.controls_locked() and lamp.state == 1 and main.coins.pending.is_empty(), "entering Laundry leaves its lamp blue and earns nothing")
+	await driver.objective_action(Vector2i(ManorRules.SLIDE, ManorRules.E), true)
+	check(main.rules.board[8] == 8 and main.rules.board[7] == -1 and guide.active and main.controls_locked() and lamp.state == 1 and main.coins.pending.is_empty(), "sliding Laundry home starts the guided look before awarding")
 	var entry_position := main.player.position
 	guide._process(0.95)
 	var toward_lamp := (lamp.globe.global_position - main.player.camera.global_position).normalized()
@@ -95,8 +98,8 @@ func run() -> void:
 	main.coin_hud._process(0.4)
 	check(lamp.state == 2 and guide.holding_reward() and main.coin_hud.presentation == 0, "warm light is shown before the token presentation starts")
 	guide._process(0.5)
-	check(main.coins.pending == [8] and main.coins.available == 0, "walking into the home target queues its coin presentation")
-	check(main.objectives.completed.has(8) and main.objectives.active != 8, "entry completes the initial target and selects the next one")
+	check(main.coins.pending == [8] and main.coins.available == 0, "sliding the target home queues its coin presentation")
+	check(main.objectives.completed.has(8) and main.objectives.active != 8, "first slide completes the initial target and selects the next one")
 	check(lamp.state == 2 and lamp.light.light_color == Color("FFF0DA"), "visited home room becomes warm")
 	check(lamp.shade.material_override == ManorGeometry.material("DDD3BD", 0.006), "completed shade returns to cream")
 	driver.queue_free()

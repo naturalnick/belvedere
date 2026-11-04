@@ -69,6 +69,17 @@ static func floor_material(id: int) -> Material:
 		materials[key] = floor_mat
 	return materials[key]
 
+# Same interior colour, with warm-grey lap siding on the wall's outward face.
+# `corners` flags end faces that are house corners (1: +X, 2: -X); see toon.gdshader.
+static func wall_material(hex: String, corners: int = 0) -> Material:
+	var key := "wall_%s_%d" % [hex, corners]
+	if not materials.has(key):
+		var result: ShaderMaterial = material(hex, 0.0).duplicate()
+		result.set_shader_parameter("exterior_siding", true)
+		result.set_shader_parameter("siding_corners", corners)
+		materials[key] = result
+	return materials[key]
+
 static func vertex_color_material(hex: String, outline: float) -> Material:
 	var key := "vertex_%s%s" % [hex, outline]
 	if not materials.has(key):

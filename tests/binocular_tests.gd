@@ -75,6 +75,8 @@ func run() -> void:
 	check(item.phase == ManorBinoculars.Phase.OVERVIEW and item.overview_camera.is_current(), "raise reaches the overhead camera")
 	check((-item.overview_camera.global_basis.z).is_equal_approx(Vector3.DOWN), "overview is exactly top-down")
 	check(main.player.camera.global_transform.is_equal_approx(view), "overview never changes the first-person camera")
+	var marker := item.hud.player_marker_position()
+	check(marker.is_equal_approx(item.overview_camera.unproject_position(main.rooms[0].global_position + Vector3(1.95, 3.2, 1.95))), "person marker sits in the occupied room corner, clear of its number")
 	check(original_shadows.keys().all(func(light: Light3D) -> bool: return light.shadow_enabled == original_shadows[light]), "overview preserves normal shadows")
 	for room in main.rooms.values():
 		check(not room.ceiling.visible and room.overview_edges.visible and room.overview_roof.visible, "every room shows its colored roof and edge caps")
@@ -97,7 +99,12 @@ func run() -> void:
 	check(not item.toggle() and item.overhead, "pause keeps overview and blocks toggling")
 	check(original_shadows.keys().all(func(light: Light3D) -> bool: return light.shadow_enabled == original_shadows[light]), "pausing overview preserves normal shadows")
 	main.resume_play()
-	check(item.toggle(), "second use starts lowering")
+	main.player.automated = false
+	main.player._unhandled_input(press(KEY_ESCAPE))
+	check(item.phase == ManorBinoculars.Phase.CLOSING and not main.play_gate.visible, "Escape lowers the overview without pausing")
+	main.player._unhandled_input(press(KEY_ESCAPE))
+	check(not main.play_gate.visible, "another Escape during closing does not pause")
+	main.player.automated = true
 	item._process(0.25)
 	item._process(0.50)
 	check(item.phase == ManorBinoculars.Phase.IDLE and main.player.camera.is_current() and not item.locks_player(), "lowering restores play")
@@ -110,6 +117,15 @@ func run() -> void:
 		check(room.ceiling.visible and not room.overview_edges.visible and not room.overview_roof.visible, "normal room rendering is restored")
 	for clue in main.fruit_clues:
 		check(clue.visible, "window clues return to their normal shader visibility")
+	item.toggle()
+	item._process(0.25)
+	main.player.automated = false
+	main.player._unhandled_input(press(KEY_ESCAPE))
+	check(item.phase == ManorBinoculars.Phase.CLOSING and not main.play_gate.visible, "Escape can cancel raising binoculars")
+	main.player.automated = true
+	item._process(0.25)
+	item._process(0.50)
+	check(item.phase == ManorBinoculars.Phase.IDLE and main.player.camera.is_current(), "cancelled raise restores first-person view")
 	item.toggle()
 	item._process(0.7)
 	item._process(0.5)
@@ -137,12 +153,16 @@ func run() -> void:
 	var reward_time := item.reward_elapsed
 	item._process(1.0)
 	check(item.reward_elapsed == reward_time and not item.owned, "reward presentation pauses without granting early")
+	check(not item.hud.reward_title.visible and not item.hud.reward_hint.visible, "pause hides the reward caption")
 	main.resume_play()
 	item._process(5.0)
 	check(item.presenting and not item.owned and item.reward.visible and item.reward_elapsed == ManorBinoculars.REWARD_HOLD_AT, "binocular reward waits in view until a press")
+	check(item.hud.reward_title.visible and item.hud.reward_title.text == "Binoculars" and item.hud.reward_hint.text == "Press B to use", "reward identifies the item and its use key")
+	check(main.player.camera.unproject_position(item.reward.global_position).x < item.hud.reward_title.position.x, "reward model sits beside its title")
 	item._input(press(KEY_W))
 	item._process(ManorBinoculars.REWARD_TIME - ManorBinoculars.REWARD_HOLD_AT)
 	check(item.owned and item.reward_claimed and not item.presenting and not item.reward.visible and acquisitions == 1, "reward arrives in inventory without a pickup")
+	check(not item.hud.reward_title.visible and not item.hud.reward_hint.visible, "reward caption disappears after acquisition")
 	item.present_reward()
 	check(not item.presenting and acquisitions == 1, "safe reward is granted only once")
 	preload("res://tools/furnishing_fixture.gd").place(main, 2)
@@ -159,6 +179,7 @@ func run() -> void:
 	item._process(0.7)
 	item._process(0.5)
 	check(item.overhead and main.rooms[2].position.is_equal_approx(ManorGeometry.center(4)), "overview shows the current room arrangement")
+	check(item.hud.player_marker_position().is_equal_approx(item.overview_camera.unproject_position(main.rooms[2].global_position + Vector3(1.95, 3.2, 1.95))), "person marker follows the occupied room after a slide")
 	item.reset_view()
 	main.player.position.y = -1.0
 	for tick in 6:

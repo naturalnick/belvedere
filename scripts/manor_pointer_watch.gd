@@ -11,15 +11,34 @@ var manor: Manor
 var captured := func() -> bool: return Input.mouse_mode == Input.MOUSE_MODE_CAPTURED
 var locked := false
 var waiting := 0.0
+var resume_on_click := false
+
+func _input(event: InputEvent) -> void:
+	if resume_on_click and event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		resume_on_click = false
+		waiting = 0.0
+		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+		get_viewport().set_input_as_handled()
 
 func _process(delta: float) -> void:
 	if manor.at_title or manor.play_gate.visible or manor.player.automated:
+		resume_on_click = false
 		locked = false
 		waiting = 0.0
 		return
 	if captured.call():
+		resume_on_click = false
 		locked = true
 		waiting = 0.0
+		return
+	if resume_on_click:
+		return
+	if locked and manor.binoculars != null and manor.binoculars.close():
+		# Browser Escape releases pointer lock without forwarding the key. Lower the
+		# binoculars now; browsers require a later click to capture the pointer again.
+		locked = false
+		waiting = 0.0
+		resume_on_click = true
 		return
 	# Escape is ignored during slides and falls as well; pause once they finish.
 	if manor.sliding or manor.recovering:

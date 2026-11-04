@@ -26,11 +26,11 @@ func run() -> void:
 	var main: Manor = load("res://scenes/manor.tscn").instantiate()
 	root.add_child(main)
 	main.start_play()
-	main.rules.player = 7
+	main.rules.player = 8
 	main.place_player_at_spawn()
 	main.player.automated = true
 	await physics_frame
-	var room: ManorRoom = main.rooms[7]
+	var room: ManorRoom = main.rooms[8]
 	var origin := room.global_position
 	var rider := room.to_local(main.player.global_position)
 	var key := main.rules.key()

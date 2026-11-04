@@ -2,8 +2,8 @@ extends Node
 
 func run(driver: Node) -> void:
 	var main: Manor = driver.main
-	# Earn the introduction through walking; stage later rewards for the short prize gallery.
-	driver._check(main.coins.awarded.is_empty() and main.coins.available == 0, "no starting coin before visiting the blue room")
+	# Earn the introduction through play; stage later rewards for the short prize gallery.
+	driver._check(main.coins.awarded.is_empty() and main.coins.available == 0, "no starting coin before moving the blue room home")
 	var first_room := main.objectives.active
 	var path := ManorObjectives.nearest_goal(main.rules, [first_room], true)
 	for action: Vector2i in path.path:
@@ -21,7 +21,7 @@ func run(driver: Node) -> void:
 	await driver.shot("guided_warm")
 	while main.first_coin_guide.holding_reward():
 		await get_tree().process_frame
-	driver._check(main.coins.pending == [first_room] and main.objectives.active != first_room, "entering home room presents first coin and changes target")
+	driver._check(main.coins.pending == [first_room] and main.objectives.active != first_room, "moving room home presents first coin and changes target")
 	await get_tree().create_timer(0.35).timeout
 	await driver.shot("coin_presented")
 	await get_tree().create_timer(1.5).timeout

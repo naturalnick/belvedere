@@ -66,6 +66,8 @@ func _ready() -> void:
 		get_tree().quit(1)
 		return
 	rules = ManorRules.courtyard_start() if three_gaps else ManorRules.from_seed(seed_name)
+	if not classic and not three_gaps and seed_name == "A":
+		rules = ManorRules.opening_start()
 	if rules == null:
 		get_tree().quit(1)
 		return

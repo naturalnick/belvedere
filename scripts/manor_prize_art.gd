@@ -3,6 +3,24 @@ extends RefCounted
 
 const BELL_EMBLEM: Texture2D = preload("res://assets/bell_engraving.svg")
 
+static func reward_label(parent: Control, text_value: String) -> Label:
+	var label := Label.new()
+	label.text = text_value
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	label.add_theme_color_override("font_color", Color("F6EEE1"))
+	label.add_theme_color_override("font_shadow_color", Color("30251B"))
+	label.add_theme_constant_override("shadow_offset_x", 1)
+	label.add_theme_constant_override("shadow_offset_y", 2)
+	parent.add_child(label)
+	return label
+
+static func layout_reward_text(view_size: Vector2, title: Label, hint: Label) -> void:
+	var text_scale := minf(view_size.x / 1100.0, view_size.y / 720.0)
+	title.add_theme_font_size_override("font_size", maxi(24, int(64 * text_scale)))
+	hint.add_theme_font_size_override("font_size", maxi(16, int(25 * text_scale)))
+	title.position = view_size * Vector2(0.52, 0.5) - Vector2(0, 55 * text_scale)
+	hint.position = view_size * Vector2(0.52, 0.5) + Vector2(0, 25 * text_scale)
+
 static func trophy(parent: Node3D) -> Node3D:
 	var result := Node3D.new()
 	parent.add_child(result)

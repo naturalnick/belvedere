@@ -18,8 +18,6 @@ var roof_number: Label3D
 
 func build(id: int) -> void:
 	room_id = id
-	var plaster := ManorGeometry.material("EFE4D2", 0.0)
-	var accent := ManorGeometry.material(ManorGeometry.ACCENTS[id], 0.0)
 	ManorGeometry.box(self, Vector3(6.25, 0.2, 6.25), Vector3(0, -0.1, 0), ManorGeometry.floor_material(id), true)
 	ceiling = ManorGeometry.box(self, Vector3(6.25, 0.2, 6.25), Vector3(0, 3.1, 0), ManorGeometry.material("F6EEE1", 0.0), true)
 	ceiling.name = "Ceiling"
@@ -35,11 +33,16 @@ func build(id: int) -> void:
 		wall.rotation.y = -d * PI / 2.0
 		var span := 6.0 if d % 2 == 0 else 6.25
 		var side_width := (span - 1.2) / 2.0
-		var mat: Material = accent if d == (first_window() + 2) % 4 else plaster
+		var hex: String = ManorGeometry.ACCENTS[id] if d == (first_window() + 2) % 4 else "EFE4D2"
+		var mat := ManorGeometry.wall_material(hex)
+		# East and west walls span the full pitch, so only their outer ends show on the facade.
+		var full_corners := ManorGeometry.wall_material(hex, 3 if d % 2 == 1 else 0)
+		var end_corner := func(sign_value: int) -> Material:
+			return ManorGeometry.wall_material(hex, (1 if sign_value > 0 else 2) if d % 2 == 1 else 0)
 		if ManorRules.side(id, d) != ManorRules.WINDOW:
 			for sign_value in [-1, 1]:
 				var x: float = sign_value * (0.6 + side_width / 2.0)
-				ManorGeometry.box(wall, Vector3(side_width, 3, 0.125), Vector3(x, 1.5, 0), mat, true)
+				ManorGeometry.box(wall, Vector3(side_width, 3, 0.125), Vector3(x, 1.5, 0), end_corner.call(sign_value), true)
 			var header := ManorGeometry.box(wall, Vector3(1.2, 0.8, 0.125), Vector3(0, 2.6, 0), mat, true)
 			if ManorRules.side(id, d) == ManorRules.DOOR:
 				door_headers.append(header)
@@ -51,13 +54,13 @@ func build(id: int) -> void:
 			door.build("A43D36" if door.is_front else ManorGeometry.ACCENTS[id])
 			doors.append(door)
 		else:
-			ManorGeometry.box(wall, Vector3(span, 0.9, 0.125), Vector3(0, 0.45, 0), mat)
-			ManorGeometry.box(wall, Vector3(span, 0.6, 0.125), Vector3(0, 2.7, 0), mat)
+			ManorGeometry.box(wall, Vector3(span, 0.9, 0.125), Vector3(0, 0.45, 0), full_corners)
+			ManorGeometry.box(wall, Vector3(span, 0.6, 0.125), Vector3(0, 2.7, 0), full_corners)
 			ManorGeometry.box(wall, Vector3(1.8, 1.5, 0.125), Vector3(0, 1.65, 0), mat)
 			for sign_value in [-1, 1]:
 				var outer_width := span / 2.0 - 2.3
 				var x: float = sign_value * (2.3 + outer_width / 2.0)
-				ManorGeometry.box(wall, Vector3(outer_width, 1.5, 0.125), Vector3(x, 1.65, 0), mat)
+				ManorGeometry.box(wall, Vector3(outer_width, 1.5, 0.125), Vector3(x, 1.65, 0), end_corner.call(sign_value))
 			for x in [-1.6, 1.6]:
 				_window(wall, x)
 			ManorGeometry.barrier(wall, Vector3(6.25, 3, 0.125), Vector3(0, 1.5, 0))
@@ -94,7 +97,7 @@ func _build_overview_roof() -> void:
 	overview_roof.name = "OverviewRoof"
 	add_child(overview_roof)
 	overview_roof.hide()
-	# Cover the ordinary wall tops so only the window-wall borders remain visible.
+	# Cover the ordinary wall tops so only the overview borders remain visible.
 	ManorGeometry.box(overview_roof, Vector3(6.25, 0.08, 6.25), Vector3(0, 3.045, 0), ManorGeometry.material(ManorGeometry.ACCENTS[room_id], 0.0))
 	roof_number = Label3D.new()
 	roof_number.name = "RoofNumber"
@@ -110,7 +113,8 @@ func _build_overview_roof() -> void:
 	overview_roof.add_child(roof_number)
 
 func _build_overview_edge(direction: int) -> void:
-	if ManorRules.side(room_id, direction) != ManorRules.WINDOW:
+	var side := ManorRules.side(room_id, direction)
+	if side == ManorRules.DOOR:
 		return
 	# Separate neighboring rooms' borders; reserve corner space only for actual borders.
 	var cap_span := ManorGeometry.PITCH - 2 * OVERVIEW_BORDER_INSET
@@ -125,7 +129,8 @@ func _build_overview_edge(direction: int) -> void:
 	overview_edges.add_child(cap)
 	cap.position = ManorGeometry.DIRECTIONS[direction] * (ManorGeometry.PITCH / 2 - OVERVIEW_BORDER_INSET - OVERVIEW_BORDER_WIDTH / 2)
 	cap.rotation.y = -direction * PI / 2
-	ManorGeometry.box(cap, Vector3(cap_span - left_trim - right_trim, 0.025, OVERVIEW_BORDER_WIDTH), Vector3((left_trim - right_trim) / 2, 3.1, 0), ManorGeometry.material("343C38", 0.0))
+	var color := "A43D36" if side == ManorRules.FRONT else "343C38"
+	ManorGeometry.box(cap, Vector3(cap_span - left_trim - right_trim, 0.025, OVERVIEW_BORDER_WIDTH), Vector3((left_trim - right_trim) / 2, 3.1, 0), ManorGeometry.material(color, 0.0))
 
 func first_window() -> int:
 	for d in 4:
