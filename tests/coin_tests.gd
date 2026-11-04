@@ -57,6 +57,7 @@ func run() -> void:
 	main.coin_hud._process(3.0)
 	main.refresh_progress()
 	check(main.coins.pending.is_empty() and main.coins.available == 0, "waiting or refreshing cannot earn the first coin")
+	check(not main.coin_hud.count.visible, "an empty wallet shows no coin count")
 	var target := main.objectives.active
 	var lamp := main.objective_display.lamps[target]
 	check(lamp.light.light_color == Color("6EBFFF") and lamp.state == 1, "starting target is blue before its slide home")
@@ -124,6 +125,7 @@ func run() -> void:
 	main.coin_hud._input(click)
 	main.coin_hud._process(ManorCoinHUD.PRESENT_TIME - ManorCoinHUD.HOLD_AT)
 	check(main.coins.available == 1 and main.coin_hud.count.text == "1", "a mouse press sends the coin to the visible inventory count")
+	check(main.coin_hud.count.visible, "the wallet appears when the first coin arrives")
 	guide._process(0.0)
 	guide.set_process(true)
 	check(not guide.active and not main.controls_locked(), "control returns only after the token arrives in the wallet")
@@ -154,6 +156,7 @@ func run() -> void:
 	main.player.begin_interact()
 	await process_frame
 	check(main.coins.available == 0 and main.coins.inserted == 1 and main.coin_hud.count.text == "0", "focused interaction inserts exactly one coin and updates HUD")
+	check(not main.coin_hud.count.visible, "depositing the last held coin hides the wallet again")
 	check(main.coin_device.token.visible and main.coin_device.remaining_label.text == "6", "device presents an insertion and remaining requirement")
 	main.player.release_interact()
 	main.release_pointer()

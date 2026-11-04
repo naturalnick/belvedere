@@ -42,6 +42,8 @@ func _ready() -> void:
 	_refresh()
 
 func _refresh() -> void:
+	# An empty wallet shows nothing; the first coin's flight ends where the icon then appears.
+	count.visible = manor.coins.available > 0
 	count.text = str(manor.coins.available)
 	count.accessibility_name = "%d Bel coins" % manor.coins.available
 	count.position = Vector2(size.x - 70, 22)
@@ -92,7 +94,8 @@ func _input(event: InputEvent) -> void:
 
 func _draw() -> void:
 	var destination := Vector2(size.x - 94, 40)
-	ManorPrizeArt.draw_coin(self, destination, 15)
+	if count.visible:
+		ManorPrizeArt.draw_coin(self, destination, 15)
 	if not presenting() or manor.sliding or manor.first_coin_guide.holding_reward() or (manor.binoculars != null and manor.binoculars.locks_player()):
 		return
 	var enter := smoothstep(0.0, 0.3, presentation)
