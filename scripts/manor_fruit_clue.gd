@@ -11,6 +11,7 @@ var kind: int
 var fruits: Array[Node3D] = []
 var clue_materials: Dictionary[String, ShaderMaterial] = {}
 var last_origin := Vector3.INF
+var last_closed_doors := Vector4(-1, -1, -1, -1)
 
 func _ready() -> void:
 	name = FRUITS[kind] + "Clue"
@@ -39,6 +40,7 @@ func _ready() -> void:
 		else:
 			_round_fruit(fruit)
 	_sync_origin()
+	_sync_doors()
 
 func _material(color: String) -> ShaderMaterial:
 	if not clue_materials.has(color):
@@ -126,6 +128,7 @@ func _stem(parent: Node3D, from: Vector3, to: Vector3, radius: float) -> void:
 
 func _process(_delta: float) -> void:
 	_sync_origin()
+	_sync_doors()
 
 func _sync_origin() -> void:
 	if room.global_position == last_origin:
@@ -133,3 +136,14 @@ func _sync_origin() -> void:
 	last_origin = room.global_position
 	for mat in clue_materials.values():
 		mat.set_shader_parameter("clue_room_origin", last_origin)
+
+func _sync_doors() -> void:
+	var closed := Vector4.ZERO
+	for door in room.doors:
+		if not door.is_front and not door.opened and door.leaves.all(func(leaf: Node3D) -> bool: return absf(leaf.rotation.y) < 0.001):
+			closed[door.direction] = 1.0
+	if closed == last_closed_doors:
+		return
+	last_closed_doors = closed
+	for mat in clue_materials.values():
+		mat.set_shader_parameter("clue_closed_doors", closed)

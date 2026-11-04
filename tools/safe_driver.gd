@@ -36,13 +36,16 @@ func run(driver: Node) -> void:
 		var silhouettes := _fruit_silhouettes(visible_image, empty_image)
 		driver._check(silhouettes == ManorFruitClue.COUNTS[clue.kind], "fruit %d has %d separate countable silhouettes" % [clue.kind, silhouettes])
 		clue.show()
-		# The same meshes must disappear indoors and through a glazed door.
-		for view in ["inside", "door"]:
+		# Compare actual pixels through a closed pane, an open doorway, and from inside.
+		for view in ["inside", "closed_door", "open_door"]:
 			main.player.position = clue.room.position + Vector3(0, 0.02, 1.2)
-			if view == "door":
+			if view != "inside":
 				var direction := ManorRules.N
 				while ManorRules.side(clue.room.room_id, direction) != ManorRules.DOOR:
 					direction += 1
+				for other in main.rooms.values():
+					for door in other.doors:
+						door.set_open(other != clue.room or view == "open_door", true)
 				main.player.position = clue.room.position + ManorGeometry.DIRECTIONS[direction] * 3.5 + Vector3.UP * 0.02
 			main.player.aim_at(target)
 			await driver.shot("fruit_%d_%s" % [clue.kind, view])
@@ -52,7 +55,7 @@ func run(driver: Node) -> void:
 			RenderingServer.force_draw(false)
 			empty_image = get_viewport().get_texture().get_image()
 			changed = _changed_pixels(visible_image, empty_image)
-			driver._check(changed == 0, "fruit %d is invisible from %s (%d changed pixels)" % [clue.kind, view, changed])
+			driver._check(changed > 10 if view == "closed_door" else changed == 0, "fruit %d visibility from %s (%d changed pixels)" % [clue.kind, view, changed])
 			clue.show()
 	var safe := main.study_safe
 	main.rules.player = 2

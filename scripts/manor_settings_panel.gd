@@ -8,10 +8,19 @@ var sliders: Dictionary[String, HSlider] = {}
 var toggles: Dictionary[String, Button] = {}
 var back: Button
 var syncing := false
+var labels: Dictionary[String, Label] = {}
+const NAMES := ["Field of view", "Sensitivity", "Invert Y", "Master volume", "Effects", "Music"]
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	for key in ROWS:
+		var label := Label.new()
+		label.text = NAMES[ROWS.find(key)]
+		label.add_theme_font_size_override("font_size", 20)
+		label.add_theme_color_override("font_color", Color("EFE4D2"))
+		label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		add_child(label)
+		labels[key] = label
 		if key == "invert_y":
 			var toggle := ManorMenuIcons.button(48)
 			toggle.size.x = 80
@@ -35,6 +44,9 @@ func _ready() -> void:
 			sliders[key] = slider
 	back = ManorMenuIcons.button()
 	back.accessibility_name = "Back"
+	back.text = "Back"
+	back.size.x = 100
+	back.add_theme_font_size_override("font_size", 22)
 	back.pressed.connect(func() -> void: closed.emit())
 	add_child(back)
 	resized.connect(_layout)
@@ -57,34 +69,33 @@ func open() -> void:
 	sliders["fov"].grab_focus()
 
 func _layout() -> void:
-	var width_value := minf(400, size.x - 48)
+	var width_value := minf(520, size.x - 48)
 	var x := (size.x - width_value) / 2
 	var lines := ROWS.size() + 1
 	var spacing := minf(52, (size.y - 90) / lines)
 	var top := (size.y - spacing * lines) / 2
 	for i in ROWS.size():
 		var key: String = ROWS[i]
-		var at := Vector2(x + 64, top + i * spacing)
+		var at := Vector2(x + 150, top + i * spacing)
+		labels[key].position = Vector2(x, at.y + 7)
+		labels[key].size = Vector2(145, 30)
 		if sliders.has(key):
 			sliders[key].position = at
-			sliders[key].size = Vector2(width_value - 64, 40)
+			sliders[key].size = Vector2(width_value - 150, 40)
 		else:
-			toggles[key].position = at + Vector2(width_value - 144, -4)
-	back.position = Vector2(size.x / 2 - 26, top + spacing * ROWS.size())
+			toggles[key].position = Vector2(x + width_value - 80, at.y - 4)
+	back.position = Vector2(size.x / 2 - 50, top + spacing * ROWS.size())
 	queue_redraw()
 
 func _draw() -> void:
 	var color := Color("EFE4D2")
 	for key in ROWS:
 		var control: Control = sliders[key] if sliders.has(key) else toggles[key]
-		var x := (size.x - minf(400, size.x - 48)) / 2 + 22
-		ManorMenuIcons.draw(self, key, Vector2(x, control.position.y + (20 if sliders.has(key) else 24)), color)
 		if toggles.has(key):
 			var at := control.position + Vector2(40, 24)
 			var on: bool = preferences.get(key)
 			draw_style_box(_toggle_track(on), Rect2(at - Vector2(27, 12), Vector2(54, 24)))
 			draw_circle(at + Vector2(15 if on else -15, 0), 8, color)
-	ManorMenuIcons.draw(self, "back", back.position + back.size / 2, color)
 
 func _toggle_track(on: bool) -> StyleBoxFlat:
 	var track := StyleBoxFlat.new()

@@ -19,7 +19,8 @@ func _ready() -> void:
 	skirting(room_id)
 
 func bathroom() -> void:
-	var tub := group("ClawfootTub", Vector3(-1.80, 0, -2.30))
+	var tub := group("ClawfootTub", Vector3(-1.55, 0, -2.12))
+	tub.scale = Vector3(1.10, 1.06, 1.12)
 	for x in [-0.60, 0.60]:
 		for z in [-0.24, 0.24]:
 			rod(tub, Vector3(x, 0.05, z * 1.3), Vector3(x * 0.90, 0.23, z), 0.055, BRASS)

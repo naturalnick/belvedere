@@ -2,6 +2,7 @@ class_name ManorCoins
 extends RefCounted
 
 signal changed
+signal received
 
 const REQUIRED := 7
 var awarded: Array[int] = []
@@ -22,6 +23,7 @@ func receive_next() -> void:
 	pending.pop_front()
 	available += 1
 	changed.emit()
+	received.emit()
 
 func insert_one() -> bool:
 	if available == 0 or inserted == REQUIRED:

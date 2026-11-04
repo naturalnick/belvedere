@@ -36,9 +36,9 @@ func build(accent: String) -> void:
 				var top := rails[section + 1] - 0.03
 				ManorGeometry.box(hinge, Vector3(0.025, top - bottom, 0.06), Vector3(offset, (top + bottom) / 2, 0), wood)
 		if is_front:
-			ManorGeometry.box(hinge, Vector3(0.6, 2.2, 0.10), Vector3(offset, 1.1, -0.015), ManorGeometry.material("3F5E7A", 0.0))
+			ManorGeometry.box(hinge, Vector3(0.6, 2.2, 0.10), Vector3(offset, 1.1, -0.015), ManorGeometry.material("A43D36", 0.0))
 			for y in [0.32, 0.85, 1.38, 1.91]:
-				ManorGeometry.box(hinge, Vector3(0.44, 0.40, 0.025), Vector3(offset, y, 0.055), ManorGeometry.material("496A83", 0.006))
+				ManorGeometry.box(hinge, Vector3(0.44, 0.40, 0.025), Vector3(offset, y, 0.055), ManorGeometry.material("BA5145", 0.006))
 		else:
 			var pane := ManorGeometry.box(hinge, Vector3(0.52, 2.1, 0.018), Vector3(offset, 1.1, 0), ManorGeometry.glass())
 			pane.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF

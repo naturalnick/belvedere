@@ -6,7 +6,17 @@ func run(driver: Node) -> void:
 	driver._check(main.at_title and main.rules.player == 0 and main.controls_locked(), "new game opens at the Bedroom wall")
 	driver._check(wall.lettering.visible and wall.tiles.size() == 9 and main.coins.awarded.is_empty(), "title has nine permanent squares and no starting reward")
 	driver._check(wall.tiles[8].material_override == wall.blue_material, "opening target is the lower-left blue square")
+	await driver.shot("00_scene_fade")
+	await get_tree().create_timer(1.0).timeout
 	await driver.shot("01_title")
+	main.play_gate._open_controls()
+	await driver.shot("controls_owned")
+	main.play_gate._close_controls()
+	main.binoculars.owned = false
+	main.play_gate._open_controls()
+	await driver.shot("controls_unearned")
+	main.play_gate._close_controls()
+	main.binoculars.owned = true
 	await driver.hover_button(main.play_gate.primary, "hover_play")
 	await driver.hover_button(main.play_gate.sound_button, "hover_sound")
 	await driver.hover_button(main.play_gate.settings_button, "hover_settings")
@@ -19,6 +29,12 @@ func run(driver: Node) -> void:
 		get_window().size = dimensions
 		await get_tree().create_timer(0.15).timeout
 		driver._check(Rect2(Vector2.ZERO, main.play_gate.size).encloses(main.play_gate.primary.get_rect()), "wall Play remains reachable after resize")
+		main.play_gate._open_controls()
+		await driver.shot("controls_%d" % dimensions.x)
+		main.play_gate._close_controls()
+		main.play_gate._open_settings()
+		await driver.shot("settings_%d" % dimensions.x)
+		main.play_gate._close_settings()
 		await driver.shot("02_title_small" if dimensions.x == 640 else "03_title_portrait")
 	get_window().size = original_size
 	await get_tree().create_timer(0.15).timeout

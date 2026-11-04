@@ -32,7 +32,7 @@ func run() -> void:
 	audio.cued.connect(func(group: String) -> void: cues.append(group))
 
 	var expected := {"step_wood": 5, "step_tile": 6, "step_grass": 5, "lever_grab": 3, "lever_blocked": 3,
-		"door_rattle": 3, "door_open": 2, "door_close": 2, "slide": 3, "wake": 1, "coin_insert": 2}
+		"door_rattle": 3, "door_open": 2, "door_close": 2, "slide": 3, "wake": 1, "coin_insert": 2, "coin_acquired": 1}
 	for group in expected:
 		check(audio.streams[group].size() == expected[group], "%s has %d variants" % [group, expected[group]])
 	check(audio.music.stream.loop and audio.music.bus == "Music", "music loops on the Music bus")
@@ -40,6 +40,14 @@ func run() -> void:
 	check(audio.voices.all(func(voice: AudioStreamPlayer) -> bool: return voice.bus == "Effects") and audio.birds.bus == "Effects", "effects use the Effects bus")
 	check(AudioServer.get_bus_index("Effects") > 0 and AudioServer.get_bus_index("Music") > 0, "volume buses exist")
 
+	check(audio.music_intro == 0.0 and audio.music.volume_db < -59.0, "music starts silent during its delay")
+	main.coins.award([0])
+	check(count("coin_acquired") == 0, "queued coin is silent until received")
+	main.coins.receive_next()
+	check(count("coin_acquired") == 1, "coin arrival sounds once")
+	main.coins.receive_next()
+	main.coins.insert_one()
+	check(count("coin_acquired") == 1, "empty queue and spending cannot repeat acquisition sound")
 	# Surfaces, sampled synchronously so physics cannot reassign occupancy in between.
 	var foyer: ManorRoom = main.rooms[7]
 	var spawn := main.player.global_position
@@ -110,7 +118,10 @@ func run() -> void:
 	await process_frame
 	check(swings[true] > 1 and count("door_open") == 1, "reopening doors voice only the nearest (%d swung)" % swings[true])
 	await create_timer(1.6).timeout
-	check(absf(audio.music.volume_db) < 0.1, "music recovers after the slide")
+	check(absf(audio.music_duck_db) < 0.1, "music duck recovers after the slide")
+	check(audio.music_intro > 0 and audio.music_intro < 1, "music fades in slowly despite the early slide")
+	await create_timer(ManorAudio.MUSIC_DELAY + ManorAudio.MUSIC_FADE_IN).timeout
+	check(absf(audio.music.volume_db) < 0.1, "music reaches its normal level after startup")
 
 	for door in foyer.doors:
 		if door.is_front:

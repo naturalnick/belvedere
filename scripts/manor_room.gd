@@ -48,7 +48,7 @@ func build(id: int) -> void:
 			door.room_id = id
 			door.direction = d
 			door.is_front = ManorRules.side(id, d) == ManorRules.FRONT
-			door.build("3F5E7A" if door.is_front else ManorGeometry.ACCENTS[id])
+			door.build("A43D36" if door.is_front else ManorGeometry.ACCENTS[id])
 			doors.append(door)
 		else:
 			ManorGeometry.box(wall, Vector3(span, 0.9, 0.125), Vector3(0, 0.45, 0), mat)

@@ -83,6 +83,20 @@ func run() -> void:
 				check(distance > (0.60 if clue.kind == 1 else 0.28), "whole fruits have distinct spacing")
 		for mesh: MeshInstance3D in clue.find_children("*", "MeshInstance3D", true, false):
 			check(mesh.cast_shadow == GeometryInstance3D.SHADOW_CASTING_SETTING_OFF and mesh.material_override.next_pass == null, "hidden clues cannot leak shadows or outlines")
+		var door: ManorDoor = clue.room.doors[0]
+		door.set_open(false, true)
+		clue._sync_doors()
+		check(clue.last_closed_doors[door.direction] == 1, "closed glass door permits clues")
+		door.set_open(true)
+		clue._sync_doors()
+		check(clue.last_closed_doors[door.direction] == 0, "clues hide as soon as door starts opening")
+		await create_timer(0.5).timeout
+		door.set_open(false)
+		clue._sync_doors()
+		check(clue.last_closed_doors[door.direction] == 0, "clues remain hidden while door closes")
+		await create_timer(0.5).timeout
+		clue._sync_doors()
+		check(clue.last_closed_doors[door.direction] == 1, "clues return once leaves are shut")
 		clue.room.position += Vector3.FORWARD * 6.25
 		await process_frame
 		await process_frame

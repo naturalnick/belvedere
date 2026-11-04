@@ -8,6 +8,9 @@ var sound_button: Button
 var title_label: Label
 var settings_button: Button
 var settings_panel: ManorSettingsPanel
+var controls_button: Button
+var controls_panel: ManorControlsPanel
+var play_label: Label
 var previous_mode := "pause"
 var trophy_view: TextureRect
 var trophy_viewport: SubViewport
@@ -25,12 +28,23 @@ func _ready() -> void:
 	add_child(title_label)
 	primary = _icon_button()
 	secondary = _icon_button()
+	play_label = Label.new()
+	play_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	play_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	primary.add_child(play_label)
+	controls_button = _icon_button()
+	controls_button.text = "Controls"
+	controls_button.pressed.connect(_open_controls)
+	controls_panel = ManorControlsPanel.new()
+	add_child(controls_panel)
+	controls_panel.closed.connect(_close_controls)
 	sound_button = _icon_button()
 	sound_button.size = Vector2(52, 52)
 	sound_button.pressed.connect(_toggle_audio)
 	settings_button = _icon_button()
 	settings_button.size = Vector2(52, 52)
 	settings_button.accessibility_name = "Settings"
+	settings_button.text = "Settings"
 	settings_button.pressed.connect(_open_settings)
 	settings_panel = ManorSettingsPanel.new()
 	settings_panel.preferences = manor.preferences
@@ -56,7 +70,7 @@ func _draw() -> void:
 	var wall_menu := mode == "title" and manor.wall_title != null and manor.at_title
 	if not wall_menu:
 		draw_rect(Rect2(Vector2.ZERO, size), Color(0.10, 0.075, 0.06, 0.97 if mode == "title" else 0.9))
-	if mode == "settings":
+	if mode in ["settings", "controls"]:
 		return
 	var brass := Color("C9A04A")
 	var ivory := Color("EFE4D2")
@@ -68,26 +82,16 @@ func _draw() -> void:
 						continue
 					draw_rect(Rect2(center + Vector2((col - 1) * 18 - 7, (row - 1) * 18 - 80), Vector2(14, 14)), brass)
 		_play_icon(primary.position + primary.size / 2, ManorWallTitle.INK if wall_menu else ivory)
-		_sound_icon(sound_button.position + sound_button.size / 2.0, ivory)
-		ManorMenuIcons.draw(self, "settings", settings_button.position + settings_button.size / 2.0, ivory)
 
 func _play_icon(center: Vector2, color: Color) -> void:
 	draw_circle(center, play_radius, color, false, 2, true)
 	draw_colored_polygon(PackedVector2Array([center + Vector2(-9, -15) * play_radius / 35, center + Vector2(-9, 15) * play_radius / 35, center + Vector2(16, 0) * play_radius / 35]), color)
 
-func _sound_icon(center: Vector2, color: Color) -> void:
-	draw_colored_polygon(PackedVector2Array([center + Vector2(-16, -5), center + Vector2(-10, -5), center + Vector2(-2, -12), center + Vector2(-2, 12), center + Vector2(-10, 5), center + Vector2(-16, 5)]), color)
-	if AudioServer.is_bus_mute(0):
-		draw_line(center + Vector2(5, -7), center + Vector2(16, 7), color, 2, true)
-		draw_line(center + Vector2(5, 7), center + Vector2(16, -7), color, 2, true)
-	else:
-		for radius in [10, 17]:
-			draw_arc(center + Vector2(-2, 0), radius, -PI / 3, PI / 3, 16, color, 2, true)
-
 func _toggle_audio() -> void:
 	manor.preferences.update("muted", not manor.preferences.muted)
 
 func _update_sound_accessibility() -> void:
+	sound_button.text = "Sound: Off" if AudioServer.is_bus_mute(0) else "Sound: On"
 	sound_button.accessibility_name = "Turn sound on" if AudioServer.is_bus_mute(0) else "Mute sound"
 
 func _icon_button() -> Button:
@@ -103,21 +107,49 @@ func _open_settings() -> void:
 	_layout()
 	settings_panel.open()
 
+func _open_controls() -> void:
+	if starting:
+		return
+	previous_mode = mode
+	mode = "controls"
+	controls_panel.set_owned(manor.binoculars != null and manor.binoculars.owned)
+	_layout()
+	controls_panel.back.grab_focus()
+
+func _close_controls() -> void:
+	show_mode(previous_mode)
+	controls_button.grab_focus()
+
 func _close_settings() -> void:
 	show_mode(previous_mode)
 	settings_button.grab_focus()
 
 func _unhandled_key_input(event: InputEvent) -> void:
-	if visible and mode == "settings" and event is InputEventKey and event.pressed and event.physical_keycode == KEY_ESCAPE:
-		_close_settings()
+	if visible and mode in ["settings", "controls"] and event is InputEventKey and event.pressed and event.physical_keycode == KEY_ESCAPE:
+		if mode == "controls":
+			_close_controls()
+		else:
+			_close_settings()
 		get_viewport().set_input_as_handled()
 
 func _layout() -> void:
+	controls_panel.visible = mode == "controls"
+	controls_panel.size = size
+	controls_button.visible = mode in ["title", "pause"]
 	settings_panel.visible = mode == "settings"
 	settings_panel.size = size
-	primary.visible = mode != "settings"
+	primary.visible = mode not in ["settings", "controls"]
 	settings_button.visible = mode in ["title", "pause"]
-	settings_button.position = Vector2(maxf(8, size.x - 136), maxf(8, size.y - 72))
+	var footer_width := minf(140, (size.x - 48) / 3)
+	for i in 3:
+		var button: Button = [controls_button, settings_button, sound_button][i]
+		button.size = Vector2(footer_width, 48)
+		button.position = Vector2(size.x - 16 - (3 - i) * footer_width - (2 - i) * 8, maxf(8, size.y - 64))
+		button.add_theme_font_size_override("font_size", 19)
+		button.add_theme_color_override("font_color", Color("EFE4D2"))
+		button.add_theme_color_override("font_shadow_color", Color("30251B"))
+		button.add_theme_constant_override("shadow_offset_x", 1)
+		button.add_theme_constant_override("shadow_offset_y", 2)
 	var won := mode == "victory"
 	var wall_menu := mode == "title" and manor.wall_title != null and manor.at_title
 	if manor.wall_title != null:
@@ -141,10 +173,15 @@ func _layout() -> void:
 		play_radius = maxf(18, at.distance_to(edge))
 		primary.size = Vector2.ONE * (play_radius * 2 + 8)
 		primary.position = at - primary.size / 2
+	play_label.visible = not won
+	play_label.text = "Play" if mode == "title" else "Resume"
+	play_label.position = Vector2(-24, primary.size.y)
+	play_label.size = Vector2(primary.size.x + 48, 32)
+	play_label.add_theme_font_size_override("font_size", 22)
+	play_label.add_theme_color_override("font_color", ManorWallTitle.INK if wall_menu else Color("EFE4D2"))
 	secondary.position = size / 2.0 + Vector2(0, 188) * ui_scale - secondary.size / 2.0
 	secondary.visible = mode == "victory"
 	sound_button.visible = mode in ["title", "pause"]
-	sound_button.position = Vector2(maxf(8, size.x - 72), maxf(8, size.y - 72))
 	title_label.visible = mode in ["title", "victory"] and not wall_menu
 	title_label.text = "Thanks for Playing" if won else "Belvedere"
 	title_label.position = Vector2(16, size.y / 2.0 - (218 * ui_scale if won else 36))
@@ -202,6 +239,7 @@ func _activate_primary() -> void:
 	primary.disabled = true
 	settings_button.disabled = true
 	sound_button.disabled = true
+	controls_button.disabled = true
 	# Pointer lock must begin inside the click, before the visual fade finishes.
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	var transition := create_tween().set_parallel(true)
@@ -222,5 +260,6 @@ func _finish_start() -> void:
 	primary.disabled = false
 	settings_button.disabled = false
 	sound_button.disabled = false
+	controls_button.disabled = false
 	if manor.wall_title != null:
 		manor.wall_title.lettering.modulate.a = 1.0

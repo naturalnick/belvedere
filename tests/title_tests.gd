@@ -14,6 +14,7 @@ func check(ok: bool, message: String) -> void:
 func run() -> void:
 	var main: Manor = load("res://scenes/manor.tscn").instantiate()
 	root.add_child(main)
+	check(main.scene_fade.color.a == 1.0 and main.play_gate.modulate.a == 1.0, "scene begins dark while menu UI is fully visible")
 	var wall := main.wall_title
 	check(main.at_title and main.play_gate.mode == "title" and main.controls_locked(), "new game waits on the wall title")
 	check(main.rules.player == 0 and main.rules.valid(), "Bedroom start has valid occupancy")

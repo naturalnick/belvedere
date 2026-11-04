@@ -132,6 +132,9 @@ def effects():
 
 
 def coin_effects():
+    # A single soft coin contact marks arrival in the wallet, distinct from the cabinet latch.
+    contact = source('rpg', 'handleCoins2', 1.08, 5800)
+    write('coin_acquired_0', contact[:int(.48 * RATE)], .24, .003, .10)
     # Recorded coin contacts keep the bright attack and natural metallic decay.
     for i, name in enumerate(('handleCoins', 'handleCoins2')):
         coins = source('rpg', name, cutoff=8500)

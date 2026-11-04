@@ -44,6 +44,21 @@ func run() -> void:
 		panel._layout()
 		for control: Control in panel.get_children():
 			check(Rect2(Vector2.ZERO, dimensions).encloses(control.get_rect()), "settings fit supported viewport")
+	main.play_gate.show_mode("pause")
+	main.binoculars.owned = false
+	main.play_gate._open_controls()
+	var controls: ManorControlsPanel = main.play_gate.controls_panel
+	check(not controls.rows.back().visible, "unearned binoculars are absent from controls")
+	main.play_gate._close_controls()
+	main.binoculars.owned = true
+	main.play_gate._open_controls()
+	check(controls.rows.back().visible, "owned binoculars reveal the B control")
+	for dimensions in [Vector2(1280, 720), Vector2(640, 480), Vector2(360, 640)]:
+		controls.size = dimensions
+		controls._layout()
+		for control: Control in controls.get_children():
+			check(Rect2(Vector2.ZERO, dimensions).encloses(control.get_rect()), "controls fit supported viewport")
+	main.play_gate._close_controls()
 	var gap := Node3D.new()
 	root.add_child(gap)
 	ManorGeometry.build_gap_floor(gap)

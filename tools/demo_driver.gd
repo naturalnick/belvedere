@@ -30,10 +30,10 @@ func run(game: Manor) -> void:
 	elif mode == "safe":
 		shot_names = ["safe_closed", "safe_entered", "safe_open", "safe_room"]
 		for kind in 4:
-			for view in ["window", "window_empty", "inside", "door"]:
+			for view in ["window", "window_empty", "inside", "closed_door", "open_door"]:
 				shot_names.append("fruit_%d_%s" % [kind, view])
 	elif mode == "title":
-		shot_names = ["01_title", "02_title_small", "03_title_portrait", "03_start_fade", "04_playing", "05_grid_target", "06_title_return", "hover_play", "hover_sound", "hover_settings", "hover_invert", "hover_back", "hover_resume"]
+		shot_names = ["01_title", "02_title_small", "03_title_portrait", "03_start_fade", "04_playing", "05_grid_target", "06_title_return", "hover_play", "hover_sound", "hover_settings", "hover_invert", "hover_back", "hover_resume", "00_scene_fade", "controls_owned", "controls_unearned", "controls_640", "controls_360", "settings_640", "settings_360"]
 	elif mode == "coins":
 		shot_names = ["01_spawn", "blue_shade", "warm_shade", "coin_presented", "coin_count", "coin_device", "coin_inserting", "coin_deposited", "ending_1", "ending_1_small", "trophy_released", "coin_title", "hover_keep_playing", "hover_quit"]
 	elif mode == "fall":

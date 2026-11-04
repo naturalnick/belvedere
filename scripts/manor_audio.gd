@@ -7,6 +7,8 @@ const DOOR_RANGE := 7.5
 const TILE_ROOMS: Array[int] = [1, 3, 7, 8]
 const MUSIC_DUCK_DB := -6.0
 const BIRDS_DB := -33.0
+const MUSIC_DELAY := 3.0
+const MUSIC_FADE_IN := 5.0
 
 signal cued(group: String)
 
@@ -22,11 +24,13 @@ var birds: AudioStreamPlayer
 var birds_on := false
 var birds_fade: Tween
 var music_fade: Tween
+var music_intro := 0.0
+var music_duck_db := 0.0
 var stride := STRIDE * 0.6
 var door_events: Array[Array] = []
 
 func _ready() -> void:
-	for group in ["step_wood", "step_tile", "step_grass", "lever_grab", "lever_blocked", "door_rattle", "door_open", "door_close", "slide", "coin_insert"]:
+	for group in ["step_wood", "step_tile", "step_grass", "lever_grab", "lever_blocked", "door_rattle", "door_open", "door_close", "slide", "coin_insert", "coin_acquired"]:
 		var variants: Array = []
 		while ResourceLoader.exists(DIR + "%s_%d.wav" % [group, variants.size()]):
 			variants.append(load(DIR + "%s_%d.wav" % [group, variants.size()]))
@@ -47,8 +51,15 @@ func _ready() -> void:
 	music.stream = load(DIR + "manor_theme.ogg")
 	music.bus = "Music"
 	add_child(music)
-	if audible:
-		music.play()
+	music.volume_db = -60.0
+	var intro := create_tween()
+	intro.tween_interval(MUSIC_DELAY)
+	intro.tween_callback(func() -> void:
+		if audible:
+			music.play())
+	intro.tween_property(self, "music_intro", 1.0, MUSIC_FADE_IN).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	if manor.coins != null:
+		manor.coins.received.connect(func() -> void: play("coin_acquired", -4.0))
 	for id in manor.rooms:
 		for door in manor.rooms[id].doors:
 			door.swung.connect(func(opening: bool) -> void: door_events.append([door, opening]))
@@ -135,6 +146,8 @@ func surface() -> String:
 	return "step_grass"
 
 func _process(_delta: float) -> void:
+	# Startup gain and slide ducking are independent, so an early slide cannot skip the fade.
+	music.volume_db = linear_to_db(maxf(0.001, music_intro)) + music_duck_db
 	_flush_doors()
 	_set_birds(manor.rules.player < 0 and not manor.at_title and not manor.play_gate.visible)
 
@@ -183,4 +196,4 @@ func _duck_music(target_db: float, seconds: float) -> void:
 	if music_fade != null:
 		music_fade.kill()
 	music_fade = create_tween()
-	music_fade.tween_property(music, "volume_db", target_db, seconds).set_trans(Tween.TRANS_SINE)
+	music_fade.tween_property(self, "music_duck_db", target_db, seconds).set_trans(Tween.TRANS_SINE)

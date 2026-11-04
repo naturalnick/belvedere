@@ -1,6 +1,7 @@
 uniform bool window_clue = false;
 uniform vec3 clue_room_origin = vec3(0.0);
 uniform vec4 clue_windows = vec4(0.0);
+uniform vec4 clue_closed_doors = vec4(0.0);
 
 bool through_clue_window(vec3 eye, vec3 point) {
 	vec3 start = eye - clue_room_origin;
@@ -25,6 +26,8 @@ bool through_clue_window(vec3 eye, vec3 point) {
 	if (side < 0 || entry < 0.0 || entry > 1.0) { return false; }
 	vec3 crossing = start + ray * entry;
 	float along = (side == 0 || side == 2) ? crossing.x : crossing.z;
-	return clue_windows[side] > 0.5 && crossing.y > 0.9 && crossing.y < 2.4
+	bool window = clue_windows[side] > 0.5 && crossing.y > 0.9 && crossing.y < 2.4
 		&& abs(abs(along) - 1.6) < 0.7;
+	bool closed_door = clue_closed_doors[side] > 0.5 && crossing.y > 0.0 && crossing.y < 2.2 && abs(along) < 0.6;
+	return window || closed_door;
 }

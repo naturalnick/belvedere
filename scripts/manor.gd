@@ -33,6 +33,7 @@ var fruit_clues: Array[ManorFruitClue] = []
 var binoculars: ManorBinoculars
 var ending: ManorEnding
 var environment: Environment
+var scene_fade: ColorRect
 var fade: ColorRect
 var in_finale := false
 var at_title := false
@@ -102,6 +103,15 @@ func _ready() -> void:
 			preferences.invert_y = true
 			preferences.apply(player)
 	refresh_doors(true)
+	var scene_layer := CanvasLayer.new()
+	scene_layer.layer = 0
+	add_child(scene_layer)
+	scene_fade = ColorRect.new()
+	scene_fade.color = Color(0.06, 0.045, 0.035, 1.0)
+	scene_fade.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	scene_layer.add_child(scene_fade)
+	scene_fade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	create_tween().tween_property(scene_fade, "color:a", 0.0, 1.4).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 	var hud := CanvasLayer.new()
 	add_child(hud)
 	var reticle := Control.new()
