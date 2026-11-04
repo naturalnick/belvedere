@@ -4,6 +4,8 @@ extends Node3D
 signal swung(opening: bool)
 signal rattled
 
+const EXIT_OPEN_SECONDS := 3.5
+
 var room_id := -1
 var direction := 0
 var is_front := false
@@ -63,7 +65,7 @@ func set_open(value: bool, instant: bool = false) -> void:
 	opened = value
 	if emblem != null:
 		emblem.material_override = ManorGeometry.glowing_material("FFE3A1") if value else ManorGeometry.material("85744E")
-	gate.collision_layer = 0 if value else 1
+	gate.collision_layer = 0 if value and (instant or not is_front) else 1
 	if motion:
 		motion.kill()
 	if not instant:
@@ -75,7 +77,11 @@ func set_open(value: bool, instant: bool = false) -> void:
 		if instant:
 			leaves[i].rotation.y = angle
 		else:
-			motion.tween_property(leaves[i], "rotation:y", angle, 0.45).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+			motion.tween_property(leaves[i], "rotation:y", angle, EXIT_OPEN_SECONDS if is_front and value else 0.45).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+
+	if is_front and value and not instant:
+		# Keep the player from walking through the solid panels during their slow reveal.
+		motion.chain().tween_callback(func() -> void: gate.collision_layer = 0)
 
 func rattle() -> void:
 	if opened:

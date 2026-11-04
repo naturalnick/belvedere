@@ -36,6 +36,7 @@ var environment: Environment
 var scene_fade: ColorRect
 var fade: ColorRect
 var in_finale := false
+var finale_motion: Tween
 var at_title := false
 var recovering := false
 var fall_recovery: ManorFallRecovery
@@ -206,21 +207,28 @@ func start_play() -> void:
 	resume_play()
 
 func resume_play() -> void:
-	if in_finale or at_title:
+	if at_title:
 		return
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	play_gate.hide()
+	if in_finale and finale_motion != null:
+		finale_motion.play()
+		fade.show()
 
 func release_pointer() -> void:
 	player.cancel_pull()
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	play_gate.show_mode("pause")
+	if in_finale and finale_motion != null:
+		finale_motion.pause()
+		fade.hide()
 
 func controls_locked() -> bool:
 	return (binoculars != null and binoculars.locks_player()) or (first_coin_guide != null and first_coin_guide.active) or recovering or sliding or in_finale or at_title or (play_gate != null and play_gate.visible) or (coin_device != null and coin_device.releasing)
 
 func return_to_title() -> void:
 	at_title = true
+	fade.show()
 	if binoculars != null:
 		binoculars.reset_view()
 	set_process(false)
@@ -273,14 +281,19 @@ func begin_finale() -> void:
 	player.cancel_pull()
 	player.velocity = Vector3.ZERO
 	player.bot_drive = Vector3.ZERO
-	var travel := create_tween()
-	travel.tween_property(player, "position", Vector3(0, -0.02, 22), 8.0).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-	travel.tween_interval(2.0)
-	travel.tween_property(fade, "color:a", 1.0, 1.4)
-	travel.tween_callback(return_to_title)
+	ending.begin_sequence()
+	finale_motion = create_tween()
+	finale_motion.tween_property(player, "position", Vector3(0, -0.02, 22), ManorEnding.WALK_SECONDS).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	finale_motion.parallel().tween_property(ending.title, "modulate:a", 1.0, ManorEnding.TITLE_FADE_SECONDS).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	finale_motion.tween_property(ending.credit, "modulate:a", 1.0, ManorEnding.CREDIT_FADE_SECONDS).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	finale_motion.tween_interval(ManorEnding.CREDIT_GAP_SECONDS)
+	finale_motion.tween_property(ending.thanks, "modulate:a", 1.0, ManorEnding.THANKS_FADE_SECONDS).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	finale_motion.tween_interval(ManorEnding.FINAL_HOLD_SECONDS)
+	finale_motion.tween_property(fade, "color:a", 1.0, 1.4)
+	finale_motion.tween_callback(return_to_title)
 
 func _process(delta: float) -> void:
-	if in_finale and not at_title:
+	if in_finale and not at_title and not play_gate.visible:
 		var direction := Vector3(0, 1.3, 36) - player.camera.global_position
 		player.rotation.y = lerp_angle(player.rotation.y, atan2(-direction.x, -direction.z), minf(delta * 2.5, 1))
 		player.camera.rotation.x = lerpf(player.camera.rotation.x, atan2(direction.y, Vector2(direction.x, direction.z).length()), minf(delta * 2.5, 1))

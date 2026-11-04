@@ -68,25 +68,71 @@ func run() -> void:
 	for id in main.rooms:
 		main.rooms[id].position = ManorGeometry.center(id)
 	main.refresh_progress()
-	check(main.won and front.opened and front.gate.collision_layer == 0, "assembled house opens bonus exit")
+	check(main.won and front.opened and front.gate.collision_layer == 1, "assembled house begins opening the solid exit")
+	await create_timer(1.0).timeout
+	check(absf(front.leaves[0].rotation.y) < deg_to_rad(50) and front.gate.collision_layer == 1, "red door opens slowly and blocks passage through its panels")
+	await create_timer(ManorDoor.EXIT_OPEN_SECONDS).timeout
+	check(front.gate.collision_layer == 0 and is_equal_approx(front.leaves[0].rotation.y, deg_to_rad(-100)), "fully open exit permits passage")
+	check(not main.ending.title.visible and not main.ending.credit.visible and not main.ending.thanks.visible, "ending lettering waits until the carpet sequence")
 	check(main.carpet.visible and main.ending.active and main.ending.rainbow.visible, "carpet and rainbow activate only for bonus")
 	main.ending.set_process(false)
 	main.player.set_physics_process(false)
 	main.player.position = Vector3(0, 0, 16)
+	main.player.aim_at(Vector3(0, 1.3, 36))
 	for i in 500:
 		main.ending._process(0.12)
 	check(main.ending.total_spawned > ManorEnding.FLOWER_LIMIT and main.ending.spawned == ManorEnding.FLOWER_LIMIT, "continuous flower growth uses bounded recycling")
+	check(main.ending.flowers.multimesh.mesh.get_aabb().end.y < 0.02, "flowers are stemless low blooms")
 	for at in main.ending.positions:
+		check(main.player.camera.is_position_in_frustum(at), "every new flower is inside the actual camera view")
 		check(absf(at.x) > 9.55 or absf(at.z) > 9.55, "flowers stay off house footprint")
 		check(not (absf(at.x) < 1.15 and at.z > 9.2 and at.z < 23), "flowers stay off carpet")
 		var offset := at - main.player.position
 		offset.y = 0
-		check(offset.length() <= 7.01 and offset.length() >= 2.49, "flowers grow near player")
+		check(offset.length() <= 12.01 and offset.length() >= 2.49, "flowers grow within the extended forward range")
+	var saved_fov := main.player.camera.fov
+	for fov in [60, 100]:
+		main.player.camera.fov = fov
+		main.player.position.z = 10.0
+		var before := main.ending.total_spawned
+		for step in 120:
+			main.player.position.z += 0.08
+			main.player.aim_at(Vector3(0, 1.3, 36))
+			var previous := main.ending.total_spawned
+			main.ending._process(ManorEnding.SPROUT_INTERVAL)
+			if main.ending.total_spawned > previous:
+				var newest := main.ending.positions[(main.ending.total_spawned - 1) % ManorEnding.FLOWER_LIMIT]
+				check(main.player.camera.is_position_in_frustum(newest), "moving player's new blooms stay in view at FOV %d" % fov)
+		check(main.ending.total_spawned - before >= 110, "visible planting keeps up with the denser rate at FOV %d" % fov)
+	main.player.camera.fov = saved_fov
 	main.rules.player = 7
 	main.player.position = Vector3(0, 0, 9.5)
 	main.update_occupant()
 	check(main.in_finale and main.controls_locked(), "crossing unlocked front door begins finale")
-	await create_timer(11.6).timeout
+	main.ending.set_process(true)
+	await create_timer(2.0).timeout
+	check(main.ending.title.modulate.a > 0 and main.ending.title.modulate.a < 1 and main.ending.credit.modulate.a == 0, "title fades slowly during the walk before any credits")
+	main.release_pointer()
+	var paused_position := main.player.position
+	var paused_alpha := main.ending.title.modulate.a
+	var paused_ages := main.ending.ages.duplicate()
+	await create_timer(0.3).timeout
+	check(main.player.position == paused_position and main.ending.title.modulate.a == paused_alpha and main.ending.ages == paused_ages, "pause freezes walking, title fade and flowers")
+	main.resume_play()
+	await create_timer(ManorEnding.WALK_SECONDS - 2.0 + 0.2).timeout
+	check(main.player.position.is_equal_approx(Vector3(0, -0.02, 22)), "player stops at carpet end")
+	check(main.ending.credit.modulate.a > 0 and main.ending.credit.modulate.a < 1 and main.ending.thanks.modulate.a == 0, "credit begins fading only after arrival")
+	main.release_pointer()
+	paused_alpha = main.ending.credit.modulate.a
+	var paused_flowers := main.ending.total_spawned
+	await create_timer(0.3).timeout
+	check(main.ending.credit.modulate.a == paused_alpha and main.ending.total_spawned == paused_flowers and not main.fade.visible, "pause freezes credits and keeps the menu unobscured")
+	main.resume_play()
+	await create_timer(ManorEnding.CREDIT_FADE_SECONDS).timeout
+	check(is_equal_approx(main.ending.credit.modulate.a, 1) and main.ending.thanks.modulate.a == 0, "credit is readable alone before the thank-you appears")
+	await create_timer(ManorEnding.CREDIT_GAP_SECONDS + 2.0).timeout
+	check(main.ending.thanks.modulate.a > 0 and main.ending.thanks.modulate.a < 1 and not main.at_title, "thank-you fades in after the additional wait")
+	await create_timer(ManorEnding.THANKS_FADE_SECONDS - 2.0 + ManorEnding.FINAL_HOLD_SECONDS + 1.6).timeout
 	check(main.at_title and main.play_gate.mode == "title", "finale returns to title")
 	check(not main.ending.is_processing(), "flower updates stop at title")
 	main.queue_free()

@@ -52,14 +52,14 @@ func run(game: Manor) -> void:
 	elif mode == "single-gap":
 		shot_names = ["01_spawn", "02_outside", "03_shifted"]
 	elif mode == "objectives":
-		shot_names = ["00_front_locked", "01_spawn", "02_active_room", "03_completed_room", "04_main_win", "05_chandelier", "06_bonus_door", "07_flowers", "08_title"]
+		shot_names = ["00_front_locked", "01_spawn", "02_active_room", "03_completed_room", "04_main_win", "05_chandelier", "06_bonus_door", "07_flowers", "07_belvedere", "07_credit", "07_credits_paused", "07_thanks", "08_title"]
 		shot_names.append_array(["coin_device", "coin_inserting", "coin_deposited"])
 		for room in ManorObjectives.ROOMS:
 			shot_names.append("coin_reward_%d" % room)
 		if OS.get_cmdline_user_args().has("--detail-only"):
 			shot_names = ["00_front_locked", "01_spawn"]
 		elif OS.get_cmdline_user_args().has("--ending-only"):
-			shot_names = ["06_bonus_door", "07_flowers", "08_title"]
+			shot_names = ["06_bonus_door", "07_flowers", "07_belvedere", "07_credit", "07_credits_paused", "07_thanks", "08_title"]
 	for name_value in shot_names:
 		DirAccess.remove_absolute(shots_dir.path_join(name_value + ".png"))
 	DisplayServer.window_move_to_foreground()
@@ -598,6 +598,27 @@ func capture_exit() -> void:
 	await get_tree().create_timer(4.5).timeout
 	_check(main.ending.total_spawned > 5, "flowers keep sprouting near player during exit")
 	await shot("07_flowers")
+	await get_tree().create_timer(ManorEnding.WALK_SECONDS - 7.5).timeout
+	await shot("07_belvedere")
+	await get_tree().create_timer(5.0).timeout
+	await shot("07_credit")
+	main.player.automated = false
+	key_event(KEY_ESCAPE, true)
+	await get_tree().process_frame
+	key_event(KEY_ESCAPE, false)
+	main.player.automated = true
+	_check(main.play_gate.visible and main.play_gate.mode == "pause", "Escape pauses the ending")
+	var paused_alpha := main.ending.credit.modulate.a
+	var paused_flowers := main.ending.total_spawned
+	await get_tree().create_timer(0.3).timeout
+	_check(main.ending.credit.modulate.a == paused_alpha and main.ending.total_spawned == paused_flowers, "paused ending freezes credits and flower spawns")
+	await shot("07_credits_paused")
+	mouse_button(true)
+	mouse_button(false)
+	await get_tree().process_frame
+	_check(not main.play_gate.visible, "Resume continues the ending")
+	await get_tree().create_timer(10.0).timeout
+	await shot("07_thanks")
 	while not main.at_title:
 		await get_tree().process_frame
 	_check(main.play_gate.visible and main.play_gate.mode == "title", "outdoor ending returns to title")

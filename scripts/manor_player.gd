@@ -32,12 +32,14 @@ func _ready() -> void:
 	Input.use_accumulated_input = false
 
 func _unhandled_input(event: InputEvent) -> void:
-	if automated or manor.recovering or manor.sliding or manor.in_finale or manor.at_title:
+	if automated or manor.recovering or manor.sliding or manor.at_title:
 		return
 	if manor.play_gate != null and manor.play_gate.visible:
 		return
 	if event is InputEventKey and event.pressed and event.physical_keycode == KEY_ESCAPE:
 		manor.release_pointer()
+		return
+	if manor.in_finale:
 		return
 	if event is InputEventKey and event.pressed and not event.echo and event.physical_keycode == KEY_B:
 		if manor.binoculars != null and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
