@@ -454,6 +454,11 @@ func request_slide(direction: int) -> bool:
 	var old_slot := rules.slot()
 	var destination_slot := ManorRules.neighbor(old_slot, direction)
 	var destination := ManorGeometry.center(destination_slot)
+	# Both slots expose ground during travel; keep matching tracks under the departing room.
+	var departing_floor := Node3D.new()
+	add_child(departing_floor)
+	ManorGeometry.build_gap_floor(departing_floor)
+	departing_floor.position = ManorGeometry.center(old_slot) + Vector3.DOWN * 0.02
 	player.reparent(room, true)
 	player.velocity = Vector3.ZERO
 	# Static door gates close during transit; only the room and rider move.
@@ -474,6 +479,7 @@ func request_slide(direction: int) -> bool:
 		gap_floors.erase(destination_slot)
 		gap_floors[old_slot] = vacated_floor
 		vacated_floor.position = ManorGeometry.center(old_slot) + Vector3.DOWN * 0.02
+		departing_floor.queue_free()
 		slides += 1
 		sliding = false
 		room.show_pull(-1, -1, false)

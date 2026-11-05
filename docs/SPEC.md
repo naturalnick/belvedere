@@ -11,7 +11,7 @@ This file holds the current design and the reasons behind non-obvious choices. E
 - 3×3 grid, eight rooms, one gap. Rooms never rotate. 6 m interiors, 0.25 m walls (two 0.125 m halves, one per room, so faces never coincide), 6.25 m slot pitch, 3 m ceilings, eye height 1.65 m, 3 m/s walking.
 - Glazed double doors open automatically when the facing side is the gap or another room's doorway; otherwise they stay shut and both leaves rattle on use. Windows never allow walking, but slides are legal across any side.
 - Lever: hold E or left mouse on it, push mouse/WASD (view-relative, converted to world axes), release. Into the gap = the whole room slides with the player riding; otherwise a wooden clunk. Slide = 1.6 s (0.09 s take-up, 1.43 s travel with half-second braking, 0.08 s docking), no overshoot or shake; input is locked and board state commits once on docking. Doors close in transit and re-evaluate on landing.
-- The gap is dark concrete with flush crossing tracks, recessed 2 cm to avoid coplanar faces with passing rooms. When the gap is on the perimeter you can walk out onto the lawn and back in through it. Exterior doors stay blocked.
+- The gap is dark concrete with flush crossing tracks, recessed 2 cm to avoid coplanar faces with passing rooms. Matching stationary slabs cover both the departing and destination slots throughout a shift, so newly exposed ground already has tracks before the room lands. When the gap is on the perimeter you can walk out onto the lawn and back in through it. Exterior doors stay blocked.
 - Every room carries its furniture, fixtures, clues and floor patterns when it slides.
 
 ## Starts and modes

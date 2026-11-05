@@ -56,7 +56,7 @@ func run(game: Manor) -> void:
 	elif mode == "courtyard":
 		shot_names = ["01_spawn", "02_courtyards", "03_outside", "04_lever_held", "05_mid_slide", "06_multiple_directions", "07_shifted"]
 	elif mode == "single-gap":
-		shot_names = ["01_spawn", "02_outside", "03_shifted"]
+		shot_names = ["01_spawn", "02_outside", "02_gap_mid_shift", "02_gap_landed", "03_shifted"]
 	elif mode == "objectives":
 		shot_names = ["00_front_locked", "01_spawn", "02_active_room", "03_completed_room", "04_main_win", "05_chandelier", "06_bonus_door", "07_flowers", "07_belvedere", "07_credit", "07_credits_paused", "07_thanks", "07_results", "07_results_portrait", "08_title"]
 		shot_names.append_array(["coin_device", "coin_inserting", "coin_deposited"])
@@ -261,10 +261,21 @@ func single_gap_views() -> void:
 	await approach_lever(main.rooms[7])
 	main.player.aim_at(main.rooms[7].lever.global_position + Vector3.UP * 0.8)
 	await hold_lever_input(ManorRules.E, true)
+	var source := main.rooms[7].position
+	var gap_camera := Camera3D.new()
+	main.add_child(gap_camera)
+	gap_camera.position = source + Vector3(-4, 9, 12)
+	gap_camera.look_at(source + Vector3(3, 0, 0), Vector3.UP)
 	release_lever_input(true)
 	_check(main.sliding, "lever starts slide")
+	gap_camera.make_current()
+	await get_tree().create_timer(0.75).timeout
+	await shot("02_gap_mid_shift")
 	while main.sliding:
 		await get_tree().process_frame
+	await shot("02_gap_landed")
+	main.player.camera.make_current()
+	gap_camera.queue_free()
 	_check(main.rules.slot() == 7 and main.rules.board.count(-1) == 1 and main.gap_floors.has(6), "slide preserves one gap")
 	_check(not main.won and not main.carpet.visible, "ordinary slide does not trigger a win")
 	main.player.aim_at(ManorGeometry.center(6) + Vector3.UP * 1.4)
