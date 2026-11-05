@@ -6,7 +6,7 @@ var opening_rules: ManorRules
 var sleeping := false
 
 func available() -> bool:
-	return manor.slides > 0 and not sleeping
+	return manor.slides > 0 and not manor.won and not sleeping
 
 func interact() -> bool:
 	if not available() or manor.controls_locked():

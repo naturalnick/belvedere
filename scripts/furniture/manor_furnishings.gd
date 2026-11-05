@@ -21,7 +21,8 @@ func _ready() -> void:
 	skirting(room_id)
 
 func bathroom() -> void:
-	var tub := group("ClawfootTub", Vector3(-1.55, 0, -2.12))
+	var tub := group("ClawfootTub", Vector3(-1.45, 0, -1.97))
+	tub.rotation.y = deg_to_rad(8)
 	tub.scale = Vector3(1.10, 1.06, 1.12)
 	for x in [-0.60, 0.60]:
 		for z in [-0.24, 0.24]:
@@ -29,21 +30,23 @@ func bathroom() -> void:
 	basin(tub, Vector3(0, 0.15, 0), 1.95, 0.90, 0.45)
 	tap(tub, Vector3(0.68, 0.47, -0.32))
 	solid(tub, Vector3(1.95, 0.6, 0.90), Vector3(0, 0.30, 0))
-	var sink := cabinet("Washstand", Vector3(2.56, 0, -1.80), 0.95, 0.66, 0.58, "8FC1B0", -PI / 2)
+	var sink := cabinet("Washstand", Vector3(-1.80, 0, 2.56), 0.95, 0.66, 0.58, "8FC1B0", PI)
 	basin(sink, Vector3(0, 0.65, 0), 0.86, 0.52, 0.20)
 	tap(sink, Vector3(0, 0.82, -0.25))
 	mirror(sink, Vector3(0, 1.53, -0.34), 0.75, 0.90)
-	var towels := group("TowelRail", Vector3(-1.85, 0, 2.87), PI)
+	var towels := group("TowelRail", Vector3(2.87, 0, -1.80), -PI / 2)
 	for x in [-0.48, 0.48]:
 		rod(towels, Vector3(x, 1.08, 0), Vector3(x, 1.08, 0.12), 0.025, BRASS)
 	rod(towels, Vector3(-0.48, 1.08, 0.12), Vector3(0.48, 1.08, 0.12), 0.025, BRASS)
 	box(towels, Vector3(0.52, 0.65, 0.045), Vector3(0, 0.765, 0.15), "C4D7CD")
 	box(towels, Vector3(0.52, 0.04, 0.008), Vector3(0, 0.49, 0.178), "8AA89C", 0.0)
-	var stool := table("BathStool", Vector3(-2.25, 0, 1.85), 0.52, 0.48, 0.42)
-	box(stool, Vector3(0.40, 0.10, 0.32), Vector3(0, 0.47, 0), CREAM)
-	var hamper := cabinet("LinenHamper", Vector3(2.35, 0, 2.40), 0.70, 0.70, 0.58, "A99679", PI)
+	var bench := table("BathBench", Vector3(1.85, 0, -2.35), 1.50, 0.50, 0.42)
+	bench.rotation.y = deg_to_rad(-12)
+	box(bench, Vector3(0.40, 0.10, 0.32), Vector3(-0.42, 0.47, 0), CREAM)
+	var hamper := cabinet("LinenHamper", Vector3(1.80, 0, 2.64), 1.50, 0.70, 0.58, "A99679", PI)
 	for y in [0.20, 0.32, 0.44, 0.56]:
-		box(hamper, Vector3(0.58, 0.018, 0.008), Vector3(0, y, 0.325), "8C7D65", 0.0)
+		box(hamper, Vector3(1.38, 0.018, 0.008), Vector3(0, y, 0.325), "8C7D65", 0.0)
+	wall_art(preload("res://assets/wall_art/bathroom.svg"), Vector3(1.80, 1.65, 2.995), Vector2(0.84, 0.84), PI)
 
 func study() -> void:
 	var desk := table("WritingDesk", Vector3(-1.85, 0, -2.30), 1.70, 0.78, 0.75, "5A3B28")

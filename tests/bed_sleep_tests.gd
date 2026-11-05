@@ -112,20 +112,33 @@ func run() -> void:
 		check(main.stopwatch.remaining == main.stopwatch.solver.assembly_distance(main.rules), "stopwatch hint updates to the reset layout")
 		check(main.stopwatch.toggle(), "retained stopwatch remains usable after waking")
 		main.stopwatch.reset_view()
-		# A completed token quest stays complete when an assembled house is reset.
+		# Tokens may be finished while the house still needs assembling.
 		main.objectives.completed.assign(ManorObjectives.ROOMS)
 		main.objectives.all_completed = true
-		main.objectives.bonus_won = true
-		main.won = true
+		main.coins.awarded.assign(ManorObjectives.ROOMS)
+		main.coins.available = ManorCoins.REQUIRED - main.coins.inserted
 		main.slides = 1
-		main.ending.activate()
-		main.carpet.show()
-		check(main.player.begin_interact(), "bed remains available after assembling the house")
+		check(main.player.begin_interact(), "finishing the token quest still allows resetting an unfinished house")
 		main.play_gate._activate_primary()
 		while main.bed_sleep.sleeping:
 			await process_frame
-		check(main.objectives.all_completed and main.objectives.active == -1 and not main.objectives.bonus_won and not main.won, "completed token quest is retained while house assembly resets")
-		check(not main.carpet.visible and not main.ending.active and not main.ending.rainbow.visible, "house ending scenery resets with assembly")
+		check(main.objectives.all_completed and main.objectives.active == -1 and not main.won and main.coins.available == 6, "completed token quest and tokens survive resetting the rooms")
+	if main.rooms.size() == 8:
+		main.rules = ManorRules.new(PackedInt32Array(ManorRules.HOME), 0)
+		main.rules.courtyards = main.bed_sleep.opening_rules.courtyards
+		main.slides = 1
+		for room in main.rooms:
+			main.rooms[room].position = ManorGeometry.center(room)
+		main.gap_floors.clear()
+		main.gap_floors[4] = main.gap_floor
+		main.gap_floor.position = ManorGeometry.center(4) + Vector3.DOWN * 0.02
+		await face_bed(main)
+		main.refresh_progress()
+		check(main.won and not main.bed_sleep.available() and not main.player.begin_interact(), "assembling the house disables bed interaction")
+		main.bed_sleep.sleep()
+		check(not main.bed_sleep.sleeping and not main.play_gate.visible and main.rules.board == PackedInt32Array(ManorRules.HOME), "disabled bed cannot reset the completed puzzle")
+		if main.ending != null:
+			check(main.carpet.visible and main.ending.active and main.ending.rainbow.visible, "completion scenery remains available after trying the bed")
 	main.player.bot_drive = Vector3.BACK
 	var before := main.player.position
 	await create_timer(0.4).timeout
