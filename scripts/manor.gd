@@ -51,6 +51,7 @@ var run_stats: ManorRunStats
 var run_summary: ManorRunSummary
 var audio: ManorAudio
 var pointer_watch: ManorPointerWatch
+var frame_rate: ManorFrameRate
 
 func _ready() -> void:
 	set_process(false)
@@ -132,7 +133,6 @@ func _ready() -> void:
 	scene_fade.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	scene_layer.add_child(scene_fade)
 	scene_fade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	create_tween().tween_property(scene_fade, "color:a", 0.0, 1.4).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 	var hud := CanvasLayer.new()
 	add_child(hud)
 	var reticle := Control.new()
@@ -207,6 +207,8 @@ func _ready() -> void:
 		pointer_watch = ManorPointerWatch.new()
 		pointer_watch.manor = self
 		add_child(pointer_watch)
+	frame_rate = ManorFrameRate.new()
+	add_child(frame_rate)
 	if wall_title != null and not gesture_start:
 		at_title = true
 		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
@@ -216,11 +218,19 @@ func _ready() -> void:
 	else:
 		start_play()
 	gesture_start = false
+	_reveal_scene(hud)
 	if demo:
 		var driver := Node.new()
 		driver.set_script(load("res://tools/demo_driver.gd"))
 		add_child(driver)
 		driver.call_deferred("run", self)
+
+func _reveal_scene(hud: CanvasLayer) -> void:
+	if ManorShaderWarmup.needed(self):
+		hud.hide()
+		await ManorShaderWarmup.run(self)
+		hud.show()
+	create_tween().tween_property(scene_fade, "color:a", 0.0, 1.4).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 
 func place_player_at_spawn() -> void:
 	# The lever sits between the player and the guaranteed open gap doorway.

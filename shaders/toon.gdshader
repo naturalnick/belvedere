@@ -27,6 +27,8 @@ uniform sampler2D paper_grain : repeat_enable, filter_linear_mipmap;
 // A printed sheet: same grain and lighting as its surroundings, with the sheet as its colour.
 uniform bool printed = false;
 uniform sampler2D print_map : source_color, repeat_disable, filter_linear_mipmap_anisotropic;
+// Cuts the sheet's transparent parts instead of blending them, so an engraving needs no shader of its own.
+uniform bool print_cutout = false;
 varying vec3 surface_position;
 varying vec3 surface_normal;
 void vertex() {
@@ -49,7 +51,9 @@ void fragment() {
 	}
 	ALBEDO = base_color.rgb * mix(0.92, 1.0, grain) * (vertex_colors ? COLOR.rgb : vec3(1.0));
 	if (printed) {
-		ALBEDO *= texture(print_map, UV).rgb;
+		vec4 sheet = texture(print_map, UV);
+		if (print_cutout && sheet.a < 0.5) { discard; }
+		ALBEDO *= sheet.rgb;
 	}
 	if ((floor_pattern == 1 || floor_pattern == 2) && surface_normal.y > 0.5) {
 		vec2 tile = surface_position.xz / tile_size;

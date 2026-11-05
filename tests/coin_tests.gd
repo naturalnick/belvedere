@@ -157,6 +157,8 @@ func run() -> void:
 	await process_frame
 	check(main.coins.available == 0 and main.coins.inserted == 1 and main.coin_hud.count.text == "0", "focused interaction inserts exactly one coin and updates HUD")
 	check(not main.coin_hud.count.visible, "depositing the last held coin hides the wallet again")
+	for piece in main.coin_device.token.find_children("*", "MeshInstance3D", true, false):
+		check(piece.material_override is ShaderMaterial, "the slot coin compiles no shader of its own on first insert")
 	check(main.coin_device.token.visible and main.coin_device.remaining_label.text == "6", "device presents an insertion and remaining requirement")
 	main.player.release_interact()
 	main.release_pointer()

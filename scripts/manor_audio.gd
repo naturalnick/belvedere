@@ -19,7 +19,8 @@ var manor: Manor
 # Headless runs use the dummy driver, which never reclaims playbacks still active at quit and
 # reports them as leaks; cues still fire so tests can check every hook.
 var audible := DisplayServer.get_name() != "headless"
-var streams: Dictionary[String, Array] = {}
+# Static so the scene reload behind Play keeps the streams and their decoded web samples.
+static var streams: Dictionary[String, Array] = {}
 var last_variant: Dictionary[String, int] = {}
 var voices: Array[AudioStreamPlayer] = []
 var music: AudioStreamPlayer
@@ -34,12 +35,8 @@ var stride := STRIDE * 0.6
 var door_events: Array[Array] = []
 
 func _ready() -> void:
-	for group in ["step_wood", "step_tile", "step_grass", "lever_grab", "lever_blocked", "door_rattle", "door_open", "door_close", "slide", "coin_insert", "coin_acquired", "ui_click", "ui_tap"]:
-		var variants: Array = []
-		while ResourceLoader.exists(DIR + "%s_%d.wav" % [group, variants.size()]):
-			variants.append(load(DIR + "%s_%d.wav" % [group, variants.size()]))
-		streams[group] = variants
-	streams["wake"] = [load(DIR + "wake.wav")]
+	if streams.is_empty():
+		_load_streams()
 	add_to_group("menu_audio")
 	for i in 6:
 		var voice := AudioStreamPlayer.new()
@@ -48,12 +45,12 @@ func _ready() -> void:
 		voices.append(voice)
 	# The forest recording's own stereo image supplies direction, so the bed is not positional.
 	birds = AudioStreamPlayer.new()
-	birds.stream = load(DIR + "birds_loop.ogg")
+	birds.stream = streams["birds"][0]
 	birds.bus = "Effects"
 	add_child(birds)
 	music = AudioStreamPlayer.new()
 	# Looping is set in the .import so a replacement track only needs the same setting.
-	music.stream = load(DIR + "manor_theme.ogg")
+	music.stream = streams["theme"][0]
 	music.bus = "Music"
 	add_child(music)
 	music.volume_db = -60.0
@@ -80,6 +77,22 @@ func _ready() -> void:
 	manor.slide_started.connect(_on_slide_started)
 	manor.slide_finished.connect(func() -> void: _duck_music(0.0, 1.4))
 	manor.fall_recovery.woke.connect(func() -> void: play("wake", -4.0))
+
+func _load_streams() -> void:
+	for group in ["step_wood", "step_tile", "step_grass", "lever_grab", "lever_blocked", "door_rattle", "door_open", "door_close", "slide", "coin_insert", "coin_acquired", "ui_click", "ui_tap"]:
+		var variants: Array = []
+		while ResourceLoader.exists(DIR + "%s_%d.wav" % [group, variants.size()]):
+			variants.append(load(DIR + "%s_%d.wav" % [group, variants.size()]))
+		streams[group] = variants
+	streams["wake"] = [load(DIR + "wake.wav")]
+	streams["birds"] = [load(DIR + "birds_loop.ogg")]
+	streams["theme"] = [load(DIR + "manor_theme.ogg")]
+	if OS.has_feature("web"):
+		# Web playback uses decoded samples, and a stream's first play() would decode all of it
+		# on the only thread. The 96 s theme alone took over 100 ms, so pay for it during load.
+		for variants in streams.values():
+			for stream: AudioStream in variants:
+				AudioServer.register_stream_as_sample(stream)
 
 # Called deferred through the "menu_audio" group, so a Sound: On press is heard after unmuting.
 func menu_click() -> void:

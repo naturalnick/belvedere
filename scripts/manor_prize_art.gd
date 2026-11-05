@@ -109,6 +109,11 @@ static func coin(parent: Node3D) -> Node3D:
 	var blue := ManorGeometry.material("426C97", 0.001)
 	var disk := ManorGeometry.cylinder(result, 0.067, 0.009, Vector3.ZERO, blue)
 	disk.rotation.x = PI / 2
+	# The toon shader's programs are already compiled. A StandardMaterial3D here froze slow machines
+	# for seconds on the first insert, while its PBR shader compiled.
+	var etched: ShaderMaterial = ManorGeometry.printed_material(BELL_EMBLEM)
+	etched.set_shader_parameter("self_light", 0.0)
+	etched.set_shader_parameter("print_cutout", true)
 	for side in [-1, 1]:
 		var face := ManorGeometry.cylinder(result, 0.054, 0.002, Vector3(0, 0, side * 0.0055), ManorGeometry.material("6F9FC8", 0.0))
 		face.rotation.x = PI / 2
@@ -116,11 +121,8 @@ static func coin(parent: Node3D) -> Node3D:
 		var face_art := QuadMesh.new()
 		face_art.size = Vector2(0.11, 0.11)
 		engraving.mesh = face_art
-		var etched := StandardMaterial3D.new()
-		etched.albedo_texture = BELL_EMBLEM
-		etched.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-		etched.roughness = 0.85
 		engraving.material_override = etched
+		engraving.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		engraving.position.z = side * 0.0067
 		engraving.rotation.y = PI if side < 0 else 0.0
 		result.add_child(engraving)

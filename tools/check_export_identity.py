@@ -13,8 +13,10 @@ assert presets, 'No export preset exists'
 mac_count = 0
 for section in presets:
     platform = config[section].get('platform', '').strip('"')
-    assert platform in ('Web', 'macOS'), f'Unapproved native export platform: {section}/{platform}'
+    assert platform in ('Web', 'macOS', 'Windows Desktop'), f'Unapproved native export platform: {section}/{platform}'
     options = config[section + '.options']
+    if platform == 'Windows Desktop':
+        assert options.get('codesign/enable') == 'false', f'{section}: only an unsigned Windows test export is authorized'
     if platform == 'macOS':
         mac_count += 1
         expected = {
@@ -31,4 +33,4 @@ for section in presets:
         sensitive = any(word in key for word in ('team_id', 'identity', 'certificate', 'password', 'provisioning', 'apple_id', 'api_key'))
         assert not sensitive or value in ('', '""'), f'Unapproved signing/account field: {section}/{key}'
 assert mac_count == 1, f'Expected one unsigned macOS test preset, found {mac_count}'
-print('Export identity preflight: Web + local unsigned macOS test; com.puzzaholics.shiftingmanor; signing/notarization disabled')
+print('Export identity preflight: Web + local unsigned macOS and Windows tests; com.puzzaholics.shiftingmanor; signing/notarization disabled')

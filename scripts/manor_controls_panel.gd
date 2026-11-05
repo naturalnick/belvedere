@@ -3,7 +3,7 @@ extends Control
 
 signal closed
 const ACTIONS := ["Move", "Look", "Interact", "Pull lever", "Pause", "Binoculars", "Stopwatch"]
-const BINDINGS := ["W A S D", "Mouse", "E / Left click", "Hold E + WASD", "Esc / P", "B", "T"]
+const BINDINGS := ["W A S D", "Mouse", "E / Left click", "Click + drag / E + WASD", "Esc / P", "B", "T"]
 var rows: Array[Control] = []
 var back: Button
 var heading: Label
@@ -61,7 +61,7 @@ func _layout() -> void:
 		row.position = Vector2((size.x - width_value) / 2, top + (visible_index + 1) * spacing)
 		visible_index += 1
 		row.size = Vector2(width_value, 32)
-		row.get_child(0).size = Vector2(width_value * 0.43, 32)
-		row.get_child(1).position.x = width_value * 0.43
-		row.get_child(1).size = Vector2(width_value * 0.57, 32)
+		row.get_child(0).size = Vector2(width_value * 0.30, 32)
+		row.get_child(1).position.x = width_value * 0.30
+		row.get_child(1).size = Vector2(width_value * 0.70, 32)
 	back.position = Vector2(size.x / 2 - 50, top + (count + 1) * spacing)
