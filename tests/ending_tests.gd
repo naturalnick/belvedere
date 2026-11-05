@@ -125,6 +125,8 @@ func run() -> void:
 	main.player.position = Vector3(0, 0, 9.5)
 	main.update_occupant()
 	check(main.in_finale and main.controls_locked(), "crossing unlocked front door begins finale")
+	var finish_time := main.run_stats.elapsed_seconds
+	check(main.run_stats.finished and not main.run_summary.visible, "run timer stops on entering the finale and results stay hidden")
 	main.ending.set_process(true)
 	await create_timer(2.0).timeout
 	check(main.ending.title.modulate.a > 0 and main.ending.title.modulate.a < 1 and main.ending.credit.modulate.a == 0, "title fades slowly during the walk before any credits")
@@ -148,8 +150,34 @@ func run() -> void:
 	check(is_equal_approx(main.ending.credit.modulate.a, 1) and main.ending.thanks.modulate.a == 0, "credit is readable alone before the thank-you appears")
 	await create_timer(ManorEnding.CREDIT_GAP_SECONDS + 2.0).timeout
 	check(main.ending.thanks.modulate.a > 0 and main.ending.thanks.modulate.a < 1 and not main.at_title, "thank-you fades in after the additional wait")
-	await create_timer(ManorEnding.THANKS_FADE_SECONDS - 2.0 + ManorEnding.FINAL_HOLD_SECONDS + 1.6).timeout
-	check(main.at_title and main.play_gate.mode == "title", "finale returns to title")
+	check(not main.run_summary.revealed, "totals wait until every ending line has faded in")
+	main.run_summary._input(press())
+	check(not main.run_summary.exiting, "early key presses cannot skip the credits")
+	while not main.run_summary.ready_to_continue:
+		await process_frame
+	check(main.run_summary.visible and is_equal_approx(main.run_summary.modulate.a, 1) and main.ending.thanks.modulate.a == 1, "totals and prompt fade in after the completed credits")
+	await create_timer(0.4).timeout
+	check(not main.at_title and is_zero_approx(main.fade.color.a) and main.run_stats.elapsed_seconds == finish_time, "completed ending waits for input without increasing run time")
+	main.release_pointer()
+	await process_frame
+	check(not main.run_summary.visible, "pause hides the results behind the menu")
+	main.run_summary._input(press())
+	check(not main.run_summary.exiting, "menu key presses cannot accept the results")
+	main.resume_play()
+	await process_frame
+	var repeated := press()
+	repeated.echo = true
+	main.run_summary._input(repeated)
+	main.run_summary._input(InputEventMouseMotion.new())
+	var click := InputEventMouseButton.new()
+	click.button_index = MOUSE_BUTTON_LEFT
+	click.pressed = true
+	main.run_summary._input(click)
+	check(not main.run_summary.exiting, "held keys, mouse movement and clicks cannot dismiss the ending")
+	main.run_summary._input(press(KEY_ESCAPE))
+	check(main.run_summary.exiting and not main.at_title, "a fresh key begins the fade back to menu")
+	await create_timer(ManorRunSummary.FADE_SECONDS + 0.2).timeout
+	check(main.at_title and main.play_gate.mode == "title" and not main.run_summary.visible, "keypress returns to title with results hidden")
 	check(not main.ending.is_processing(), "flower updates stop at title")
 	main.queue_free()
 	await process_frame
@@ -157,6 +185,7 @@ func run() -> void:
 	root.add_child(fresh)
 	fresh.start_play()
 	fresh.player.automated = true
+	check(fresh.run_stats.shifts == 0 and fresh.run_stats.sleeps == 0 and fresh.run_stats.falls == 0 and fresh.run_stats.elapsed_seconds == 0, "a new game starts with fresh run statistics")
 	check(fresh.coins.inserted == 0 and fresh.coins.available == 0 and fresh.coins.pending.is_empty() and fresh.objectives.active == 8, "a fresh game resets the wallet, device and presentation queue")
 	fresh.rules.board = PackedInt32Array(ManorRules.HOME)
 	fresh.refresh_progress()

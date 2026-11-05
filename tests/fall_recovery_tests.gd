@@ -46,6 +46,7 @@ func run() -> void:
 	check(main.player.position.y < drop_y, "fall continues during fade-out")
 	await create_timer(1.6).timeout
 	check(not main.recovering and is_zero_approx(main.fade.color.a), "wake-up fades back in and restores controls")
+	check(main.run_stats.sleeps == 1 and main.run_stats.falls == 1 and main.run_stats.sleep_count() == "1*", "walking off the map counts exactly one marked sleep")
 	check(main.player.position.distance_to(main.rooms[0].to_global(ManorFallRecovery.BEDSIDE)) < 0.1, "wake beside bed in moved Bedroom")
 	check(main.rules.player == 0 and main.rules.gap_slot == -1, "respawn restores room occupancy")
 	check(main.rules.board == layout and main.objectives.completed == earned and main.slides == 0, "recovery preserves puzzle and objective progress")

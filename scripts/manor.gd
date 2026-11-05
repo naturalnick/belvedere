@@ -47,6 +47,8 @@ var at_title := false
 var recovering := false
 var fall_recovery: ManorFallRecovery
 var bed_sleep: ManorBedSleep
+var run_stats: ManorRunStats
+var run_summary: ManorRunSummary
 var audio: ManorAudio
 var pointer_watch: ManorPointerWatch
 
@@ -80,6 +82,10 @@ func _ready() -> void:
 	bed_sleep.manor = self
 	bed_sleep.opening_rules = rules.copy()
 	add_child(bed_sleep)
+	run_stats = ManorRunStats.new()
+	run_stats.manor = self
+	add_child(run_stats)
+	slide_finished.connect(run_stats.record_shift)
 	_build_world()
 	for id in rules.board:
 		if id == -1:
@@ -183,6 +189,9 @@ func _ready() -> void:
 		stopwatch = ManorStopwatch.new()
 		add_child(stopwatch)
 		stopwatch.setup(self, hud)
+	run_summary = ManorRunSummary.new()
+	run_summary.manor = self
+	hud.add_child(run_summary)
 	fade = ColorRect.new()
 	fade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	fade.color = Color(0.06, 0.045, 0.035, 0)
@@ -226,6 +235,7 @@ func place_player_at_spawn() -> void:
 func start_play() -> void:
 	at_title = false
 	fresh_title = false
+	run_stats.started = true
 	if wall_title != null:
 		wall_title.lettering.hide()
 	resume_play()
@@ -235,23 +245,29 @@ func resume_play() -> void:
 		return
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	play_gate.hide()
-	if in_finale and finale_motion != null:
-		finale_motion.play()
+	if in_finale:
+		if finale_motion != null and finale_motion.is_valid():
+			finale_motion.play()
 		fade.show()
+		if run_summary.revealed:
+			run_summary.show()
 
 func release_pointer() -> void:
 	player.cancel_pull()
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	play_gate.show_mode("pause")
-	if in_finale and finale_motion != null:
-		finale_motion.pause()
+	if in_finale:
+		if finale_motion != null and finale_motion.is_valid():
+			finale_motion.pause()
 		fade.hide()
+		run_summary.hide()
 
 func controls_locked(for_movement := false) -> bool:
 	return (foundation_hatch != null and foundation_hatch.busy) or (stopwatch != null and stopwatch.locks_player(for_movement)) or (binoculars != null and binoculars.locks_player()) or (first_coin_guide != null and first_coin_guide.active) or (coin_hud != null and coin_hud.presenting()) or recovering or sliding or in_finale or at_title or (play_gate != null and play_gate.visible) or (coin_device != null and coin_device.releasing)
 
 func return_to_title() -> void:
 	at_title = true
+	run_summary.reset()
 	fade.show()
 	if stopwatch != null:
 		stopwatch.reset_view()
@@ -303,6 +319,7 @@ func begin_finale() -> void:
 	if in_finale or ending == null or not won:
 		return
 	in_finale = true
+	run_stats.finished = true
 	set_process(true)
 	player.cancel_pull()
 	player.velocity = Vector3.ZERO
@@ -314,9 +331,10 @@ func begin_finale() -> void:
 	finale_motion.tween_property(ending.credit, "modulate:a", 1.0, ManorEnding.CREDIT_FADE_SECONDS).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 	finale_motion.tween_interval(ManorEnding.CREDIT_GAP_SECONDS)
 	finale_motion.tween_property(ending.thanks, "modulate:a", 1.0, ManorEnding.THANKS_FADE_SECONDS).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-	finale_motion.tween_interval(ManorEnding.FINAL_HOLD_SECONDS)
-	finale_motion.tween_property(fade, "color:a", 1.0, 1.4)
-	finale_motion.tween_callback(return_to_title)
+	finale_motion.tween_interval(ManorRunSummary.REVEAL_DELAY)
+	finale_motion.tween_callback(run_summary.reveal)
+	finale_motion.tween_property(run_summary, "modulate:a", 1.0, ManorRunSummary.FADE_SECONDS)
+	finale_motion.tween_callback(run_summary.arm)
 
 func _process(delta: float) -> void:
 	if in_finale and not at_title and not play_gate.visible:

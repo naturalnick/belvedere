@@ -21,6 +21,7 @@ run_checked --script res://tests/safe_tests.gd
 run_checked --script res://tests/binocular_tests.gd
 run_checked --script res://tests/stopwatch_tests.gd
 run_checked --script res://tests/ending_tests.gd
+run_checked --script res://tests/run_stats_tests.gd
 run_checked --script res://tests/title_tests.gd
 run_checked --script res://tests/pointer_tests.gd
 run_checked --script res://tests/pointer_tests.gd -- --web-entry

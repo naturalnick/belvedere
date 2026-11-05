@@ -21,6 +21,9 @@ func _physics_process(delta: float) -> void:
 		_recover()
 
 func _recover() -> void:
+	if manor.recovering:
+		return
+	manor.run_stats.record_sleep(true)
 	manor.recovering = true
 	manor.player.cancel_pull()
 	var transition := create_tween()

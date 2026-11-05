@@ -8,8 +8,6 @@ const TITLE_FADE_SECONDS := 10.0
 const CREDIT_FADE_SECONDS := 4.0
 const CREDIT_GAP_SECONDS := 3.0
 const THANKS_FADE_SECONDS := 4.0
-const FINAL_HOLD_SECONDS := 7.0
-const HOLD_SECONDS := CREDIT_FADE_SECONDS + CREDIT_GAP_SECONDS + THANKS_FADE_SECONDS + FINAL_HOLD_SECONDS
 var player: ManorPlayer
 var active := false
 var flowers: MultiMeshInstance3D

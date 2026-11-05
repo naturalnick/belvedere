@@ -22,6 +22,7 @@ func sleep() -> void:
 	if not available() or not manor.play_gate.visible or manor.play_gate.mode != "sleep":
 		return
 	sleeping = true
+	manor.run_stats.record_sleep()
 	manor.recovering = true
 	# Browsers require pointer capture to begin inside the confirming click.
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED

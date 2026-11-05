@@ -58,14 +58,14 @@ func run(game: Manor) -> void:
 	elif mode == "single-gap":
 		shot_names = ["01_spawn", "02_outside", "03_shifted"]
 	elif mode == "objectives":
-		shot_names = ["00_front_locked", "01_spawn", "02_active_room", "03_completed_room", "04_main_win", "05_chandelier", "06_bonus_door", "07_flowers", "07_belvedere", "07_credit", "07_credits_paused", "07_thanks", "08_title"]
+		shot_names = ["00_front_locked", "01_spawn", "02_active_room", "03_completed_room", "04_main_win", "05_chandelier", "06_bonus_door", "07_flowers", "07_belvedere", "07_credit", "07_credits_paused", "07_thanks", "07_results", "07_results_portrait", "08_title"]
 		shot_names.append_array(["coin_device", "coin_inserting", "coin_deposited"])
 		for room in ManorObjectives.ROOMS:
 			shot_names.append("coin_reward_%d" % room)
 		if OS.get_cmdline_user_args().has("--detail-only"):
 			shot_names = ["00_front_locked", "01_spawn"]
 		elif OS.get_cmdline_user_args().has("--ending-only"):
-			shot_names = ["06_bonus_door", "07_flowers", "07_belvedere", "07_credit", "07_credits_paused", "07_thanks", "08_title"]
+			shot_names = ["06_bonus_door", "07_flowers", "07_belvedere", "07_credit", "07_credits_paused", "07_thanks", "07_results", "07_results_portrait", "08_title"]
 	for name_value in shot_names:
 		DirAccess.remove_absolute(shots_dir.path_join(name_value + ".png"))
 	DisplayServer.window_move_to_foreground()
@@ -583,6 +583,12 @@ func objective_views() -> void:
 		main.gap_floor.position = ManorGeometry.center(4) + Vector3.DOWN * 0.02
 		main.player.position = ManorGeometry.center(7) + Vector3(0, 0.02, 1.5)
 		main.refresh_progress()
+		while not main.coins.pending.is_empty():
+			main.coins.receive_next()
+		main.run_stats.shifts = 31
+		main.run_stats.sleeps = 3
+		main.run_stats.falls = 1
+		main.run_stats.elapsed_seconds = 1542.0
 		main.resume_play()
 		await get_tree().create_timer(0.6).timeout
 		await capture_exit()
@@ -668,6 +674,21 @@ func capture_exit() -> void:
 	_check(not main.play_gate.visible, "Resume continues the ending")
 	await get_tree().create_timer(10.0).timeout
 	await shot("07_thanks")
+	while not main.run_summary.ready_to_continue:
+		await get_tree().process_frame
+	await shot("07_results")
+	var content_size := get_window().content_scale_size
+	var window_size := get_window().size
+	get_window().content_scale_size = Vector2i(360, 640)
+	get_window().size = Vector2i(360, 640)
+	await get_tree().process_frame
+	await shot("07_results_portrait")
+	get_window().content_scale_size = content_size
+	get_window().size = window_size
+	await get_tree().process_frame
+	_check(not main.at_title, "outdoor ending waits for a fresh key")
+	key_event(KEY_SPACE, true)
+	key_event(KEY_SPACE, false)
 	while not main.at_title:
 		await get_tree().process_frame
 	_check(main.play_gate.visible and main.play_gate.mode == "title", "outdoor ending returns to title")
