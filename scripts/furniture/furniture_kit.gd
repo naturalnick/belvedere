@@ -77,14 +77,25 @@ func chair(label: String, at: Vector3, yaw: float, fabric: String, upholstered: 
 	solid(node, Vector3(width + (0.14 if upholstered else 0.0), 0.95, depth), Vector3(0, 0.475, 0))
 	return node
 
-func cabinet(label: String, at: Vector3, width: float, height: float, depth: float, color: String, yaw: float = 0.0) -> Node3D:
+func coin_drawer(parent: Node3D, at: Vector3, width: float, height: float, depth: float, color: String, front_color: String, yaw: float = 0.0) -> ManorCoinDrawer:
+	var drawer := ManorCoinDrawer.new()
+	parent.add_child(drawer)
+	drawer.position = at
+	drawer.rotation.y = yaw
+	drawer.build(width, height, depth, color, front_color)
+	return drawer
+
+func cabinet(label: String, at: Vector3, width: float, height: float, depth: float, color: String, yaw: float = 0.0, with_drawer: bool = false) -> Node3D:
 	var node := group(label, at, yaw)
+	var drawer_height := 0.20 if with_drawer else 0.0
 	box(node, Vector3(width - 0.10, 0.09, depth - 0.08), Vector3(0, 0.045, 0), WOOD)
-	box(node, Vector3(width, height - 0.15, depth), Vector3(0, (height - 0.15) / 2 + 0.09, 0), color)
+	box(node, Vector3(width, height - 0.15 - drawer_height, depth), Vector3(0, (height - 0.15 - drawer_height) / 2 + 0.09, 0), color)
 	box(node, Vector3(width + 0.04, 0.06, depth + 0.04), Vector3(0, height - 0.03, 0), CREAM)
 	for side in [-1, 1]:
-		box(node, Vector3(width / 2 - 0.045, height - 0.24, 0.025), Vector3(side * width / 4, height / 2, depth / 2 + 0.016), color)
-		cylinder(node, 0.018, 0.11, Vector3(side * 0.07, height * 0.64, depth / 2 + 0.045), BRASS)
+		box(node, Vector3(width / 2 - 0.045, height - 0.24 - drawer_height, 0.025), Vector3(side * width / 4, (height - drawer_height) / 2, depth / 2 + 0.016), color)
+		cylinder(node, 0.018, 0.11, Vector3(side * 0.07, height * 0.64 - drawer_height * 0.6, depth / 2 + 0.045), BRASS)
+	if with_drawer:
+		coin_drawer(node, Vector3(0, height - 0.16, 0), width, 0.20, depth, color, color)
 	solid(node, Vector3(width + 0.04, height, depth + 0.08), Vector3(0, height / 2, 0.02))
 	return node
 

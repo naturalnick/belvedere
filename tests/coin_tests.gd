@@ -30,12 +30,15 @@ func run() -> void:
 	create_timer(40).timeout.connect(func() -> void: quit(1))
 	var coins := ManorCoins.new()
 	coins.award([0, 0, 7, 1])
-	check(coins.pending == [0, 1] and coins.available == 0, "only distinct objective rooms queue coins; no invisible inventory grant")
+	check(coins.awarded == [0, 1] and coins.pending.is_empty() and coins.available == 0, "completed objectives unlock coins without collecting them")
+	check(not coins.collect(7) and coins.collect(0) and coins.collect(1) and not coins.collect(0), "only unlocked uncollected coins can be picked up once")
 	check(not coins.insert_one(), "pending coins cannot be spent before presentation")
 	coins.receive_next()
 	check(coins.available == 1 and coins.pending == [1], "presentation credits exactly one coin")
 	check(coins.insert_one() and coins.available == 0 and coins.remaining() == 6, "one deposit consumes one coin")
 	coins.award(ManorObjectives.ROOMS)
+	for room in ManorObjectives.ROOMS:
+		coins.collect(room)
 	while not coins.pending.is_empty():
 		coins.receive_next()
 	while coins.remaining() > 0:
@@ -98,8 +101,19 @@ func run() -> void:
 	guide._process(0.85)
 	main.coin_hud._process(0.4)
 	check(lamp.state == 2 and guide.holding_reward() and main.coin_hud.presentation == 0, "warm light is shown before the token presentation starts")
-	guide._process(0.5)
-	check(main.coins.pending == [8] and main.coins.available == 0, "sliding the target home queues its coin presentation")
+	guide._process(0.95)
+	var drawer := main.coin_drawers[8]
+	drawer._process(ManorCoinDrawer.OPEN_TIME)
+	guide._process(0.95)
+	check(not guide.active and not main.controls_locked() and main.coins.pending.is_empty() and drawer.opened and drawer.coin.visible, "tutorial leaves an open drawer and waits for a physical pickup")
+	var toward_drawer := (drawer.coin.global_position - main.player.camera.global_position).normalized()
+	check((-main.player.camera.global_basis.z).dot(toward_drawer) > 0.999, "first guided look ends on the opened coin drawer")
+	main.player.global_position = drawer.to_global(Vector3(0, 0, drawer.travel + 0.85))
+	main.player.global_position.y = 0.02
+	main.player.aim_at(drawer.coin.global_position)
+	await physics_frame
+	await physics_frame
+	check(main.player.begin_interact() and main.coins.pending == [8], "normal interaction picks the physical coin up from the drawer")
 	check(main.objectives.completed.has(8) and main.objectives.active != 8, "first slide completes the initial target and selects the next one")
 	check(lamp.state == 2 and lamp.light.light_color == Color("FFF0DA"), "visited home room becomes warm")
 	check(lamp.shade.material_override == ManorGeometry.material("DDD3BD", 0.006), "completed shade returns to cream")
@@ -168,6 +182,7 @@ func run() -> void:
 	await create_timer(0.75).timeout
 	check(clinks == 1 and not main.coin_device.token.visible, "accepted insertion produces one recorded coin clink")
 	main.coins.award([0])
+	main.coins.collect(0)
 	receive_coin(main)
 	main.player.begin_interact()
 	check(not main.player.begin_interact(), "device rejects overlapping insertions while its slot is occupied")

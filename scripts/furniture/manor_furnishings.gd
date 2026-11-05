@@ -30,7 +30,7 @@ func bathroom() -> void:
 	basin(tub, Vector3(0, 0.15, 0), 1.95, 0.90, 0.45)
 	tap(tub, Vector3(0.68, 0.47, -0.32))
 	solid(tub, Vector3(1.95, 0.6, 0.90), Vector3(0, 0.30, 0))
-	var sink := cabinet("Washstand", Vector3(-1.80, 0, 2.56), 1.50, 0.66, 0.58, "8FC1B0", PI)
+	var sink := cabinet("Washstand", Vector3(-1.80, 0, 2.56), 1.50, 0.66, 0.58, "8FC1B0", PI, true)
 	basin(sink, Vector3(0, 0.65, 0), 0.86, 0.52, 0.20)
 	tap(sink, Vector3(0, 0.82, -0.25))
 	mirror(sink, Vector3(0, 1.53, -0.34), 0.75, 0.90)
@@ -64,13 +64,11 @@ func bathroom() -> void:
 
 func study() -> void:
 	var desk := table("WritingDesk", Vector3(-1.85, 0, -2.30), 1.70, 0.78, 0.75, "5A3B28")
-	box(desk, Vector3(0.67, 0.19, 0.63), Vector3(0.40, 0.59, 0), "5A3B28")
-	box(desk, Vector3(0.60, 0.13, 0.025), Vector3(0.40, 0.59, 0.33), "75513A")
-	rod(desk, Vector3(0.28, 0.59, 0.36), Vector3(0.52, 0.59, 0.36), 0.012, BRASS)
+	coin_drawer(desk, Vector3(0.40, 0.59, 0), 0.67, 0.19, 0.63, "5A3B28", "75513A")
 	box(desk, Vector3(0.62, 0.012, 0.43), Vector3(0, 0.758, 0.04), "547563", 0.0)
 	box(desk, Vector3(0.28, 0.018, 0.22), Vector3(0.20, 0.774, 0.03), CREAM, 0.002)
 	lamp(desk, Vector3(-0.58, 0.75, -0.13), 0.45)
-	chair("DeskChair", Vector3(-1.85, 0, -1.52), PI, "547563")
+	chair("DeskChair", Vector3(-2.05, 0, -1.52), PI, "547563")
 	var shelf := group("Bookcase", Vector3(-2.70, 0, 1.85), PI / 2)
 	box(shelf, Vector3(1.68, 2.18, 0.06), Vector3(0, 1.09, -0.18), "5A3B28")
 	for x in [-0.82, 0.82]:
@@ -109,7 +107,7 @@ func kitchen() -> void:
 	for x in [-0.33, -0.11, 0.11, 0.33]:
 		cylinder(range_unit, 0.035, 0.035, Vector3(x, 0.77, 0.37), "DDD3BD").rotation.x = PI / 2
 	solid(range_unit, Vector3(1.06, 0.9, 0.8), Vector3(0, 0.45, 0.04))
-	cabinet("RangeCounter", Vector3(2.60, 0, -2.52), 0.55, 0.90, 0.68, "C6AA68")
+	cabinet("RangeCounter", Vector3(2.60, 0, -2.52), 0.55, 0.90, 0.68, "C6AA68", 0.0, true)
 	var fridge := group("Refrigerator", Vector3(2.52, 0, 1.90), -PI / 2)
 	box(fridge, Vector3(0.84, 1.85, 0.73), Vector3(0, 0.925, 0), CREAM)
 	box(fridge, Vector3(0.78, 0.46, 0.05), Vector3(0, 1.58, 0.39), "D9DEC9")
@@ -149,7 +147,7 @@ func living() -> void:
 	var floor_lamp := group("FloorLamp", Vector3(-2.65, 0, 2.55))
 	lamp(floor_lamp, Vector3.ZERO, 1.55)
 	solid(floor_lamp, Vector3(0.30, 1.55, 0.30), Vector3(0, 0.775, 0))
-	var console := cabinet("LowSideboard", Vector3(2.56, 0, 1.60), 1.45, 0.90, 0.52, WOOD, -PI / 2)
+	var console := cabinet("LowSideboard", Vector3(2.56, 0, 1.60), 1.45, 0.90, 0.52, WOOD, -PI / 2, true)
 	for i in 2:
 		box(console, Vector3(0.38, 0.045, 0.26), Vector3(-0.34, 0.928 + i * 0.047, 0.16), "768D80" if i == 0 else "AA8865", 0.003)
 	wall_art(preload("res://assets/wall_art/living.svg"), Vector3(1.85, 1.96, -2.995), Vector2(0.96, 0.72))
@@ -161,7 +159,7 @@ func dining() -> void:
 		for end in [-1, 1]:
 			chair("DiningChair%d_%d" % [side, end], Vector3(-1.55 + side * 0.61, 0, end * 0.62), -side * PI / 2, "7A4A6E")
 		chair("DiningEndChair%d" % side, Vector3(-1.55, 0, side * 1.43), PI if side == 1 else 0.0, "7A4A6E")
-	var sideboard := cabinet("Sideboard", Vector3(1.80, 0, -2.60), 1.85, 0.86, 0.60, "6A3A2A")
+	var sideboard := cabinet("Sideboard", Vector3(1.80, 0, -2.60), 1.85, 0.86, 0.60, "6A3A2A", 0.0, true)
 	for i in 3:
 		cylinder(sideboard, 0.16, 0.018, Vector3(-0.54, 0.874 + i * 0.021, 0), CREAM)
 	cylinder(sideboard, 0.095, 0.25, Vector3(0.54, 0.985, 0), "B6BFB0")
@@ -254,6 +252,7 @@ func laundry() -> void:
 		box(coats, Vector3(0.018, 0.57, 0.008), Vector3(x, 1.535, 0.193), "656B62", 0.0)
 	house_plan()
 	var folding := table("FoldingTable", Vector3(1.95, 0, 2.55), 1.35, 0.65, 0.75)
+	coin_drawer(folding, Vector3(0, 0.59, 0), 1.14, 0.18, 0.53, WOOD, "987153", PI)
 	for towel in 3:
 		box(folding, Vector3(0.52, 0.065, 0.38), Vector3(-0.25, 0.784 + towel * 0.067, 0), CREAM if towel % 2 == 0 else "A6B9B5")
 

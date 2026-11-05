@@ -12,6 +12,15 @@ var reward_title: Label
 var reward_hint: Label
 var presentation := 0.0
 var accepted := false
+var pickup_origin := Vector2.ZERO
+var pickup_radius := 8.0
+var physical_pickup := false
+
+func begin_pickup(at: Vector3) -> void:
+	var camera := manor.player.camera
+	pickup_origin = camera.unproject_position(at)
+	pickup_radius = maxf(3.0, pickup_origin.distance_to(camera.unproject_position(at + camera.global_basis.x * 0.067)))
+	physical_pickup = true
 
 # Any fresh key, mouse button or gamepad button accepts a presented reward. The pause keys
 # still pause, and wheel or mouse motion never accept.
@@ -64,6 +73,7 @@ func _process(delta: float) -> void:
 	if accepted and presentation >= PRESENT_TIME:
 		presentation = 0.0
 		accepted = false
+		physical_pickup = false
 		manor.coins.receive_next()
 	_refresh_caption()
 	queue_redraw()
@@ -102,5 +112,8 @@ func _draw() -> void:
 	var travel := smoothstep(HOLD_AT, PRESENT_TIME, presentation)
 	var origin := size * Vector2(0.32, 0.5) + Vector2(0, 24 * (1 - enter))
 	var radius := lerpf(minf(size.y * 0.15, 110) * lerpf(0.65, 1.0, enter), 15.0, travel)
+	if physical_pickup:
+		origin = pickup_origin.lerp(size * Vector2(0.32, 0.5), enter)
+		radius = lerpf(lerpf(pickup_radius, minf(size.y * 0.15, 110), enter), 15.0, travel)
 	var at := origin.lerp(destination, travel)
 	ManorPrizeArt.draw_coin(self, at, radius, lerpf(-0.85, 0.0, enter), radius > 30)

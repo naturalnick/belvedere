@@ -128,6 +128,10 @@ func begin_interact() -> bool:
 	if hit.is_empty():
 		return false
 	var collider: Object = hit.collider
+	if collider.has_meta("drawer_coin"):
+		return collider.get_meta("drawer_coin").take_coin()
+	if collider.has_meta("coin_drawer"):
+		return collider.get_meta("coin_drawer").interact()
 	if collider.has_meta("red_key"):
 		return collider.get_meta("red_key").take_key()
 	if collider.has_meta("bed"):

@@ -17,6 +17,7 @@ run_checked --script res://tests/wall_geometry_tests.gd
 run_checked --script res://tests/door_geometry_tests.gd
 run_checked --script res://tests/objective_tests.gd
 run_checked --script res://tests/coin_tests.gd
+run_checked --script res://tests/drawer_tests.gd
 run_checked --script res://tests/safe_tests.gd
 run_checked --script res://tests/binocular_tests.gd
 run_checked --script res://tests/stopwatch_tests.gd

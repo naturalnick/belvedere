@@ -11,7 +11,10 @@ const DOOR_SPANS: Array[Vector2] = [Vector2(-0.6, 0.6)]
 const DOOR_HEIGHT := Vector2(0.0, 3.0)
 
 static func trim_casters(room: ManorRoom, furniture: Node3D) -> void:
+	var drawer := furniture.find_child("CoinDrawer", true, false)
 	for geometry: GeometryInstance3D in furniture.find_children("*", "GeometryInstance3D", true, false):
+		if drawer != null and drawer.is_ancestor_of(geometry):
+			continue
 		if geometry.cast_shadow == GeometryInstance3D.SHADOW_CASTING_SETTING_OFF:
 			continue
 		if not boxes_in_room(geometry, room).any(func(box: AABB) -> bool: return sunlit(room.room_id, box)):

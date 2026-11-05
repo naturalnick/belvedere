@@ -19,7 +19,10 @@ func run() -> void:
 		check(main.rooms[id].has_node("BedroomFurnishings") == (id == 0), "Bedroom furnishings remain isolated to room 0")
 	var room: ManorRoom = main.rooms[0]
 	var furniture: Node3D = room.get_node("BedroomFurnishings")
-	check(furniture.find_children("*", "GeometryInstance3D", true, false).size() <= 60, "trial furniture stays within mesh budget")
+	var meshes := furniture.find_children("*", "GeometryInstance3D", true, false)
+	print("Bedroom: %d furniture meshes" % meshes.size())
+	# The moving drawer and removable coin cannot join the furniture's static batches.
+	check(meshes.size() <= 68, "bedroom and interactive drawer stay within mesh budget")
 	check(not furniture.is_processing(), "furniture has no ambient animation")
 	var driver: Node = load("res://tools/demo_driver.gd").new()
 	root.add_child(driver)

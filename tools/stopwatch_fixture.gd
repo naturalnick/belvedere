@@ -19,6 +19,7 @@ static func place(main: Manor, on_lawn: bool = false) -> void:
 	main.rules.gap_slot = 0
 	main.first_coin_guide.seen = true
 	main.coins.awarded.assign(main.objectives.completed)
+	main.coins.collected.assign(main.objectives.completed)
 	main.coins.pending.clear()
 	main.coins.available = main.objectives.completed.size()
 	main.coins.changed.emit()

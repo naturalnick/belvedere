@@ -644,10 +644,7 @@ func objective_views() -> void:
 				first_goal = false
 			await objective_action(action)
 		_check(main.objectives.completed.has(active), "physical target delivery earns completion")
-		if not main.coins.pending.is_empty():
-			await get_tree().create_timer(0.45).timeout
-			await shot("coin_reward_%d" % active)
-			await accept_rewards()
+		await collect_room_coin(active, false, "coin_reward_%d" % active)
 		if not main.objectives.all_completed:
 			main.player.aim_at(main.rooms[active].global_position + Vector3.UP * 2.25)
 			await shot("03_completed_room")
@@ -763,6 +760,30 @@ func objective_action(action: Vector2i, stop_for_guide: bool = false) -> void:
 		while main.sliding:
 			await get_tree().process_frame
 	_check(main.rules.key() == expected.key(), "physical action matches pure rules")
+
+func collect_room_coin(id: int, capture: bool = false, reward_shot: String = "") -> void:
+	var drawer := main.coin_drawers[id]
+	if main.coins.collected.has(id):
+		return
+	while main.first_coin_guide.active or drawer.opening < ManorCoinDrawer.OPEN_TIME:
+		await get_tree().process_frame
+	await walk_to(main.rooms[id].position + Vector3(0, 0, 1.2))
+	var approach := drawer.to_global(Vector3(0, 0, drawer.travel + 0.85))
+	approach.y = 0.02
+	await walk_to(approach)
+	main.player.aim_at(drawer.coin.global_position)
+	await get_tree().physics_frame
+	if capture:
+		await shot("drawer_%d_open" % id)
+	_check(main.player.begin_interact(), "room %d drawer coin is physically reachable" % id)
+	_check(main.coins.pending == [id], "drawer pickup starts one coin presentation")
+	if capture or not reward_shot.is_empty():
+		await get_tree().create_timer(0.5).timeout
+		await shot("coin_presented" if reward_shot.is_empty() else reward_shot)
+	await accept_rewards()
+	if capture:
+		await shot("drawer_%d_empty" % id)
+	await walk_to(main.rooms[id].position + Vector3(0, 0, 1.2))
 
 func collect_red_key(capture: bool = false) -> void:
 	await accept_rewards()

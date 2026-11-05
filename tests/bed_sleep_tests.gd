@@ -71,6 +71,7 @@ func run() -> void:
 	if main.coins != null:
 		main.objectives.completed.assign([1, 3, 8])
 		main.coins.awarded.assign([1, 3, 8])
+		main.coins.collected.assign([1, 3, 8])
 		main.coins.available = 2
 		main.coins.inserted = 1
 		main.coins.changed.emit()
@@ -116,6 +117,7 @@ func run() -> void:
 		main.objectives.completed.assign(ManorObjectives.ROOMS)
 		main.objectives.all_completed = true
 		main.coins.awarded.assign(ManorObjectives.ROOMS)
+		main.coins.collected.assign(ManorObjectives.ROOMS)
 		main.coins.available = ManorCoins.REQUIRED - main.coins.inserted
 		main.slides = 1
 		check(main.player.begin_interact(), "finishing the token quest still allows resetting an unfinished house")

@@ -11,7 +11,7 @@ Kept in `tools/`; update this list when the scripts change.
 - Stopwatch playtest (starts on the lawn beside the reachable hatch): `tools/try_stopwatch.sh`
 - Rule, solver and scene tests (headless): `tools/test.sh`
 - Classic-mode bots and geometry probes (headless): `tools/fun_test.sh` → `docs/FUNTEST.md`
-- Screenshots (real window): `tools/capture.sh [title|coins|safe|binoculars|stopwatch|sleep|fall|trees|exterior|furnishings|stage3|objectives|single-gap|courtyard|conservatory|solve|review] [seed] [out_dir] [extra flags]`; furnishings accepts `--rooms=5,7`.
+- Screenshots (real window): `tools/capture.sh [title|coins|drawers|safe|binoculars|stopwatch|sleep|fall|trees|exterior|furnishings|stage3|objectives|single-gap|courtyard|conservatory|solve|review] [seed] [out_dir] [extra flags]`; furnishings accepts `--rooms=5,7`.
 - QR flicker check: `tools/check_qr.sh`. Door close-up pixel check: `tools/check_doors.sh [out_dir]`. Render benchmark: `tools/profile.sh [output_json]`.
 - Web build (local zip, never uploaded): `tools/build_itch.sh`
 - Windows test build (local unsigned zip, never uploaded): `tools/build_windows.sh`

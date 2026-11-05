@@ -75,12 +75,16 @@ func _build_dresser(wood: Material, brass: Material) -> void:
 	add_child(dresser)
 	dresser.position = Vector3(-1.90, 0, 2.60)
 	dresser.rotation.y = PI
-	ManorGeometry.box(dresser, Vector3(1.50, 0.84, 0.60), Vector3(0, 0.42, 0), wood)
+	ManorGeometry.box(dresser, Vector3(1.50, 0.56, 0.60), Vector3(0, 0.28, 0), wood)
 	ManorGeometry.box(dresser, Vector3(1.58, 0.06, 0.66), Vector3(0, 0.87, 0), wood)
 	var fronts := ManorGeometry.material("987153", 0.004)
-	for y in [0.19, 0.44, 0.69]:
+	for y in [0.19, 0.44]:
 		ManorGeometry.box(dresser, Vector3(1.40, 0.20, 0.035), Vector3(0, y, 0.31), fronts)
 		ManorGeometry.cylinder(dresser, 0.025, 0.04, Vector3(0, y, 0.36), brass).rotation.x = PI / 2
+	var drawer := ManorCoinDrawer.new()
+	dresser.add_child(drawer)
+	drawer.position.y = 0.70
+	drawer.build(1.50, 0.28, 0.60, "8A6247", "987153")
 	ManorGeometry.barrier(dresser, Vector3(1.58, 0.90, 0.66), Vector3(0, 0.45, 0))
 	ManorGeometry.box(dresser, Vector3(0.94, 1.06, 0.055), Vector3(0, 1.63, -0.34), wood)
 	ManorGeometry.box(dresser, Vector3(0.80, 0.92, 0.018), Vector3(0, 1.63, -0.302), ManorGeometry.material("A6B5BB", 0.0))

@@ -59,6 +59,8 @@ func run() -> void:
 	check(not main.controls_locked() and not main.play_gate.visible, "earning the last coin does not end play")
 	check(not front.opened and not main.carpet.visible and not main.ending.active, "coin objectives do not unlock bonus exit")
 	main.coins.award(ManorObjectives.ROOMS)
+	for room in ManorObjectives.ROOMS:
+		main.coins.collect(room)
 	while not main.coins.pending.is_empty():
 		receive_coin(main)
 	for i in 7:

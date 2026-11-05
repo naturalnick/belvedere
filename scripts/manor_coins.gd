@@ -6,6 +6,7 @@ signal received
 
 const REQUIRED := 7
 var awarded: Array[int] = []
+var collected: Array[int] = []
 var pending: Array[int] = []
 var available := 0
 var inserted := 0
@@ -14,8 +15,15 @@ func award(rooms: Array[int]) -> void:
 	for room in rooms:
 		if room in ManorObjectives.ROOMS and not awarded.has(room):
 			awarded.append(room)
-			pending.append(room)
 	changed.emit()
+
+func collect(room: int) -> bool:
+	if not awarded.has(room) or collected.has(room):
+		return false
+	collected.append(room)
+	pending.append(room)
+	changed.emit()
+	return true
 
 func receive_next() -> void:
 	if pending.is_empty():

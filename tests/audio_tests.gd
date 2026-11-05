@@ -57,6 +57,7 @@ func run() -> void:
 
 	check(audio.music_intro == 0.0 and audio.music.volume_db < -59.0, "music starts silent during its delay")
 	main.coins.award([0])
+	main.coins.collect(0)
 	check(count("coin_acquired") == 0, "queued coin is silent until received")
 	main.coins.receive_next()
 	check(count("coin_acquired") == 1, "coin arrival sounds once")

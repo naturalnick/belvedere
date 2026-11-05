@@ -76,7 +76,11 @@ func build(id: int) -> void:
 	_build_lever()
 	var furniture: Node3D = ManorBedroom.new() if id == 0 else ManorFurnishings.new(id)
 	add_child(furniture)
-	ManorStaticBatch.combine(furniture)
+	var moving_furniture: Array[Node] = []
+	var drawer := furniture.find_child("CoinDrawer", true, false)
+	if drawer != null:
+		moving_furniture.append(drawer)
+	ManorStaticBatch.combine(furniture, moving_furniture)
 	ManorSunReach.trim_casters(self, furniture)
 	# These pieces change visibility independently in the binocular overview.
 	var skip: Array[Node] = [lever, furniture, ceiling, overview_edges, overview_roof]

@@ -54,6 +54,7 @@ func run() -> void:
 	main.player.position = Vector3(0, 0.02, 7.5)
 	main.player.aim_at(Vector3(0, 1.4, 0))
 	main.coins.award([0])
+	main.coins.collect(0)
 	c._process(20)
 	check(c.room == null, "queued reward prevents an obscured reveal")
 	main.coins.receive_next()

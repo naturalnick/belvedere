@@ -19,22 +19,19 @@ func run(driver: Node) -> void:
 	while not main.first_coin_guide.completed:
 		await get_tree().process_frame
 	await driver.shot("guided_warm")
-	while main.first_coin_guide.holding_reward():
-		await get_tree().process_frame
-	driver._check(main.coins.pending == [first_room] and main.objectives.active != first_room, "moving room home presents first coin and changes target")
-	await get_tree().create_timer(0.35).timeout
-	await driver.shot("coin_presented")
-	await get_tree().create_timer(1.5).timeout
-	driver._check(main.coins.pending == [first_room] and main.coins.available == 0 and main.coin_hud.presentation == ManorCoinHUD.HOLD_AT, "presented coin waits in view for a press")
-	await driver.accept_rewards()
 	while main.first_coin_guide.active:
 		await get_tree().process_frame
+	await driver.shot("guided_drawer")
+	driver._check(main.coins.pending.is_empty() and main.coin_drawers[first_room].coin.visible, "first reward waits in its drawer")
+	await driver.collect_room_coin(first_room, true)
 	main.player.aim_at(main.rooms[first_room].global_position + Vector3.UP * 2.4)
 	if main.wall_title != null:
 		driver._check(main.wall_title.tiles[main.rules.board.find(main.objectives.active)].material_override == main.wall_title.blue_material and main.wall_title.tiles[first_room].material_override != main.wall_title.blue_material, "first earned coin advances the permanent wall target")
 	await driver.shot("warm_shade")
 	await driver.shot("coin_count")
 	main.coins.award(ManorObjectives.ROOMS)
+	for room in ManorObjectives.ROOMS:
+		main.coins.collect(room)
 	await driver.accept_rewards()
 	await deposit_all(driver)
 	await driver.shot("ending_1")

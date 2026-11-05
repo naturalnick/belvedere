@@ -87,6 +87,7 @@ func run() -> void:
 		check(not clue.visible, "overhead inspection cannot reveal window-only fruit")
 	check(not main.player.begin_interact() and not main.request_slide(ManorRules.E), "overview blocks interactions and room movement")
 	main.coins.award([0])
+	main.coins.collect(0)
 	var coin_time := main.coin_hud.presentation
 	main.coin_hud._process(0.5)
 	check(main.coin_hud.presentation == coin_time and main.coins.available == 0, "pending coin presentation waits during binocular use")

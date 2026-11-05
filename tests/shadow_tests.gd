@@ -40,6 +40,10 @@ func run() -> void:
 		for geometry: GeometryInstance3D in furniture.find_children("*", "GeometryInstance3D", true, false):
 			if ManorStaticBatch.is_outline_shell(geometry) or not geometry.material_override is ShaderMaterial:
 				continue
+			# The coin disk casts its shadow; its etched surface overlays must not cast a second one.
+			if geometry.material_override.get_shader_parameter("print_cutout") == true:
+				check(geometry.cast_shadow == GeometryInstance3D.SHADOW_CASTING_SETTING_OFF, "coin engravings do not duplicate the disk shadow")
+				continue
 			if geometry.cast_shadow != GeometryInstance3D.SHADOW_CASTING_SETTING_OFF:
 				casting += 1
 				continue

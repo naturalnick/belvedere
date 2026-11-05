@@ -27,6 +27,7 @@ static var gesture_start := false
 var objectives: ManorObjectives
 var objective_display: ManorObjectiveDisplay
 var coins: ManorCoins
+var coin_drawers: Dictionary[int, ManorCoinDrawer] = {}
 var coin_hud: ManorCoinHUD
 var first_coin_guide: ManorFirstCoinGuide
 var wall_title: ManorWallTitle
@@ -209,6 +210,11 @@ func _ready() -> void:
 	audio = ManorAudio.new()
 	audio.manor = self
 	add_child(audio)
+	if coins != null:
+		for id in ManorObjectives.ROOMS:
+			var drawer := rooms[id].find_child("CoinDrawer", true, false) as ManorCoinDrawer
+			coin_drawers[id] = drawer
+			drawer.setup(self, id)
 	if OS.has_feature("web") or OS.get_cmdline_user_args().has("--web-entry"):
 		pointer_watch = ManorPointerWatch.new()
 		pointer_watch.manor = self
