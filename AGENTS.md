@@ -15,6 +15,8 @@ Kept in `tools/`; update this list when the scripts change.
 - QR flicker check: `tools/check_qr.sh`. Door close-up pixel check: `tools/check_doors.sh [out_dir]`. Render benchmark: `tools/profile.sh [output_json]`.
 - Web build (local zip, never uploaded): `tools/build_itch.sh`
 - Windows test build (local unsigned zip, never uploaded): `tools/build_windows.sh`
+- macOS test build (local unsigned zip, never uploaded): `tools/build_macos.sh`
+- macOS release build (Developer ID signed and notarized zip, never uploaded): `tools/build_macos_release.sh`
 - Underside QR generate/verify: `tools/gen_qr.sh` (macOS)
 - Laundry wall plan: `python3 tools/gen_plan.py` writes `assets/house_plan.svg`
 - Export scope/identity preflight (read-only): `python3 tools/check_export_identity.py`
@@ -25,5 +27,6 @@ Kept in `tools/`; update this list when the scripts change.
 - Audio stays quiet and physical, within the scope listed in SPEC.
 - All art and audio must be original or CC0, with an entry in `docs/CREDITS.md`.
 - Never push or publish.
-- The macOS Unsigned Test preset is authorized only for local unsigned/unnotarized testing in Stage 8. Run the identity preflight first.
+- The macOS Unsigned Test preset is authorized only for local unsigned/unnotarized testing. Run the identity preflight first.
+- The macOS Release preset is authorized for Developer ID signing and notarization with team `ULBH832X6Q` only. Uploading the result is Nick's.
 - The Windows Test preset is authorized only for local unsigned testing.

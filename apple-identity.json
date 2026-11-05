@@ -1,8 +1,17 @@
 {
-  "scope": "local unsigned macOS test export only",
-  "decision": "Parent-agent decision pending Nick's confirmation under the global bundle-ID rule; identifier and unsigned-only scope explicitly supplied in the Stage 1 review instruction.",
-  "preset": "macOS Unsigned Test",
-  "bundle_identifier": "com.puzzaholics.shiftingmanor",
-  "codesign": 0,
-  "notarization": 0
+  "scope": "Local unsigned macOS test export, and a Developer ID signed, notarized macOS release for direct distribution",
+  "decision": "Nick approved team ULBH832X6Q (Puzzaholics LLC), bundle id com.puzzaholics.belvedere and Developer ID distribution on 2026-11-05.",
+  "team_id": "ULBH832X6Q",
+  "bundle_identifier": "com.puzzaholics.belvedere",
+  "test_preset": {
+    "name": "macOS Unsigned Test",
+    "codesign": 0,
+    "notarization": 0
+  },
+  "release_preset": {
+    "name": "macOS Release",
+    "codesign": 3,
+    "notarization": 0,
+    "identity": "Developer ID Application: Puzzaholics LLC (ULBH832X6Q)"
+  }
 }
