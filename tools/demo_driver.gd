@@ -17,15 +17,17 @@ func run(game: Manor) -> void:
 			shots_dir = arg.trim_prefix("--shots=")
 		if arg.begins_with("--mode="):
 			mode = arg.trim_prefix("--mode=")
-	if mode not in ["solve", "review", "courtyard", "single-gap", "objectives", "stage3", "furnishings", "trees", "exterior", "fall", "coins", "title", "safe", "binoculars", "stopwatch", "sleep"]:
-		printerr("Capture mode must be solve, review, courtyard, single-gap, objectives, stage3, furnishings, trees, exterior, fall, coins, title, safe, binoculars, stopwatch or sleep")
+	if mode not in ["solve", "review", "courtyard", "single-gap", "objectives", "stage3", "furnishings", "trees", "exterior", "fall", "coins", "title", "safe", "binoculars", "stopwatch", "sleep", "conservatory"]:
+		printerr("Capture mode must be solve, review, courtyard, single-gap, objectives, stage3, furnishings, trees, exterior, fall, coins, title, safe, binoculars, stopwatch, sleep or conservatory")
 		get_tree().quit(1)
 		return
 	DirAccess.make_dir_recursive_absolute(shots_dir)
 	started = Time.get_ticks_msec()
 	# Remove this mode's outputs so stale success frames cannot survive a failed run.
 	var shot_names := ["01_spawn", "02_window", "03_lever_held", "04_mid_slide", "05_solved", "06_front_door_open"]
-	if mode == "sleep":
+	if mode == "conservatory":
+		shot_names = ["01_spawn", "conservatory_retracting", "conservatory_rising", "conservatory_docked", "conservatory_interior", "conservatory_roof", "conservatory_shaft", "conservatory_seating", "conservatory_planting", "red_key_pedestal", "red_key_reward", "red_door_keyhole", "red_key_unlocking", "red_key_inventory", "red_key_inventory_portrait", "red_door_unlocked"]
+	elif mode == "sleep":
 		shot_names = ["sleep_bed", "sleep_prompt", "sleep_prompt_portrait", "sleep_fade", "sleep_wake", "sleep_watch"]
 	elif mode == "stopwatch":
 		shot_names = ["stopwatch_approach", "stopwatch_hatch_closed", "stopwatch_hatch_opening", "stopwatch_hatch_open", "stopwatch_lifting", "stopwatch_flying", "stopwatch_reward", "stopwatch_hatch_reclosed", "stopwatch_reward_portrait", "stopwatch_inventory", "stopwatch_inventory_all", "stopwatch_view", "stopwatch_near_wall", "stopwatch_view_800x800", "stopwatch_view_640x900", "stopwatch_view_360x640", "stopwatch_controls"]
@@ -45,7 +47,7 @@ func run(game: Manor) -> void:
 	elif mode == "trees":
 		shot_names = ["01_spawn", "02_meadow", "03_tree_detail", "04_house_and_trees", "05_window_view", "06_north_window", "07_east_window", "08_south_window"]
 	elif mode == "exterior":
-		shot_names = ["01_spawn", "01_south_facade", "02_southwest_corner", "03_wall_close", "04_gap", "05_north_facade", "06_east_facade", "07_interior_window", "08_window_onto_neighbour"]
+		shot_names = ["01_spawn", "01_south_facade", "02_southwest_corner", "03_wall_close", "04_gap", "05_north_facade", "06_east_facade", "07_interior_window", "08_window_onto_neighbour", "09_red_door_inside", "10_red_door_outside"]
 	elif mode == "furnishings":
 		shot_names = ["01_spawn", "bathroom_washstand", "bathroom_bench", "bathroom_toilet", "kitchen_bowl_detail", "dining_shelf_detail", "dining_serving_table", "trophy_case_left", "trophy_case_right"]
 		for room_name in ["bathroom", "study", "kitchen", "living", "dining", "foyer", "laundry"]:
@@ -161,6 +163,13 @@ func run(game: Manor) -> void:
 		print("Objective capture: %d screenshots; %d checks, %d failures; %d slides; %.2fs" % [shot_count, checks, failures, main.slides, elapsed()])
 		get_tree().quit(1 if failures else 0)
 		return
+	if mode == "conservatory":
+		var gallery: Node = load("res://tools/conservatory_driver.gd").new()
+		add_child(gallery)
+		await gallery.run(self)
+		print("Conservatory capture: %d screenshots; %d checks, %d failures" % [shot_count, checks, failures])
+		get_tree().quit(1 if failures else 0)
+		return
 	if mode == "single-gap":
 		await single_gap_views()
 		print("Single-gap capture: %d screenshots; %d checks, %d failures; %.2fs" % [shot_count, checks, failures, elapsed()])
@@ -225,6 +234,7 @@ func run(game: Manor) -> void:
 		if not window_captured and main.rules.player >= 0:
 			window_captured = await capture_window()
 	_check(main.won and main.rules.solved(), "physical solve reaches home")
+	await collect_red_key()
 	_check(main.slides == expected, "capture used optimal slide count")
 	main.player.aim_at(ManorGeometry.center(4) + Vector3.UP * 1.4)
 	await shot("05_solved")
@@ -233,11 +243,12 @@ func run(game: Manor) -> void:
 	for direction in route:
 		await walk_direction(direction)
 	var foyer: ManorRoom = main.rooms[7]
-	for door in foyer.doors:
-		if door.is_front:
-			_check(door.opened and door.gate.collision_layer == 0, "front door unlocks after solve")
 	await walk_to(foyer.global_position + Vector3(0, 0, 1.5))
 	main.player.aim_at(Vector3(0, 1.4, 22))
+	await unlock_red_door()
+	for door in foyer.doors:
+		if door.is_front:
+			_check(door.opened and door.gate.collision_layer == 0, "front door unlocks after using the red key")
 	await shot("06_front_door_open")
 	await walk_to(Vector3(0, 0, 11))
 	_check(main.player.global_position.z > 9.5, "unlocked front door can be walked through")
@@ -574,6 +585,11 @@ func review_views() -> void:
 	for id in main.rooms:
 		main.rooms[id].position = ManorGeometry.center(id)
 	main.gap_floor.position = ManorGeometry.center(4) + Vector3.DOWN * 0.02
+	preload("res://tools/conservatory_fixture.gd").finish_reveal(main)
+	for door in main.rooms[7].doors:
+		if door.is_front:
+			main.conservatory.unlock_exit(door)
+			main.conservatory._process(ManorConservatory.UNLOCK_TIME)
 	main.refresh_doors(true)
 	main.carpet.visible = true
 	main.player.position = ManorGeometry.center(7) + Vector3(0, 0, 1.5)
@@ -591,6 +607,8 @@ func objective_views() -> void:
 		main.rules.player = 7
 		for id in main.rooms:
 			main.rooms[id].position = ManorGeometry.center(id)
+		main.gap_floors.clear()
+		main.gap_floors[4] = main.gap_floor
 		main.gap_floor.position = ManorGeometry.center(4) + Vector3.DOWN * 0.02
 		main.player.position = ManorGeometry.center(7) + Vector3(0, 0.02, 1.5)
 		main.refresh_progress()
@@ -602,6 +620,10 @@ func objective_views() -> void:
 		main.run_stats.elapsed_seconds = 1542.0
 		main.resume_play()
 		await get_tree().create_timer(0.6).timeout
+		await collect_red_key()
+		for direction in walk_route(7):
+			await walk_direction(direction)
+		await walk_to(main.rooms[7].position + Vector3(0, 0, 1.5))
 		await capture_exit()
 		return
 	_check(main.objectives != null, "default game has objectives")
@@ -647,6 +669,7 @@ func objective_views() -> void:
 	for action in path:
 		await objective_action(action)
 	_check(main.won and main.objectives.all_completed and main.objectives.bonus_won, "full house awards bonus without losing coin rewards")
+	await collect_red_key()
 	for direction in walk_route(7):
 		await walk_direction(direction)
 	main.player.aim_at(main.rooms[7].global_position + Vector3.UP * 2.4)
@@ -655,6 +678,7 @@ func objective_views() -> void:
 	await capture_exit()
 
 func capture_exit() -> void:
+	await unlock_red_door()
 	main.player.aim_at(Vector3(0, 1.7, 18))
 	await shot("06_bonus_door")
 	main.player.bot_drive = Vector3.BACK
@@ -739,3 +763,114 @@ func objective_action(action: Vector2i, stop_for_guide: bool = false) -> void:
 		while main.sliding:
 			await get_tree().process_frame
 	_check(main.rules.key() == expected.key(), "physical action matches pure rules")
+
+func collect_red_key(capture: bool = false) -> void:
+	await accept_rewards()
+	var c := main.conservatory
+	if c.key_owned:
+		return
+	if c.revealing():
+		var room := main.rooms[main.rules.player]
+		var inward := -room.position.normalized()
+		await walk_to(room.position + inward * 1.85)
+		main.player.aim_at(Vector3(0, 1.4, 0))
+		while c.phase == ManorConservatory.Phase.WAITING:
+			await get_tree().process_frame
+		if capture:
+			while c.elapsed < ManorConservatory.CLOSE_TIME + 0.4:
+				await get_tree().process_frame
+			await check_motion_audio(c)
+			await shot("conservatory_retracting")
+		while c.phase == ManorConservatory.Phase.RETRACTING:
+			await get_tree().process_frame
+		if capture:
+			main.player.aim_at(Vector3(0, -2.5, 0))
+			await shot("conservatory_shaft")
+			main.player.aim_at(Vector3(0, 1.4, 0))
+			await check_motion_audio(c)
+		await get_tree().create_timer(3.4).timeout
+		if capture:
+			await shot("conservatory_rising")
+		while not c.accessible():
+			await get_tree().process_frame
+		await get_tree().create_timer(0.55).timeout
+		if capture:
+			await shot("conservatory_docked")
+	# Enter from whichever of the four adjacent rooms performed the final slide.
+	var from := main.rules.slot()
+	var inward := -ManorGeometry.center(from).normalized()
+	await walk_to(ManorGeometry.center(from) + inward * 2.0)
+	await walk_to(-inward * 2.45)
+	# The central tree and pedestal leave a generous aisle around the east side.
+	if from == 1:
+		await walk_to(Vector3(0.85, 0, -2.45))
+		await walk_to(Vector3(0.85, 0, 2.35))
+	elif from in [3, 5]:
+		await walk_to(Vector3(-2.45 if from == 3 else 2.45, 0, 0.4))
+		await walk_to(Vector3(0.85, 0, 0.4))
+		await walk_to(Vector3(0.85, 0, 2.35))
+	await walk_to(Vector3(0, 0, 2.35))
+	main.player.aim_at(Vector3(0, 1.75, -0.4))
+	if capture:
+		await shot("conservatory_interior")
+		main.player.aim_at(Vector3(0, 4.0, -0.7))
+		await shot("conservatory_roof")
+	main.player.aim_at(c.room.key.global_position)
+	await get_tree().physics_frame
+	if capture:
+		await shot("red_key_pedestal")
+	_check(main.player.begin_interact(), "interaction ray picks up pedestal key")
+	while c.collecting and c.pickup_elapsed < ManorConservatory.REWARD_HOLD_AT:
+		await get_tree().process_frame
+	if capture:
+		await shot("red_key_reward")
+	key_event(KEY_SPACE, true)
+	key_event(KEY_SPACE, false)
+	while c.collecting:
+		await get_tree().process_frame
+	_check(c.key_owned, "red key reaches inventory")
+	if capture:
+		await shot("red_key_inventory")
+		await walk_to(Vector3(-0.95, 0, 2.35))
+		main.player.aim_at(Vector3(1.8, 0.65, 1.8))
+		await shot("conservatory_seating")
+		await walk_to(Vector3(-1.35, 0, 0.35))
+		main.player.aim_at(Vector3(-1.8, 0.9, -2.65))
+		await shot("conservatory_planting")
+		await walk_to(Vector3(-0.95, 0, 2.35))
+		await walk_to(Vector3(0, 0, 2.35))
+	await walk_to(Vector3(0, 0, 4.8))
+
+func check_motion_audio(c: ManorConservatory) -> void:
+	var voice := c.motion_sound
+	_check(is_instance_valid(voice) and voice.playing and is_equal_approx(voice.pitch_scale, 1.0), "reveal audio plays at the motion's exact timing")
+	if not is_instance_valid(voice):
+		return
+	main.release_pointer()
+	await get_tree().process_frame
+	await get_tree().process_frame
+	var elapsed_before := c.elapsed
+	await get_tree().create_timer(0.15).timeout
+	_check(voice.stream_paused and c.elapsed == elapsed_before, "pause holds both reveal sound and movement")
+	main.resume_play()
+	await get_tree().process_frame
+	await get_tree().process_frame
+	_check(not voice.stream_paused, "reveal audio resumes with movement")
+
+func unlock_red_door(capture: bool = false) -> void:
+	var front: ManorDoor
+	for door in main.rooms[7].doors:
+		if door.is_front:
+			front = door
+	await walk_to(main.rooms[7].position + Vector3(0, 0, 1.75))
+	main.player.aim_at(front.gate.global_position)
+	await get_tree().physics_frame
+	if capture:
+		await shot("red_door_keyhole")
+	_check(main.player.begin_interact(), "key unlocks red door through normal interaction")
+	if capture:
+		while main.conservatory.unlock_elapsed < 0.7:
+			await get_tree().process_frame
+		await shot("red_key_unlocking")
+	while front.gate.collision_layer != 0:
+		await get_tree().process_frame

@@ -31,9 +31,11 @@ func run() -> void:
 	audio.cued.connect(func(group: String) -> void: cues.append(group))
 
 	var expected := {"step_wood": 5, "step_tile": 6, "step_grass": 5, "lever_grab": 3, "lever_blocked": 3,
-		"door_rattle": 3, "door_open": 2, "door_close": 2, "slide": 3, "wake": 1, "coin_insert": 2, "coin_acquired": 1, "ui_click": 3, "ui_tap": 3}
+		"door_rattle": 3, "door_open": 2, "door_close": 2, "slide": 3, "gap_retract": 1, "conservatory_rise": 1, "wake": 1, "coin_insert": 2, "coin_acquired": 1, "ui_click": 3, "ui_tap": 3}
 	for group in expected:
 		check(audio.streams[group].size() == expected[group], "%s has %d variants" % [group, expected[group]])
+	check(absf(audio.streams["gap_retract"][0].get_length() - (ManorConservatory.RETRACT_TIME + 0.2)) < 0.01, "slab sound covers its travel and soft tail")
+	check(absf(audio.streams["conservatory_rise"][0].get_length() - (ManorConservatory.RISE_TIME + 0.2)) < 0.01, "lift sound covers the full rise and soft landing")
 	check(audio.music.stream.loop and audio.music.bus == "Music", "music loops on the Music bus")
 	check(audio.birds.stream.loop, "forest birds loop")
 	check(audio.voices.all(func(voice: AudioStreamPlayer) -> bool: return voice.bus == "Effects") and audio.birds.bus == "Effects", "effects use the Effects bus")

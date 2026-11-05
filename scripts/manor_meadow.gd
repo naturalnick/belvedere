@@ -31,14 +31,14 @@ var bushes: Array[Transform3D] = []
 var treeline: Array[Transform3D] = []
 var vegetation: Array[MeshInstance3D] = []
 var parts: Dictionary[String, Array] = {}
+var center_ground: Node3D
+var center_collision: StaticBody3D
 
-func build(ground_value: float, solid: bool) -> void:
+func build(ground_value: float, use_ground_height: bool) -> void:
 	ground_y = ground_value
 	var grass: ShaderMaterial = ManorGeometry.material("9DB86E", 0.0).duplicate()
 	grass.set_shader_parameter("meadow", true)
-	var ground := ManorGeometry.box(self, Vector3(220, 0.2, 220), Vector3(0, ground_y - 0.1, 0), grass, solid)
-	# The flat ground receives house shadows but must not shadow itself at grazing angles.
-	ground.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	_build_ground(grass, ground_y if use_ground_height else -0.02)
 	var island := ManorIsland.new()
 	add_child(island)
 	island.build(ground_y)
@@ -76,6 +76,34 @@ func build(ground_value: float, solid: bool) -> void:
 	_plant_bushes(rng)
 	_plant_treeline(rng)
 	_merge()
+
+func _build_ground(grass: Material, collision_y: float) -> void:
+	var surface := SurfaceTool.new()
+	surface.begin(Mesh.PRIMITIVE_TRIANGLES)
+	for rect in ManorGeometry.ground_surround():
+		var shape := BoxMesh.new()
+		shape.size = Vector3(rect.size.x, 0.2, rect.size.y)
+		var at := Vector3(rect.get_center().x, ground_y - 0.1, rect.get_center().y)
+		surface.append_from(shape, 0, Transform3D(Basis.IDENTITY, at))
+		ManorGeometry.barrier(self, shape.size, Vector3(at.x, collision_y - 0.1, at.z))
+	var ground := MeshInstance3D.new()
+	ground.name = "GroundSurround"
+	ground.mesh = surface.commit()
+	ground.material_override = grass
+	# The flat ground receives house shadows but must not shadow itself at grazing angles.
+	ground.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	add_child(ground)
+	# A separate center keeps ordinary gaps walkable until the conservatory hatch opens.
+	center_ground = Node3D.new()
+	center_ground.name = "CenterGround"
+	add_child(center_ground)
+	var center := ManorGeometry.box(center_ground, Vector3(ManorGeometry.PITCH, 0.2, ManorGeometry.PITCH), Vector3(0, ground_y - 0.1, 0), grass)
+	center.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	center_collision = ManorGeometry.barrier(center_ground, Vector3(ManorGeometry.PITCH, 0.2, ManorGeometry.PITCH), Vector3(0, collision_y - 0.1, 0))
+
+func open_center() -> void:
+	center_ground.hide()
+	center_collision.collision_layer = 0
 
 func _plant(at: Vector2, height_value: float, kind: ManorTree.Kind, variant: int, yaw: float) -> ManorTree:
 	var tree := ManorTree.new()

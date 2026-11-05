@@ -30,7 +30,8 @@ func build(ground_y: float) -> void:
 func _casing_mesh() -> ArrayMesh:
 	var surface := SurfaceTool.new()
 	surface.begin(Mesh.PRIMITIVE_TRIANGLES)
-	_face(surface, Vector2(220, 220), Vector3(0, DEPTH / 2, 0), Vector3(-PI / 2, 0, 0))
+	for rect in ManorGeometry.ground_surround():
+		_face(surface, rect.size, Vector3(rect.get_center().x, DEPTH / 2, rect.get_center().y), Vector3(-PI / 2, 0, 0))
 	for side in [-1, 1]:
 		_face(surface, Vector2(220, DEPTH), Vector3(side * 110, 0, 0), Vector3(0, side * PI / 2, 0))
 		_face(surface, Vector2(220, DEPTH), Vector3(0, 0, side * 110), Vector3(0, PI if side < 0 else 0.0, 0))

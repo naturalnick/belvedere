@@ -18,6 +18,11 @@ static func to_sun() -> Vector3:
 static func center(slot: int) -> Vector3:
 	return Vector3((slot % 3 - 1) * PITCH, 0, (slot / 3 - 1) * PITCH)
 
+static func ground_surround() -> Array[Rect2]:
+	var edge := PITCH / 2
+	var width := 110.0 - edge
+	return [Rect2(-110, -110, width, 220), Rect2(edge, -110, width, 220), Rect2(-edge, -110, PITCH, width), Rect2(-edge, edge, PITCH, width)]
+
 static func build_gap_floor(parent: Node3D) -> void:
 	if not materials.has("gap_tracks"):
 		var concrete: ShaderMaterial = material("747B7D", 0.0).duplicate()

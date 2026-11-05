@@ -5,6 +5,7 @@ Sources and hashes live beside the recordings in audio_sources/sources.json.
 from pathlib import Path
 import hashlib
 import json
+import argparse
 import subprocess
 import wave
 import numpy as np
@@ -113,10 +114,7 @@ def effects():
         length = 2.05
         n = int(length * RATE);t = np.arange(n) / RATE
         # A low, irregular rolling texture under real creaking wood, without a motor tone.
-        noise = filt(RNG.normal(size=n), 320)
-        texture = filt(RNG.normal(size=n), [180, 1300], 'bandpass')
-        modulation = .7 + .3*norm(filt(RNG.normal(size=n), 17))
-        rolling = norm(noise) * .65 + norm(texture) * modulation * .18
+        rolling = rolling_texture(n, RNG)
         u = np.clip((t-.09) / 1.43, 0, 1)
         velocity = np.ones(n)
         velocity[u < .224] = .5 - .5*np.cos(np.pi*u[u < .224]/.224)
@@ -130,6 +128,30 @@ def effects():
         takeup = source('impact', 'impactPlank_medium_000', .8, 1500)
         x = mix(length, [(0, rolling, .55 / 4), (.20, creak, .17 / 12), (.95, settle, .11 / 12), (.015, takeup, .13), (1.52, landing, .44), (1.54, latch, .07)])
         write(f'slide_{variant}', x, .63, .008, .18)
+
+
+def rolling_texture(n, rng):
+    noise = filt(rng.normal(size=n), 320)
+    texture = filt(rng.normal(size=n), [180, 1300], 'bandpass')
+    modulation = .7 + .3 * norm(filt(rng.normal(size=n), 17))
+    return norm(noise) * .65 + norm(texture) * modulation * .18
+
+
+def conservatory_effects():
+    # Reuse the room shift's rolling layer, without either timber-creak recording.
+    # A separate seed keeps these clips stable without changing the existing foley or music.
+    rng = np.random.default_rng(73105)
+    for name, seconds, peak, cutoff in [('gap_retract', 2.2, .18, 500), ('conservatory_rise', 5.5, .42, 1300)]:
+        n = int(seconds * RATE)
+        t = np.arange(n) / RATE
+        velocity = np.sin(np.pi * t / seconds) ** .8
+        rolling = filt(rolling_texture(n, rng), cutoff, order=4) * velocity
+        layers = [(0, rolling, .55)]
+        if name == 'conservatory_rise':
+            takeup = source('impact', 'impactPlank_medium_000', cutoff=500)
+            landing = source('impact', 'impactWood_heavy_002', cutoff=650)
+            layers += [(0, takeup, .035), (seconds - .12, landing, .10)]
+        write(name + '_0', mix(seconds + .2, layers), peak, .12, .2)
 
 
 def menu_effects():
@@ -220,14 +242,23 @@ def music():
 
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--conservatory-only', action='store_true', help='Regenerate only the creak-free slab and lift sounds')
+    args = parser.parse_args()
     manifest=json.loads((SOURCE/'sources.json').read_text())
     for name, digest in manifest['sha256'].items():
         assert hashlib.sha256((SOURCE/name).read_bytes()).hexdigest() == digest, name
     OUT.mkdir(parents=True, exist_ok=True)
-    for stale in list(OUT.glob('*.wav')) + list(OUT.glob('*.ogg')):
-        stale.unlink()
-    effects();birds();music()
+    if args.conservatory_only:
+        conservatory_effects()
+    else:
+        for stale in list(OUT.glob('*.wav')) + list(OUT.glob('*.ogg')):
+            stale.unlink()
+        effects();birds();music();conservatory_effects()
     for orphan in OUT.glob('*.import'):
         if not orphan.with_suffix('').exists(): orphan.unlink()
-    target=ROOT/'build/audio-metrics.json';target.write_text(json.dumps(REPORT,indent=2)+'\n')
+    target=ROOT/'build/audio-metrics.json'
+    metrics = json.loads(target.read_text()) if args.conservatory_only and target.exists() else {}
+    metrics.update(REPORT)
+    target.write_text(json.dumps(metrics,indent=2)+'\n')
     print(f'Prepared {len(REPORT)} assets; {sum(x["bytes"] for x in REPORT.values()) / 1e6:.2f} MB. Metrics: {target}')

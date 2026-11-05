@@ -57,6 +57,8 @@ func locks_player(for_movement := false) -> bool:
 	return presenting or (phase != Phase.IDLE and not (for_movement and phase == Phase.LOWERING))
 
 func toggle() -> bool:
+	if manor.conservatory != null and manor.conservatory.revealing():
+		return false
 	if not owned or presenting or _suspended():
 		return false
 	if phase == Phase.VIEWING:

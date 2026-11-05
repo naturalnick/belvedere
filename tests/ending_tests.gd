@@ -84,8 +84,10 @@ func run() -> void:
 	for id in main.rooms:
 		main.rooms[id].position = ManorGeometry.center(id)
 	main.refresh_progress()
-	check(main.won and front.opened and front.gate.collision_layer == 1, "assembled house begins opening the solid exit")
-	await create_timer(1.0).timeout
+	check(main.won and not front.opened and front.gate.collision_layer == 1, "assembled house keeps the exit locked for the conservatory key")
+	preload("res://tools/conservatory_fixture.gd").finish_reveal(main)
+	check(main.conservatory.unlock_exit(front), "collected conservatory key unlocks the solid exit")
+	await create_timer(ManorConservatory.UNLOCK_TIME + 1.0).timeout
 	check(absf(front.leaves[0].rotation.y) < deg_to_rad(50) and front.gate.collision_layer == 1, "red door opens slowly and blocks passage through its panels")
 	await create_timer(ManorDoor.EXIT_OPEN_SECONDS).timeout
 	check(front.gate.collision_layer == 0 and is_equal_approx(front.leaves[0].rotation.y, deg_to_rad(-100)), "fully open exit permits passage")
@@ -189,7 +191,7 @@ func run() -> void:
 	check(fresh.coins.inserted == 0 and fresh.coins.available == 0 and fresh.coins.pending.is_empty() and fresh.objectives.active == 8, "a fresh game resets the wallet, device and presentation queue")
 	fresh.rules.board = PackedInt32Array(ManorRules.HOME)
 	fresh.refresh_progress()
-	check(fresh.won and fresh.coins.awarded.size() == 7, "assembling the house first grants all outstanding room coins")
+	check(fresh.won and fresh.coins.awarded.is_empty() and fresh.coins.pending.is_empty() and fresh.objectives.active == 8, "assembling the house first preserves the blue-light quest without awarding coins")
 	check(not fresh.play_gate.visible and fresh.coins.inserted == 0, "house-first ending never bypasses the trophy's coin deposits")
 	fresh.queue_free()
 	await process_frame

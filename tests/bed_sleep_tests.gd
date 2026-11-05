@@ -138,7 +138,7 @@ func run() -> void:
 		main.bed_sleep.sleep()
 		check(not main.bed_sleep.sleeping and not main.play_gate.visible and main.rules.board == PackedInt32Array(ManorRules.HOME), "disabled bed cannot reset the completed puzzle")
 		if main.ending != null:
-			check(main.carpet.visible and main.ending.active and main.ending.rainbow.visible, "completion scenery remains available after trying the bed")
+			check(main.conservatory.revealing() and not main.carpet.visible and not main.ending.active, "trying the bed preserves the conservatory reveal without bypassing the key")
 	main.player.bot_drive = Vector3.BACK
 	var before := main.player.position
 	await create_timer(0.4).timeout

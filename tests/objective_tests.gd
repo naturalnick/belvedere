@@ -53,7 +53,7 @@ func run() -> void:
 					total_walks += 1
 			check(state.board[active] == active and slides == result.slides, "objective distance and destination agree")
 			var previous := progress.completed.duplicate()
-			progress.advance(state)
+			check(progress.advance(state) == [active], "only the active blue-light objective earns a coin")
 			for room in previous:
 				check(progress.completed.has(room), "completed rooms remain earned")
 			check(progress.completed.has(active), "active room earns completion")
@@ -71,8 +71,23 @@ func run() -> void:
 	progress.advance(ManorRules.from_seed("B"))
 	check(progress.all_completed and progress.completed.size() == 7, "earned room rewards persist after moving rooms away")
 	var early := ManorObjectives.new()
-	early.advance(ManorRules.new())
-	check(early.all_completed and early.bonus_won and early.completed.size() == 7, "early full solve earns all room rewards and the door ending")
-	check(early.active == -1, "no further target after winning")
+	var solved := ManorRules.new(PackedInt32Array(ManorRules.HOME), 7)
+	early.active = 8
+	check(early.advance(solved).is_empty(), "full solve outside the active target awards no coins")
+	check(not early.all_completed and early.bonus_won and early.completed.is_empty(), "early assembly unlocks the ending independently of coins")
+	check(early.active == 8, "full solve preserves the active blue-light objective")
+	solved.player = 8
+	check(early.advance(solved) == [8] and early.completed == [8], "visiting the active home room earns only its coin after assembly")
+	check(early.active == 0, "another already-home room becomes blue instead of being auto-credited")
+	check(early.advance(solved).is_empty(), "repeated progress updates cannot collect the next room remotely")
+	while not early.all_completed:
+		var target := early.active
+		solved.player = target
+		check(early.advance(solved) == [target], "remaining solved rooms each require their own blue-light visit")
+	check(early.active == -1 and early.completed.size() == 7 and early.advance(solved).is_empty(), "sequence finishes once without duplicate rewards")
+	var simultaneous := ManorObjectives.new()
+	simultaneous.active = 8
+	solved.player = 8
+	check(simultaneous.advance(solved) == [8] and simultaneous.bonus_won and not simultaneous.all_completed, "a final shift can earn its active blue coin and unlock the conservatory together")
 	print("Objectives: %d checks, %d failures" % [checks, failures])
 	quit(1 if failures else 0)

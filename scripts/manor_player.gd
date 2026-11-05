@@ -128,6 +128,8 @@ func begin_interact() -> bool:
 	if hit.is_empty():
 		return false
 	var collider: Object = hit.collider
+	if collider.has_meta("red_key"):
+		return collider.get_meta("red_key").take_key()
 	if collider.has_meta("bed"):
 		return manor.bed_sleep.interact()
 	if collider.has_meta("foundation_hatch"):
@@ -140,6 +142,8 @@ func begin_interact() -> bool:
 		return device.interact()
 	if collider.has_meta("door"):
 		var door: ManorDoor = collider.get_meta("door")
+		if door.is_front and manor.conservatory != null and manor.conservatory.unlock_exit(door):
+			return true
 		door.rattle()
 		return false
 	if not collider.has_meta("lever_room") or int(collider.get_meta("lever_room")) != manor.rules.player:

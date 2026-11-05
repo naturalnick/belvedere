@@ -15,29 +15,19 @@ func advance(state: ManorRules) -> Array[int]:
 	var earned: Array[int] = []
 	if state.board == PackedInt32Array(ManorRules.HOME):
 		bonus_won = true
+	# Assembly unlocks the conservatory independently of the active coin objective.
+	if active >= 0 and (state.board[active] != active or state.player != active):
+		return earned
+	if active >= 0:
+		completed.append(active)
+		earned.append(active)
+	active = -1
+	if completed.size() < ROOMS.size():
+		var pending: Array[int] = []
 		for room in ROOMS:
 			if not completed.has(room):
-				completed.append(room)
-				earned.append(room)
-		active = -1
-	elif active >= 0 and (state.board[active] != active or state.player != active):
-		return earned
-	else:
-		if active >= 0:
-			completed.append(active)
-			earned.append(active)
-		active = -1
-		# Already-positioned objectives count immediately; never require moving out and back.
-		for room in ROOMS:
-			if not completed.has(room) and state.board[room] == room:
-				completed.append(room)
-				earned.append(room)
-		if completed.size() < ROOMS.size():
-			var pending: Array[int] = []
-			for room in ROOMS:
-				if not completed.has(room):
-					pending.append(room)
-			active = nearest_goal(state, pending).room
+				pending.append(room)
+		active = nearest_goal(state, pending).room
 	all_completed = completed.size() == ROOMS.size()
 	return earned
 

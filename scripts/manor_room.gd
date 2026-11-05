@@ -34,11 +34,13 @@ func build(id: int) -> void:
 		var span := 6.0 if d % 2 == 0 else 6.25
 		var side_width := (span - 1.2) / 2.0
 		var hex: String = ManorGeometry.ACCENTS[id] if d == (first_window() + 2) % 4 else "EFE4D2"
-		var mat := ManorGeometry.wall_material(hex)
+		# The finish follows the room's solved exterior, even while rooms are shuffled.
+		var siding := ManorRules.side(id, d) in [ManorRules.WINDOW, ManorRules.FRONT]
+		var mat := ManorGeometry.wall_material(hex) if siding else ManorGeometry.material(hex, 0.0)
 		# East and west walls span the full pitch, so only their outer ends show on the facade.
-		var full_corners := ManorGeometry.wall_material(hex, 3 if d % 2 == 1 else 0)
+		var full_corners := ManorGeometry.wall_material(hex, 3 if d % 2 == 1 else 0) if siding else mat
 		var end_corner := func(sign_value: int) -> Material:
-			return ManorGeometry.wall_material(hex, (1 if sign_value > 0 else 2) if d % 2 == 1 else 0)
+			return ManorGeometry.wall_material(hex, (1 if sign_value > 0 else 2) if d % 2 == 1 else 0) if siding else mat
 		if ManorRules.side(id, d) != ManorRules.WINDOW:
 			for sign_value in [-1, 1]:
 				var x: float = sign_value * (0.6 + side_width / 2.0)
@@ -81,8 +83,7 @@ func build(id: int) -> void:
 	skip.append_array(door_headers)
 	for door in doors:
 		skip.append_array(door.leaves)
-		if door.emblem != null:
-			skip.append(door.emblem)
+		skip.append_array(door.emblems)
 	ManorStaticBatch.combine(self, skip)
 
 func set_overview(enabled: bool) -> void:

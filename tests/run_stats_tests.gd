@@ -81,6 +81,12 @@ func run() -> void:
 	main.rules.board = PackedInt32Array(ManorRules.HOME)
 	main.refresh_progress()
 	receive_pending(main)
+	preload("res://tools/conservatory_fixture.gd").finish_reveal(main)
+	for door in main.rooms[7].doors:
+		if door.is_front:
+			main.conservatory.unlock_exit(door)
+			main.conservatory._process(ManorConservatory.UNLOCK_TIME)
+			door.set_open(true, true)
 	main.begin_finale()
 	stats._process(100)
 	check(stats.finished and stats.elapsed_seconds == 15, "entering the finale freezes active run time")

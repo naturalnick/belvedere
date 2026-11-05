@@ -79,7 +79,7 @@ func _ready() -> void:
 	manor.fall_recovery.woke.connect(func() -> void: play("wake", -4.0))
 
 func _load_streams() -> void:
-	for group in ["step_wood", "step_tile", "step_grass", "lever_grab", "lever_blocked", "door_rattle", "door_open", "door_close", "slide", "coin_insert", "coin_acquired", "ui_click", "ui_tap"]:
+	for group in ["step_wood", "step_tile", "step_grass", "lever_grab", "lever_blocked", "door_rattle", "door_open", "door_close", "slide", "gap_retract", "conservatory_rise", "coin_insert", "coin_acquired", "ui_click", "ui_tap"]:
 		var variants: Array = []
 		while ResourceLoader.exists(DIR + "%s_%d.wav" % [group, variants.size()]):
 			variants.append(load(DIR + "%s_%d.wav" % [group, variants.size()]))
@@ -115,22 +115,23 @@ func play(group: String, volume_db: float = 0.0, pitch: float = 1.0) -> void:
 	voice.pitch_scale = pitch * randf_range(0.97, 1.03)
 	voice.play()
 
-func play_at(group: String, where: Vector3, volume_db: float = 0.0) -> void:
+func play_at(group: String, where: Vector3, volume_db: float = 0.0, vary_pitch: bool = true) -> AudioStreamPlayer3D:
 	var stream := _pick(group)
 	cued.emit(group)
 	if stream == null or not audible:
-		return
+		return null
 	var voice := AudioStreamPlayer3D.new()
 	voice.bus = "Effects"
 	voice.stream = stream
 	voice.unit_size = 4.0
 	voice.max_distance = 30.0
 	voice.volume_db = volume_db + randf_range(-0.8, 0.8)
-	voice.pitch_scale = randf_range(0.97, 1.03)
+	voice.pitch_scale = randf_range(0.97, 1.03) if vary_pitch else 1.0
 	add_child(voice)
 	voice.global_position = where
 	voice.finished.connect(voice.queue_free)
 	voice.play()
+	return voice
 
 func _pick(group: String) -> AudioStream:
 	var variants: Array = streams.get(group, [])
@@ -176,7 +177,8 @@ func _process(_delta: float) -> void:
 	# Startup gain and slide ducking are independent, so an early slide cannot skip the fade.
 	music.volume_db = linear_to_db(maxf(0.001, music_intro)) + music_duck_db
 	_flush_doors()
-	_set_birds(manor.rules.player < 0 and not manor.at_title and not manor.play_gate.visible)
+	var in_conservatory := manor.conservatory != null and manor.conservatory.accessible() and manor.rules.slot() == 4
+	_set_birds(manor.rules.player < 0 and not in_conservatory and not manor.at_title and not manor.play_gate.visible)
 
 func _set_birds(on: bool) -> void:
 	if on == birds_on:

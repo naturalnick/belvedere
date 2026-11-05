@@ -21,8 +21,15 @@ func run(driver: Node) -> void:
 	main.player.position = laundry.position + Vector3(1.0, 0.02, 1.6)
 	main.player.aim_at(laundry.position + Vector3(10, 2, 1.6))
 	await driver.shot("07_interior_window")
-	# Seed A puts Bathroom's north window against Study's door wall, so its siding shows through the glass.
+	# Seed A puts Bathroom's north window against Study's door wall, which should stay plain through the glass.
 	var bathroom: ManorRoom = main.rooms[1]
 	main.player.position = bathroom.position + Vector3(1.2, 0.02, -1.2)
 	main.player.aim_at(bathroom.position + Vector3(1.6, 1.6, -3.1))
 	await driver.shot("08_window_onto_neighbour")
+	for door in main.rooms[7].doors:
+		if not door.is_front:
+			continue
+		for face in [1, -1]:
+			main.player.global_position = door.to_global(Vector3(0, 0.02, face * 1.8))
+			main.player.aim_at(door.to_global(Vector3(0, 1.4, 0)))
+			await driver.shot("09_red_door_inside" if face == 1 else "10_red_door_outside")

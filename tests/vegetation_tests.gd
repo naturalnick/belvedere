@@ -74,6 +74,17 @@ func run() -> void:
 			print("%s %s: %d triangles" % ["Pine" if kind == ManorTree.Kind.PINE else "Broadleaf", "far" if far else "near", count])
 	check(triangles <= 60000, "all foliage stays within its triangle budget")
 	print("Vegetation: %d trees, %d treeline, %d shrubs, %d meshes, %d triangles" % [trees.size(), meadow.treeline.size(), meadow.bushes.size(), meadow.vegetation.size(), triangles])
+	await physics_frame
+	var space := meadow.get_world_3d().direct_space_state
+	var center_ray := PhysicsRayQueryParameters3D.create(Vector3(0, 1, 0), Vector3(0, -8, 0))
+	check(not space.intersect_ray(center_ray).is_empty(), "ordinary center ground remains walkable before the reveal")
+	meadow.open_center()
+	await physics_frame
+	check(space.intersect_ray(center_ray).is_empty(), "opening the center removes its walking surface")
+	for point in [Vector3(-4, 0, 0), Vector3(4, 0, 0), Vector3(0, 0, -4), Vector3(0, 0, 4)]:
+		var ray := PhysicsRayQueryParameters3D.create(point + Vector3.UP, point + Vector3.DOWN)
+		var hit := space.intersect_ray(ray)
+		check(not hit.is_empty() and is_equal_approx(hit.position.y, -0.04), "shaft opening preserves the surrounding lawn collision")
 	meadow.queue_free()
 	await process_frame
 	print("Vegetation: %d checks, %d failures" % [checks, failures])

@@ -52,6 +52,8 @@ var run_summary: ManorRunSummary
 var audio: ManorAudio
 var pointer_watch: ManorPointerWatch
 var frame_rate: ManorFrameRate
+var conservatory: ManorConservatory
+var meadow: ManorMeadow
 
 func _ready() -> void:
 	set_process(false)
@@ -189,6 +191,10 @@ func _ready() -> void:
 		stopwatch = ManorStopwatch.new()
 		add_child(stopwatch)
 		stopwatch.setup(self, hud)
+	if rooms.size() == 8:
+		conservatory = ManorConservatory.new()
+		add_child(conservatory)
+		conservatory.setup(self, hud)
 	run_summary = ManorRunSummary.new()
 	run_summary.manor = self
 	hud.add_child(run_summary)
@@ -273,7 +279,7 @@ func release_pointer() -> void:
 		run_summary.hide()
 
 func controls_locked(for_movement := false) -> bool:
-	return (foundation_hatch != null and foundation_hatch.busy) or (stopwatch != null and stopwatch.locks_player(for_movement)) or (binoculars != null and binoculars.locks_player()) or (first_coin_guide != null and first_coin_guide.active) or (coin_hud != null and coin_hud.presenting()) or recovering or sliding or in_finale or at_title or (play_gate != null and play_gate.visible) or (coin_device != null and coin_device.releasing)
+	return (conservatory != null and (conservatory.collecting or conservatory.unlocking)) or (foundation_hatch != null and foundation_hatch.busy) or (stopwatch != null and stopwatch.locks_player(for_movement)) or (binoculars != null and binoculars.locks_player()) or (first_coin_guide != null and first_coin_guide.active) or (coin_hud != null and coin_hud.presenting()) or recovering or sliding or in_finale or at_title or (play_gate != null and play_gate.visible) or (coin_device != null and coin_device.releasing)
 
 func return_to_title() -> void:
 	at_title = true
@@ -310,12 +316,16 @@ func refresh_progress() -> void:
 		if wall_title != null:
 			wall_title.refresh(objectives.active, rules.board)
 		won = objectives.bonus_won
-	if won:
-		carpet.visible = true
-		for barrier in perimeter:
-			barrier.collision_layer = 0
-		if ending != null:
-			ending.activate()
+	if won and conservatory != null:
+		conservatory.begin()
+	refresh_doors()
+
+func open_exit() -> void:
+	carpet.visible = true
+	for barrier in perimeter:
+		barrier.collision_layer = 0
+	if ending != null:
+		ending.activate()
 	refresh_doors()
 
 func show_coin_ending() -> void:
@@ -326,8 +336,11 @@ func show_coin_ending() -> void:
 	play_gate.show_mode("victory")
 
 func begin_finale() -> void:
-	if in_finale or ending == null or not won:
+	if in_finale or ending == null or not won or conservatory == null or not conservatory.exit_unlocked:
 		return
+	for door in rooms[7].doors:
+		if door.is_front and door.gate.collision_layer != 0:
+			return
 	in_finale = true
 	run_stats.finished = true
 	set_process(true)
@@ -379,10 +392,8 @@ func _build_world() -> void:
 	sun.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_2_SPLITS
 	sun.directional_shadow_max_distance = 40
 	add_child(sun)
-	# Level courtyard/lawn collision avoids an unjumpable step on the return trip.
-	if rules.courtyards:
-		ManorGeometry.barrier(self, Vector3(220, 0.2, 220), Vector3(0, -0.12, 0))
-	var meadow := ManorMeadow.new()
+	# The meadow supplies level walking collision and a removable center over the lift shaft.
+	meadow = ManorMeadow.new()
 	add_child(meadow)
 	meadow.build(-0.04 if rules.courtyards else -0.15, not rules.courtyards)
 	carpet = ManorGeometry.box(self, Vector3(1.8, 0.025, 13), Vector3(0, 0, 15.8), ManorGeometry.material("B3363A", 0.0))
@@ -395,10 +406,13 @@ func _build_world() -> void:
 			perimeter.append(ManorGeometry.barrier(self, size, ManorGeometry.DIRECTIONS[d] * 9.425 + Vector3.UP * 1.5))
 
 func refresh_doors(instant: bool = false) -> void:
+	var revealing := conservatory != null and conservatory.revealing()
 	for id in rooms:
 		var state := ManorRules.new(rules.board, id)
 		for door in rooms[id].doors:
-			var allowed := won or (not door.is_front and state.can_walk(door.direction))
+			var allowed := not revealing and not door.is_front and state.can_walk(door.direction)
+			if door.is_front:
+				allowed = won and conservatory != null and conservatory.exit_unlocked
 			door.set_open(allowed, instant)
 
 func update_occupant() -> void:

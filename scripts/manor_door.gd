@@ -13,15 +13,20 @@ var opened := false
 var leaves: Array[Node3D] = []
 var gate: StaticBody3D
 var motion: Tween
-var emblem: MeshInstance3D
+var emblems: Array[MeshInstance3D] = []
+var keyhole: Node3D
 
 func build(accent: String) -> void:
 	var frame := ManorGeometry.material(accent, 0.0)
 	# Expanded box hulls become detached sheets when thin joinery is viewed up close.
 	var wood := ManorGeometry.material("6E4A33", 0.0)
-	for x in [-0.65, 0.65]:
-		ManorGeometry.box(self, Vector3(0.1, 2.3, 0.12), Vector3(x, 1.15, 0.125), frame)
-	ManorGeometry.box(self, Vector3(1.2, 0.1, 0.12), Vector3(0, 2.25, 0.125), frame)
+	var faces: Array[int] = [1]
+	if is_front:
+		faces.append(-1)
+	for face in faces:
+		for x in [-0.65, 0.65]:
+			ManorGeometry.box(self, Vector3(0.1, 2.3, 0.12), Vector3(x, 1.15, face * 0.125), frame)
+		ManorGeometry.box(self, Vector3(1.2, 0.1, 0.12), Vector3(0, 2.25, face * 0.125), frame)
 	for i in 2:
 		var hinge := Node3D.new()
 		add_child(hinge)
@@ -39,31 +44,58 @@ func build(accent: String) -> void:
 				ManorGeometry.box(hinge, Vector3(0.025, top - bottom, 0.06), Vector3(offset, (top + bottom) / 2, 0), wood)
 		if is_front:
 			ManorGeometry.box(hinge, Vector3(0.6, 2.2, 0.10), Vector3(offset, 1.1, -0.015), ManorGeometry.material("A43D36", 0.0))
-			for y in [0.32, 0.85, 1.38, 1.91]:
-				ManorGeometry.box(hinge, Vector3(0.44, 0.40, 0.025), Vector3(offset, y, 0.055), ManorGeometry.material("BA5145", 0.006))
+			for face in faces:
+				for y in [0.32, 0.85, 1.38, 1.91]:
+					ManorGeometry.box(hinge, Vector3(0.44, 0.40, 0.025), Vector3(offset, y, -0.015 + face * 0.07), ManorGeometry.material("BA5145", 0.006))
 		else:
 			var pane := ManorGeometry.box(hinge, Vector3(0.52, 2.1, 0.018), Vector3(offset, 1.1, 0), ManorGeometry.glass())
 			pane.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-		ManorGeometry.box(hinge, Vector3(0.04, 0.17, 0.12), Vector3(offset * 1.75, 1.02, 0.05), ManorGeometry.material("C9A04A"))
+		var handle_x := offset * (1.86 if is_front else 1.75)
+		for face in faces:
+			var handle_z := -0.015 + face * 0.065 if is_front else 0.05
+			ManorGeometry.box(hinge, Vector3(0.04, 0.17, 0.12), Vector3(handle_x, 1.02, handle_z), ManorGeometry.material("C9A04A"))
+			if is_front and i == 0:
+				var lock_plate := _build_keyhole(hinge, handle_x, face)
+				if face == 1:
+					keyhole = lock_plate
 		ManorStaticBatch.combine(hinge)
 		leaves.append(hinge)
 	gate = ManorGeometry.barrier(self, Vector3(1.2, 2.2, 0.27), Vector3(0, 1.1, 0))
 	gate.set_meta("door", self)
 	if is_front:
-		var mark := Node3D.new()
-		add_child(mark)
-		mark.position = Vector3(0, 2.58, 0.13)
-		emblem = ManorGeometry.box(mark, Vector3(0.32, 0.25, 0.04), Vector3.ZERO, ManorGeometry.material("85744E"))
-		for side in [-1, 1]:
-			var roof := ManorGeometry.box(mark, Vector3(0.25, 0.045, 0.045), Vector3(side * 0.085, 0.19, 0), ManorGeometry.material("C9A04A"))
-			roof.rotation.z = side * -PI / 4.0
+		for face in faces:
+			var mark := Node3D.new()
+			add_child(mark)
+			mark.position = Vector3(0, 2.58, face * 0.13)
+			emblems.append(ManorGeometry.box(mark, Vector3(0.32, 0.25, 0.04), Vector3.ZERO, ManorGeometry.material("85744E")))
+			for side in [-1, 1]:
+				var roof := ManorGeometry.box(mark, Vector3(0.25, 0.045, 0.045), Vector3(side * 0.085, 0.19, 0), ManorGeometry.material("C9A04A"))
+				roof.rotation.z = side * -PI / 4.0
+
+func _build_keyhole(hinge: Node3D, x: float, face: int) -> Node3D:
+	var plate := Node3D.new()
+	plate.name = "Keyhole" if face == 1 else "OuterKeyhole"
+	hinge.add_child(plate)
+	# Mount against the flat center stile, clear of the raised decorative panels.
+	plate.position = Vector3(x, 0.79, -0.015 + face * 0.06)
+	plate.rotation.y = 0.0 if face == 1 else PI
+	var brass := ManorGeometry.material("C9A04A", 0.0)
+	var dark := ManorGeometry.material("30251B", 0.0)
+	ManorGeometry.box(plate, Vector3(0.07, 0.17, 0.018), Vector3.ZERO, brass)
+	var opening := ManorGeometry.cylinder(plate, 0.024, 0.003, Vector3(0, 0.012, 0.011), dark)
+	opening.rotation.x = PI / 2
+	ManorGeometry.box(plate, Vector3(0.025, 0.046, 0.003), Vector3(0, -0.019, 0.011), dark)
+	for y in [-0.064, 0.064]:
+		var screw := ManorGeometry.cylinder(plate, 0.007, 0.003, Vector3(0, y, 0.011), ManorGeometry.material("85744E", 0.0))
+		screw.rotation.x = PI / 2
+	return plate
 
 func set_open(value: bool, instant: bool = false) -> void:
 	if value == opened and not instant and (motion == null or not motion.is_running()):
 		return
 	var changed := value != opened
 	opened = value
-	if emblem != null:
+	for emblem in emblems:
 		emblem.material_override = ManorGeometry.glowing_material("FFE3A1") if value else ManorGeometry.material("85744E")
 	gate.collision_layer = 0 if value and (instant or not is_front) else 1
 	if motion:
