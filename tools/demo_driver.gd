@@ -49,7 +49,7 @@ func run(game: Manor) -> void:
 	elif mode == "furnishings":
 		shot_names = ["01_spawn", "kitchen_bowl_detail", "dining_shelf_detail", "dining_serving_table", "trophy_case_left", "trophy_case_right"]
 		for room_name in ["bathroom", "study", "kitchen", "living", "dining", "foyer", "laundry"]:
-			for view in ["north", "south", "slide"]:
+			for view in ["north", "south", "slide", "wall_art"]:
 				shot_names.append(room_name + "_" + view)
 	elif mode == "stage3":
 		shot_names = ["01_spawn", "02_settings", "03_cross_tracks", "04_meadow", "05_landscape", "06_bedroom_entry", "07_bed_and_table", "08_wardrobe", "09_bedroom_lever", "10_bedroom_sliding", "11_dresser", "12_reading_chair"]

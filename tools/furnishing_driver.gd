@@ -24,6 +24,12 @@ func run(driver: Node) -> void:
 		await driver.walk_to(room.position + Vector3(0, 0, -2.30))
 		main.player.aim_at(room.position + Vector3(0, 1.0, 1.80))
 		await driver.shot("%s_south" % NAMES[id])
+		var art := room.get_node_or_null("Furnishings/WallArt") as Node3D
+		if art != null:
+			var viewpoint: Vector3 = {2: Vector3(1.2, 0, 0.8), 3: Vector3(-1.2, 0, 0), 5: Vector3(1.3, 0, -0.8), 6: Vector3(1.2, 0, -0.8)}[id]
+			await driver.walk_to(room.position + viewpoint)
+			main.player.aim_at(art.global_position)
+			await driver.shot("%s_wall_art" % NAMES[id])
 		if id == 3:
 			await driver.walk_to(room.position + Vector3(-1.0, 0, 1.3))
 			main.player.aim_at(room.position + Vector3(-2.38, 1.0, 2.28))

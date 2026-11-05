@@ -74,6 +74,7 @@ func study() -> void:
 	meridian.rotation.z = PI / 2 - 0.35
 	ring(stand, 0.258, 0.267, Vector3(0, 1.06, 0), "B5B691")
 	chair("ReadingChair", Vector3(2.10, 0, 1.95), -PI * 0.75, "547563", true)
+	wall_art(preload("res://assets/wall_art/study.svg"), Vector3(1.85, 1.95, 2.995), Vector2(0.72, 0.912), PI)
 
 func kitchen() -> void:
 	var sink := cabinet("SinkCounter", Vector3(-2.55, 0, -1.80), 1.65, 0.80, 0.68, "C6AA68", PI / 2)
@@ -103,6 +104,7 @@ func kitchen() -> void:
 	box(prep, Vector3(1.60, 0.05, 0.92), Vector3(0, 0.875, 0), "F2E7D0")
 	box(prep, Vector3(0.55, 0.025, 0.38), Vector3(0.25, 0.913, 0), "B18B5E", 0.003)
 	bowl(prep, Vector3(-0.43, 0.90, 0), 0.14, 0.12)
+	wall_art(preload("res://assets/wall_art/kitchen.svg"), Vector3(-2.995, 1.70, 0), Vector2(0.96, 0.72), PI / 2)
 
 func living() -> void:
 	box(self, Vector3(2.10, 0.006, 2.1), Vector3(-1.86, 0.004, -1.83), "D9B48A", 0.0)
@@ -133,6 +135,7 @@ func living() -> void:
 	var console := cabinet("LowSideboard", Vector3(2.56, 0, 1.60), 1.45, 0.90, 0.52, WOOD, -PI / 2)
 	for i in 2:
 		box(console, Vector3(0.38, 0.045, 0.26), Vector3(-0.34, 0.928 + i * 0.047, 0.16), "768D80" if i == 0 else "AA8865", 0.003)
+	wall_art(preload("res://assets/wall_art/living.svg"), Vector3(1.85, 1.96, -2.995), Vector2(0.96, 0.72))
 
 func dining() -> void:
 	var dining_table := table("DiningTable", Vector3(-1.55, 0, 0), 0.80, 2.30, 0.75, "6A3A2A")
@@ -155,6 +158,22 @@ func dining() -> void:
 		bowl(china, Vector3(x, 1.28, 0.025), 0.125, 0.075)
 	solid(china, Vector3(1.44, 1.95, 0.48), Vector3(0, 0.975, 0))
 	table("ServingTable", Vector3(-1.60, 0, 2.56), 1.30, 0.48, 0.90, "6A3A2A")
+	wall_art(preload("res://assets/wall_art/dining.svg"), Vector3(1.80, 1.78, -2.995), Vector2(1.0, 0.75))
+
+func wall_art(texture: Texture2D, at: Vector3, art_size: Vector2, yaw: float = 0.0) -> void:
+	var frame := group("WallArt", at, yaw)
+	var print_mesh := MeshInstance3D.new()
+	var sheet := QuadMesh.new()
+	sheet.size = art_size
+	print_mesh.mesh = sheet
+	print_mesh.material_override = ManorGeometry.printed_material(texture)
+	print_mesh.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	frame.add_child(print_mesh)
+	print_mesh.position.z = 0.012
+	var bar := 0.027
+	for side in [-1, 1]:
+		box(frame, Vector3(art_size.x + 2 * bar, bar, 0.035), Vector3(0, side * (art_size.y + bar) / 2, 0.018), WOOD, 0.002)
+		box(frame, Vector3(bar, art_size.y, 0.035), Vector3(side * (art_size.x + bar) / 2, 0, 0.018), WOOD, 0.002)
 
 func foyer() -> void:
 	var bench := table("EntryBench", Vector3(1.85, 0, -2.50), 1.70, 0.65, 0.43)
