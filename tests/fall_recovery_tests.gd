@@ -56,6 +56,16 @@ func run() -> void:
 	var before := main.player.position
 	await create_timer(0.4).timeout
 	check(main.player.position.distance_to(before) > 0.7, "player can walk away from bed after recovery")
+	# One slide from assembled, so the next target stays reachable once this one completes.
+	main.rules.board = PackedInt32Array([0, -1, 2, 3, 1, 5, 6, 7, 8])
+	for id in main.rooms:
+		main.rooms[id].position = ManorGeometry.center(main.rules.board.find(id))
+	main.objectives.active = 0
+	main.first_coin_guide.seen = true
+	main.rules.player = ManorRules.OUTSIDE
+	main.fall_recovery._recover()
+	await create_timer(0.7).timeout
+	check(main.objectives.completed.has(0) and main.coin_drawers[0].opened, "waking in the home blue room completes its objective")
 	main.queue_free()
 	await process_frame
 	print("Fall recovery: %d checks, %d failures" % [checks, failures])

@@ -28,7 +28,10 @@ func _recover() -> void:
 	manor.player.cancel_pull()
 	var transition := create_tween()
 	transition.tween_property(manor.fade, "color:a", 1.0, FADE_OUT)
-	transition.tween_callback(_wake)
+	transition.tween_callback(func() -> void:
+		_wake()
+		# Waking can place the player in the blue room without walking or sliding into it.
+		manor.refresh_progress())
 	transition.tween_interval(0.15)
 	transition.tween_property(manor.fade, "color:a", 0.0, FADE_IN).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 	transition.tween_callback(func() -> void:

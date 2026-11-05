@@ -48,6 +48,7 @@ func run() -> void:
 		var sound_before := cues.count("lever_blocked")
 		check(main.player.begin_interact() and cues.count("lever_blocked") == sound_before + 1, "room %d drawer rattles through normal interaction" % id)
 		check(not drawer.opened and not drawer.take_coin() and main.coins.pending.is_empty(), "locked drawer cannot grant a coin")
+		check(not drawer.coin.visible, "a closed drawer's coin is not drawn")
 		drawer._process(0.06)
 		check(absf(drawer.tray.position.z) > 0.001, "locked drawer physically rattles")
 		drawer._process(1)

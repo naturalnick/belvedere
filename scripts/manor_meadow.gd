@@ -93,7 +93,7 @@ func _build_ground(grass: Material, collision_y: float) -> void:
 	# The flat ground receives house shadows but must not shadow itself at grazing angles.
 	ground.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	add_child(ground)
-	# A separate center keeps ordinary gaps walkable until the conservatory hatch opens.
+	# A separate center keeps ordinary gaps walkable until the conservatory shaft opens.
 	center_ground = Node3D.new()
 	center_ground.name = "CenterGround"
 	add_child(center_ground)

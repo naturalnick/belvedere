@@ -76,12 +76,13 @@ func setup(game: Manor, id: int) -> void:
 	_refresh()
 
 func _refresh() -> void:
-	coin.visible = not manor.coins.collected.has(room_id)
 	if manor.coins.awarded.has(room_id) and not opened:
 		opened = true
 		rattles = false
 		opening = 0.0
 		set_process(true)
+	# A closed drawer hides its coin, which would otherwise still cost draw calls in every view.
+	coin.visible = opened and not manor.coins.collected.has(room_id)
 	coin_hit.collision_layer = 1 if opened and opening >= OPEN_TIME and coin.visible else 0
 
 func interact() -> bool:
