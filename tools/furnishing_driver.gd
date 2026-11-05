@@ -37,6 +37,9 @@ func run(driver: Node) -> void:
 			await driver.walk_to(room.position + Vector3(1.2, 0, -0.8))
 			main.player.aim_at(room.position + Vector3(1.85, 0.65, -2.35))
 			await driver.shot("bathroom_bench")
+			await driver.walk_to(room.position + Vector3(0.9, 0, 1.0))
+			main.player.aim_at(room.position + Vector3(2.55, 0.55, 1.80))
+			await driver.shot("bathroom_toilet")
 		if id == 3:
 			await driver.walk_to(room.position + Vector3(-1.0, 0, 1.3))
 			main.player.aim_at(room.position + Vector3(-2.38, 1.0, 2.28))

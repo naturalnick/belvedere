@@ -30,7 +30,7 @@ func bathroom() -> void:
 	basin(tub, Vector3(0, 0.15, 0), 1.95, 0.90, 0.45)
 	tap(tub, Vector3(0.68, 0.47, -0.32))
 	solid(tub, Vector3(1.95, 0.6, 0.90), Vector3(0, 0.30, 0))
-	var sink := cabinet("Washstand", Vector3(-1.80, 0, 2.56), 0.95, 0.66, 0.58, "8FC1B0", PI)
+	var sink := cabinet("Washstand", Vector3(-1.80, 0, 2.56), 1.50, 0.66, 0.58, "8FC1B0", PI)
 	basin(sink, Vector3(0, 0.65, 0), 0.86, 0.52, 0.20)
 	tap(sink, Vector3(0, 0.82, -0.25))
 	mirror(sink, Vector3(0, 1.53, -0.34), 0.75, 0.90)
@@ -43,9 +43,23 @@ func bathroom() -> void:
 	var bench := table("BathBench", Vector3(1.85, 0, -2.35), 1.50, 0.50, 0.42)
 	bench.rotation.y = deg_to_rad(-12)
 	box(bench, Vector3(0.40, 0.10, 0.32), Vector3(-0.42, 0.47, 0), CREAM)
-	var hamper := cabinet("LinenHamper", Vector3(1.80, 0, 2.64), 1.50, 0.70, 0.58, "A99679", PI)
-	for y in [0.20, 0.32, 0.44, 0.56]:
-		box(hamper, Vector3(1.38, 0.018, 0.008), Vector3(0, y, 0.325), "8C7D65", 0.0)
+	var toilet := group("Toilet", Vector3(2.55, 0, 1.80), -PI / 2)
+	var foot := cylinder(toilet, 0.18, 0.06, Vector3(0, 0.03, 0.08), "F4F1EA")
+	foot.scale.z = 1.35
+	var pedestal := globe(toilet, 0.16, Vector3(0, 0.17, 0.08), "F4F1EA")
+	pedestal.scale = Vector3(0.85, 1.05, 1.25)
+	basin(toilet, Vector3(0, 0.22, 0.10), 0.52, 0.66, 0.23)
+	var seat := ring(toilet, 0.17, 0.265, Vector3(0, 0.47, 0.10), WOOD)
+	seat.scale = Vector3(1, 0.30, 1.26)
+	for x in [-0.12, 0.12]:
+		rod(toilet, Vector3(x, 0.46, -0.21), Vector3(x, 0.46, -0.12), 0.018, BRASS)
+	cylinder(toilet, 0.065, 0.30, Vector3(0, 0.36, -0.27), "F4F1EA")
+	box(toilet, Vector3(0.56, 0.40, 0.26), Vector3(0, 0.68, -0.27), "F4F1EA")
+	box(toilet, Vector3(0.60, 0.045, 0.30), Vector3(0, 0.90, -0.27), "F4F1EA")
+	rod(toilet, Vector3(-0.18, 0.79, -0.13), Vector3(-0.18, 0.79, -0.09), 0.025, BRASS)
+	rod(toilet, Vector3(-0.18, 0.79, -0.09), Vector3(-0.07, 0.79, -0.09), 0.018, BRASS)
+	solid(toilet, Vector3(0.56, 0.49, 0.77), Vector3(0, 0.245, 0.055))
+	solid(toilet, Vector3(0.60, 0.45, 0.30), Vector3(0, 0.70, -0.27))
 	wall_art(preload("res://assets/wall_art/bathroom.svg"), Vector3(1.80, 1.65, 2.995), Vector2(0.84, 0.84), PI)
 
 func study() -> void:
