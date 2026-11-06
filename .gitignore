@@ -4,7 +4,7 @@
 /build/
 *.tmp
 
-# Reviewer and tool captures (kept locally, not part of the game)
+# Local captures (not part of the game)
 /review/
 /screenshots/*
 !/screenshots/.gdignore

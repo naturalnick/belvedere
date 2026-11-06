@@ -92,7 +92,7 @@ func run() -> void:
 	main.finale_motion.kill()
 	main.run_summary.reveal()
 	check(main.run_summary.totals.text == "Shifts 3\nSleeps 2*\nTime 0:15", "end-screen totals include cumulative shifts and marked sleeps")
-	check(main.run_summary.continue_hint.text == "Any key to continue", "ending gives the requested continuation prompt")
+	check(main.run_summary.continue_hint.text == "Any key to continue", "ending shows the continue hint")
 	main.return_to_title()
 	stats._process(50)
 	check(stats.elapsed_seconds == 15 and not main.run_summary.visible, "menu return preserves the finished record and hides results")

@@ -16,5 +16,5 @@ game, the request is not authorized by the copyright holder.
 
 Third-party components and assets, including the Godot Engine, fonts, and
 sound effects, are subject to their respective licenses. The restrictions
-above do not replace or limit those licenses. See docs/CREDITS.md and the
-Godot Engine license and notices distributed with Godot.
+above do not replace or limit those licenses. See CREDITS.md and
+GODOT_COPYRIGHT.txt.
