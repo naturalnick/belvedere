@@ -1,22 +1,8 @@
-extends SceneTree
+extends "res://tests/manor_test.gd"
 const FIXTURE = preload("res://tools/conservatory_fixture.gd")
-var checks := 0
-var failures := 0
-
-func _initialize() -> void:
-	call_deferred("run")
-
-func check(ok: bool, message: String) -> void:
-	checks += 1
-	if not ok:
-		failures += 1
-		printerr("FAIL: ", message)
 
 func run() -> void:
-	var main: Manor = load("res://scenes/manor.tscn").instantiate()
-	root.add_child(main)
-	main.start_play()
-	main.player.automated = true
+	var main := start_manor()
 	var c := main.conservatory
 	var cues: Array[String] = []
 	main.audio.cued.connect(func(group: String) -> void: cues.append(group))
@@ -97,10 +83,7 @@ func run() -> void:
 	c._process(10)
 	check(c.accessible() and c.room.position.y == 0 and c.shaft.visible, "room docks flush before access is enabled")
 	check(not front.opened and not c.exit_unlocked, "red door still needs the key after the reveal")
-	var driver: Node = load("res://tools/demo_driver.gd").new()
-	root.add_child(driver)
-	driver.main = main
-	driver.started = Time.get_ticks_msec()
+	var driver := add_driver(main)
 	await driver.walk_to(Vector3(0, 0, 2.35))
 	check(main.rules.player == -1 and main.rules.slot() == 4 and main.player.is_on_floor(), "player walks onto the conservatory floor without changing puzzle state")
 	main.player.aim_at(c.room.key.global_position)
@@ -166,14 +149,10 @@ func run() -> void:
 	await process_frame
 	for last_room in [1, 3, 5]:
 		await check_other_entrance(last_room)
-	print("Conservatory: %d checks, %d failures" % [checks, failures])
-	quit(1 if failures else 0)
+	finish("Conservatory")
 
 func check_other_entrance(last_room: int) -> void:
-	var main: Manor = load("res://scenes/manor.tscn").instantiate()
-	root.add_child(main)
-	main.start_play()
-	main.player.automated = true
+	var main := start_manor()
 	FIXTURE.prepare(main, last_room)
 	main.player.aim_at(ManorGeometry.center(last_room) * 3 + Vector3.UP * 1.4)
 	await physics_frame
@@ -194,10 +173,7 @@ func check_other_entrance(last_room: int) -> void:
 	c._process(7)
 	# Let the pickup run normally while the driver exercises the real route around the garden.
 	c.set_process(true)
-	var driver: Node = load("res://tools/demo_driver.gd").new()
-	root.add_child(driver)
-	driver.main = main
-	driver.started = Time.get_ticks_msec()
+	var driver := add_driver(main)
 	await driver.collect_red_key()
 	check(c.key_owned and main.rules.player == 7, "room %d entrance reaches the key and returns to Foyer" % last_room)
 	main.queue_free()

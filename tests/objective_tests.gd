@@ -1,16 +1,4 @@
-extends SceneTree
-
-var checks := 0
-var failures := 0
-
-func _initialize() -> void:
-	call_deferred("run")
-
-func check(condition: bool, message: String) -> void:
-	checks += 1
-	if not condition:
-		failures += 1
-		printerr("FAIL: ", message)
+extends "res://tests/manor_test.gd"
 
 func run() -> void:
 	var opening := ManorRules.opening_start()
@@ -89,5 +77,4 @@ func run() -> void:
 	simultaneous.active = 8
 	solved.player = 8
 	check(simultaneous.advance(solved) == [8] and simultaneous.bonus_won and not simultaneous.all_completed, "a final shift can earn its active blue coin and unlock the conservatory together")
-	print("Objectives: %d checks, %d failures" % [checks, failures])
-	quit(1 if failures else 0)
+	finish("Objectives")

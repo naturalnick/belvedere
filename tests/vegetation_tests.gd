@@ -1,16 +1,4 @@
-extends SceneTree
-
-var checks := 0
-var failures := 0
-
-func _initialize() -> void:
-	call_deferred("run")
-
-func check(ok: bool, message: String) -> void:
-	checks += 1
-	if not ok:
-		failures += 1
-		printerr("FAIL: ", message)
+extends "res://tests/manor_test.gd"
 
 func run() -> void:
 	var meadow := ManorMeadow.new()
@@ -87,5 +75,4 @@ func run() -> void:
 		check(not hit.is_empty() and is_equal_approx(hit.position.y, -0.02), "shaft opening preserves the surrounding lawn collision")
 	meadow.queue_free()
 	await process_frame
-	print("Vegetation: %d checks, %d failures" % [checks, failures])
-	quit(1 if failures else 0)
+	finish("Vegetation")

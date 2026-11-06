@@ -1,17 +1,6 @@
-extends SceneTree
+extends "res://tests/manor_test.gd"
 
-var checks := 0
-var failures := 0
 var cues: Array[String] = []
-
-func _initialize() -> void:
-	call_deferred("run")
-
-func check(condition: bool, message: String) -> void:
-	checks += 1
-	if not condition:
-		failures += 1
-		printerr("FAIL: ", message)
 
 func count(group: String) -> int:
 	return cues.count(group)
@@ -20,8 +9,7 @@ func run() -> void:
 	create_timer(30).timeout.connect(func() -> void:
 		printerr("FAIL: audio tests timed out")
 		quit(1))
-	var main: Manor = load("res://scenes/manor.tscn").instantiate()
-	root.add_child(main)
+	var main := load_manor()
 	main.start_play()
 	preload("res://tools/furnishing_fixture.gd").place(main, 7)
 	main.player.automated = true
@@ -102,10 +90,7 @@ func run() -> void:
 	await create_timer(0.3).timeout
 	check(cues.is_empty(), "standing still is silent")
 
-	var driver: Node = load("res://tools/demo_driver.gd").new()
-	root.add_child(driver)
-	driver.main = main
-	driver.started = Time.get_ticks_msec()
+	var driver := add_driver(main)
 	await driver.approach_lever(foyer)
 	cues.clear()
 	main.player.aim_at(foyer.lever.global_position + Vector3.UP * 0.8)
@@ -162,5 +147,4 @@ func run() -> void:
 
 	main.queue_free()
 	await process_frame
-	print("Audio: %d checks, %d failures" % [checks, failures])
-	quit(1 if failures else 0)
+	finish("Audio")

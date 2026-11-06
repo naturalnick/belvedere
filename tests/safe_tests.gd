@@ -1,23 +1,8 @@
-extends SceneTree
-
-var checks := 0
-var failures := 0
-
-func _initialize() -> void:
-	call_deferred("run")
-
-func check(ok: bool, message: String) -> void:
-	checks += 1
-	if not ok:
-		failures += 1
-		printerr("FAIL: ", message)
+extends "res://tests/manor_test.gd"
 
 func run() -> void:
 	create_timer(35).timeout.connect(func() -> void: quit(1))
-	var main: Manor = load("res://scenes/manor.tscn").instantiate()
-	root.add_child(main)
-	main.start_play()
-	main.player.automated = true
+	var main := start_manor()
 	var safe := main.study_safe
 	check(safe.contents.get_child_count() == 1 and not safe.unlocked, "safe starts locked with binoculars inside")
 	check(safe.position.x > 2.0 and absf(safe.position.z) < 0.1, "safe is on Study east window wall, between globe and chair")
@@ -104,5 +89,4 @@ func run() -> void:
 			check(mat.get_shader_parameter("clue_room_origin") == clue.room.global_position, "window visibility follows room movement")
 	main.queue_free()
 	await process_frame
-	print("Safe: %d checks, %d failures" % [checks, failures])
-	quit(1 if failures else 0)
+	finish("Safe")

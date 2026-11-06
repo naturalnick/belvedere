@@ -1,4 +1,4 @@
-extends SceneTree
+extends "res://tests/manor_test.gd"
 # Sheet coordinates from tools/gen_plan.py; the sheet shows east at the top and south to the right.
 const VIEW_SIZE := 2048.0
 const MARGIN := 170.0
@@ -6,18 +6,7 @@ const CELL := (VIEW_SIZE - 2.0 * MARGIN) / 3.0
 const WINDOW_OFFSET := 150.0
 const LIGHT := 0.90
 const DARK := 0.85
-var checks := 0
-var failures := 0
 var sheet: Image
-
-func _initialize() -> void:
-	call_deferred("run")
-
-func check(ok: bool, message: String) -> void:
-	checks += 1
-	if not ok:
-		failures += 1
-		printerr("FAIL: ", message)
 
 func run() -> void:
 	var source := FileAccess.get_file_as_string("res://assets/house_plan.svg")
@@ -38,10 +27,9 @@ func run() -> void:
 	root.add_child(foyer)
 	check(not foyer.has_node("HousePlan"), "only the Laundry has a plan")
 	foyer.queue_free()
-	print("House plan: %d checks, %d failures" % [checks, failures])
 	furniture.queue_free()
 	await process_frame
-	quit(1 if failures else 0)
+	finish("House plan")
 
 func check_side(room: int, direction: int) -> void:
 	var cell := Vector2(room / 3, 2 - room % 3) * CELL + Vector2.ONE * (MARGIN + CELL / 2.0)

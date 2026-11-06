@@ -1,11 +1,5 @@
-extends SceneTree
-var failures := 0
-func _initialize() -> void:
-	call_deferred("run")
-func check(ok: bool, message: String) -> void:
-	if not ok:
-		failures += 1
-		printerr("FAIL: ", message)
+extends "res://tests/manor_test.gd"
+
 func run() -> void:
 	var door := ManorDoor.new()
 	root.add_child(door)
@@ -30,5 +24,4 @@ func run() -> void:
 	check(is_equal_approx(door.leaves[0].rotation.y, deg_to_rad(-100)) and is_equal_approx(door.leaves[1].rotation.y, deg_to_rad(100)), "unlock interrupts rattle and opens both leaves")
 	door.queue_free()
 	await process_frame
-	print("Door motion: 7 checks, %d failures" % failures)
-	quit(1 if failures else 0)
+	finish("Door motion")

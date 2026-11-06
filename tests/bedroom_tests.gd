@@ -1,18 +1,7 @@
-extends SceneTree
-var checks := 0
-var failures := 0
-func _initialize() -> void:
-	call_deferred("run")
-func check(ok: bool, message: String) -> void:
-	checks += 1
-	if not ok:
-		failures += 1
-		printerr("FAIL: ", message)
+extends "res://tests/manor_test.gd"
+
 func run() -> void:
-	var main: Manor = load("res://scenes/manor.tscn").instantiate()
-	root.add_child(main)
-	main.start_play()
-	main.player.automated = true
+	var main := start_manor()
 	await physics_frame
 	await physics_frame
 	for id in main.rooms:
@@ -24,10 +13,7 @@ func run() -> void:
 	# The moving drawer and removable coin cannot join the furniture's static batches.
 	check(meshes.size() <= 68, "bedroom and interactive drawer stay within mesh budget")
 	check(not furniture.is_processing(), "furniture has no ambient animation")
-	var driver: Node = load("res://tools/demo_driver.gd").new()
-	root.add_child(driver)
-	driver.main = main
-	driver.started = Time.get_ticks_msec()
+	var driver := add_driver(main)
 	main.rules.player = 0
 	main.player.position = room.position + Vector3(0, 0.02, 1.2)
 	for i in range(25):
@@ -69,8 +55,7 @@ func run() -> void:
 		await process_frame
 	check(bed.global_position.is_equal_approx(before + Vector3.RIGHT * 6.25), "furniture rides exactly one slot")
 	check(main.rules.valid(), "furnished slide preserves rules")
-	print("Bedroom: %d checks, %d failures" % [checks, failures])
 	main.queue_free()
 	driver.queue_free()
 	await process_frame
-	quit(1 if failures else 0)
+	finish("Bedroom")

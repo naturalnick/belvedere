@@ -1,21 +1,9 @@
-extends SceneTree
+extends "res://tests/manor_test.gd"
 
 const SHELL_LAYER := 1 << 19
-var checks := 0
-var failures := 0
-
-func _initialize() -> void:
-	call_deferred("run")
-
-func check(ok: bool, message: String) -> void:
-	checks += 1
-	if not ok:
-		failures += 1
-		printerr("FAIL: ", message)
 
 func run() -> void:
-	var main: Manor = load("res://scenes/manor.tscn").instantiate()
-	root.add_child(main)
+	var main := load_manor()
 	await process_frame
 	var to_sun := ManorGeometry.to_sun()
 	var sun: DirectionalLight3D = main.find_children("*", "DirectionalLight3D", false, false)[0]
@@ -68,10 +56,10 @@ func run() -> void:
 	check(trimmed > casting, "most enclosed furniture leaves the shadow map")
 	main.queue_free()
 	await process_frame
-	print("Shadows: %d checks, %d failures" % [checks, failures])
-	quit(1 if failures else 0)
+	finish("Shadows")
 
 # Opaque architecture only: glass, door leaves and lintels count as open, which can only add light.
+
 func _add_shell_collision(main: Manor, room: ManorRoom, furniture: Node3D) -> void:
 	var open: Array[Node] = [furniture, room.lever, room.overview_roof, room.overview_edges]
 	open.append_array(room.door_headers)

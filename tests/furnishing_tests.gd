@@ -1,26 +1,9 @@
-extends SceneTree
+extends "res://tests/manor_test.gd"
 const FIXTURE = preload("res://tools/furnishing_fixture.gd")
-var checks := 0
-var failures := 0
-
-func _initialize() -> void:
-	call_deferred("run")
-
-func check(ok: bool, message: String) -> void:
-	checks += 1
-	if not ok:
-		failures += 1
-		printerr("FAIL: ", message)
 
 func run() -> void:
-	var main: Manor = load("res://scenes/manor.tscn").instantiate()
-	root.add_child(main)
-	main.start_play()
-	main.player.automated = true
-	var driver: Node = load("res://tools/demo_driver.gd").new()
-	root.add_child(driver)
-	driver.main = main
-	driver.started = Time.get_ticks_msec()
+	var main := start_manor()
+	var driver := add_driver(main)
 	Engine.time_scale = 4.0
 	for id in [1, 2, 3, 5, 6, 7, 8]:
 		FIXTURE.place(main, id)
@@ -81,8 +64,7 @@ func run() -> void:
 		for i in solids.size():
 			check(solids[i].global_position.is_equal_approx(before[i] + Vector3.RIGHT * 6.25), "furniture collision rides room %d" % id)
 		check(main.rules.valid(), "furnished slide preserves rules")
-	print("Furnishings: %d checks, %d failures" % [checks, failures])
 	main.queue_free()
 	driver.queue_free()
 	await process_frame
-	quit(1 if failures else 0)
+	finish("Furnishings")

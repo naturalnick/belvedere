@@ -1,16 +1,4 @@
-extends SceneTree
-
-var checks := 0
-var failures := 0
-
-func _initialize() -> void:
-	call_deferred("run")
-
-func check(ok: bool, message: String) -> void:
-	checks += 1
-	if not ok:
-		failures += 1
-		printerr("FAIL: ", message)
+extends "res://tests/manor_test.gd"
 
 func receive_pending(main: Manor) -> void:
 	while not main.coins.pending.is_empty():
@@ -18,8 +6,7 @@ func receive_pending(main: Manor) -> void:
 
 func run() -> void:
 	create_timer(35).timeout.connect(func() -> void: quit(1))
-	var main: Manor = load("res://scenes/manor.tscn").instantiate()
-	root.add_child(main)
+	var main := load_manor()
 	var stats := main.run_stats
 	stats.set_process(false)
 	stats._process(30.0)
@@ -98,5 +85,4 @@ func run() -> void:
 	check(stats.elapsed_seconds == 15 and not main.run_summary.visible, "menu return preserves the finished record and hides results")
 	main.queue_free()
 	await process_frame
-	print("Run tracking: %d checks, %d failures" % [checks, failures])
-	quit(1 if failures else 0)
+	finish("Run tracking")

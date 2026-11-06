@@ -1,16 +1,4 @@
-extends SceneTree
-
-var checks := 0
-var failures := 0
-
-func _initialize() -> void:
-	call_deferred("run")
-
-func check(ok: bool, message: String) -> void:
-	checks += 1
-	if not ok:
-		failures += 1
-		printerr("FAIL: ", message)
+extends "res://tests/manor_test.gd"
 
 func face_bed(main: Manor) -> void:
 	main.fall_recovery._wake()
@@ -36,10 +24,7 @@ func shift_once(main: Manor) -> void:
 
 func run() -> void:
 	create_timer(45).timeout.connect(func() -> void: quit(1))
-	var main: Manor = load("res://scenes/manor.tscn").instantiate()
-	root.add_child(main)
-	main.start_play()
-	main.player.automated = true
+	var main := start_manor()
 	main.first_coin_guide.seen = true
 	var opening := main.rules.board.duplicate()
 	await face_bed(main)
@@ -137,5 +122,4 @@ func run() -> void:
 	check(main.player.position.distance_to(before) > 0.7, "player can walk away after waking")
 	main.queue_free()
 	await process_frame
-	print("Bed sleep: %d checks, %d failures" % [checks, failures])
-	quit(1 if failures else 0)
+	finish("Bed sleep")

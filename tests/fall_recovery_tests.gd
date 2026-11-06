@@ -1,21 +1,10 @@
-extends SceneTree
-var checks := 0
-var failures := 0
-func _initialize() -> void:
-	call_deferred("run")
-func check(ok: bool, message: String) -> void:
-	checks += 1
-	if not ok:
-		failures += 1
-		printerr("FAIL: ", message)
+extends "res://tests/manor_test.gd"
+
 func run() -> void:
 	create_timer(25).timeout.connect(func() -> void:
 		printerr("FAIL: fall recovery timed out")
 		quit(1))
-	var main: Manor = load("res://scenes/manor.tscn").instantiate()
-	root.add_child(main)
-	main.start_play()
-	main.player.automated = true
+	var main := start_manor()
 	# Move Bedroom to a different slot so respawning at its home or old position fails.
 	var old_slot := main.rules.board.find(0)
 	var gap := main.rules.board.find(-1)
@@ -68,5 +57,4 @@ func run() -> void:
 	check(main.objectives.completed.has(0) and main.coin_drawers[0].opened, "waking in the home blue room completes its objective")
 	main.queue_free()
 	await process_frame
-	print("Fall recovery: %d checks, %d failures" % [checks, failures])
-	quit(1 if failures else 0)
+	finish("Fall recovery")

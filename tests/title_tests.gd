@@ -1,19 +1,7 @@
-extends SceneTree
-var checks := 0
-var failures := 0
-
-func _initialize() -> void:
-	call_deferred("run")
-
-func check(ok: bool, message: String) -> void:
-	checks += 1
-	if not ok:
-		failures += 1
-		printerr("FAIL: ", message)
+extends "res://tests/manor_test.gd"
 
 func run() -> void:
-	var main: Manor = load("res://scenes/manor.tscn").instantiate()
-	root.add_child(main)
+	var main := load_manor()
 	check(main.scene_fade.color.a == 1.0 and main.play_gate.modulate.a == 1.0, "scene begins dark while menu UI is fully visible")
 	var wall := main.wall_title
 	check(main.at_title and main.play_gate.mode == "title" and main.controls_locked(), "new game waits on the wall title")
@@ -67,5 +55,4 @@ func run() -> void:
 	check(main.player.global_position.is_equal_approx(main.rooms[0].to_global(ManorWallTitle.SPAWN)), "returning title uses the Bedroom's current position")
 	main.queue_free()
 	await process_frame
-	print("Wall title: %d checks, %d failures" % [checks, failures])
-	quit(1 if failures else 0)
+	finish("Wall title")

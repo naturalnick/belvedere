@@ -1,35 +1,7 @@
-extends SceneTree
-
-var checks := 0
-var failures := 0
-
-func _initialize() -> void:
-	call_deferred("run")
-
-func check(condition: bool, message: String) -> void:
-	checks += 1
-	if not condition:
-		failures += 1
-		printerr("FAIL: ", message)
-
-
-func press(key: Key = KEY_SPACE) -> InputEventKey:
-	var event := InputEventKey.new()
-	event.physical_keycode = key
-	event.keycode = key
-	event.pressed = true
-	return event
-
-func receive_coin(main: Manor) -> void:
-	main.coin_hud._process(ManorCoinHUD.HOLD_AT)
-	main.coin_hud._input(press())
-	main.coin_hud._process(ManorCoinHUD.PRESENT_TIME)
+extends "res://tests/manor_test.gd"
 
 func run() -> void:
-	var main: Manor = load("res://scenes/manor.tscn").instantiate()
-	root.add_child(main)
-	main.start_play()
-	main.player.automated = true
+	var main := start_manor()
 	await physics_frame
 	await physics_frame
 	check(main.objective_display.lamps.size() == 7 and not main.objective_display.lamps.has(7), "exactly seven pendants, excluding Foyer")
@@ -155,7 +127,7 @@ func run() -> void:
 	await create_timer(ManorEnding.CREDIT_GAP_SECONDS + 2.0).timeout
 	check(main.ending.thanks.modulate.a > 0 and main.ending.thanks.modulate.a < 1 and not main.at_title, "thank-you fades in after the additional wait")
 	check(not main.run_summary.revealed, "totals wait until every ending line has faded in")
-	main.run_summary._input(press())
+	main.run_summary._input(key_press())
 	check(not main.run_summary.exiting, "early key presses cannot skip the credits")
 	while not main.run_summary.ready_to_continue:
 		await process_frame
@@ -165,11 +137,11 @@ func run() -> void:
 	main.release_pointer()
 	await process_frame
 	check(not main.run_summary.visible, "pause hides the results behind the menu")
-	main.run_summary._input(press())
+	main.run_summary._input(key_press())
 	check(not main.run_summary.exiting, "menu key presses cannot accept the results")
 	main.resume_play()
 	await process_frame
-	var repeated := press()
+	var repeated := key_press()
 	repeated.echo = true
 	main.run_summary._input(repeated)
 	main.run_summary._input(InputEventMouseMotion.new())
@@ -178,17 +150,14 @@ func run() -> void:
 	click.pressed = true
 	main.run_summary._input(click)
 	check(not main.run_summary.exiting, "held keys, mouse movement and clicks cannot dismiss the ending")
-	main.run_summary._input(press(KEY_ESCAPE))
+	main.run_summary._input(key_press(KEY_ESCAPE))
 	check(main.run_summary.exiting and not main.at_title, "a fresh key begins the fade back to menu")
 	await create_timer(ManorRunSummary.FADE_SECONDS + 0.2).timeout
 	check(main.at_title and main.play_gate.mode == "title" and not main.run_summary.visible, "keypress returns to title with results hidden")
 	check(not main.ending.is_processing(), "flower updates stop at title")
 	main.queue_free()
 	await process_frame
-	var fresh: Manor = load("res://scenes/manor.tscn").instantiate()
-	root.add_child(fresh)
-	fresh.start_play()
-	fresh.player.automated = true
+	var fresh := start_manor()
 	check(fresh.run_stats.shifts == 0 and fresh.run_stats.sleeps == 0 and fresh.run_stats.falls == 0 and fresh.run_stats.elapsed_seconds == 0, "a new game starts with fresh run statistics")
 	check(fresh.coins.inserted == 0 and fresh.coins.available == 0 and fresh.coins.pending.is_empty() and fresh.objectives.active == 8, "a fresh game resets the wallet, device and presentation queue")
 	fresh.rules.board = PackedInt32Array(ManorRules.HOME)
@@ -197,5 +166,4 @@ func run() -> void:
 	check(not fresh.play_gate.visible and fresh.coins.inserted == 0, "house-first ending never bypasses the trophy's coin deposits")
 	fresh.queue_free()
 	await process_frame
-	print("Endings: %d checks, %d failures" % [checks, failures])
-	quit(1 if failures else 0)
+	finish("Endings")

@@ -1,36 +1,16 @@
-extends SceneTree
-var checks := 0
-var failures := 0
+extends "res://tests/manor_test.gd"
 var lock := false
-
-func _initialize() -> void:
-	call_deferred("run")
-
-func check(ok: bool, message: String) -> void:
-	checks += 1
-	if not ok:
-		failures += 1
-		printerr("FAIL: ", message)
 
 func wait(seconds: float) -> void:
 	await create_timer(seconds).timeout
 	await process_frame
 
-func key(code: Key, echo := false) -> InputEventKey:
-	var event := InputEventKey.new()
-	event.physical_keycode = code
-	event.keycode = code
-	event.pressed = true
-	event.echo = echo
-	return event
-
 func press(code: Key, echo := false) -> void:
-	root.push_input(key(code, echo))
+	root.push_input(key_press(code, echo))
 	await process_frame
 
 func run() -> void:
-	var main: Manor = load("res://scenes/manor.tscn").instantiate()
-	root.add_child(main)
+	var main := load_manor()
 	if OS.get_cmdline_user_args().has("--web-entry"):
 		await watch_pointer(main)
 	else:
@@ -39,8 +19,7 @@ func run() -> void:
 	await pause_keys(main)
 	main.queue_free()
 	await process_frame
-	print("Pointer and pause keys: %d checks, %d failures" % [checks, failures])
-	quit(1 if failures else 0)
+	finish("Pointer and pause keys")
 
 func pause_keys(main: Manor) -> void:
 	var web := main.pointer_watch != null
@@ -65,9 +44,10 @@ func pause_keys(main: Manor) -> void:
 	check(main.play_gate.visible and main.play_gate.mode == "settings", "P does not leave settings")
 	main.play_gate._close_settings()
 	main.resume_play()
-	check(not ManorCoinHUD.is_accept_press(key(KEY_P)) and ManorCoinHUD.is_accept_press(key(KEY_E)), "P pauses instead of accepting a presented reward")
+	check(not ManorCoinHUD.is_accept_press(key_press(KEY_P)) and ManorCoinHUD.is_accept_press(key_press(KEY_E)), "P pauses instead of accepting a presented reward")
 
 # Headless has no real pointer lock, so the test supplies it.
+
 func watch_pointer(main: Manor) -> void:
 	var watch := main.pointer_watch
 	check(watch != null, "web entry installs the pointer watch")

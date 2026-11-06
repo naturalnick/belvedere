@@ -1,15 +1,4 @@
-extends SceneTree
-var checks := 0
-var failures := 0
-
-func _initialize() -> void:
-	call_deferred("run")
-
-func check(ok: bool, message: String) -> void:
-	checks += 1
-	if not ok:
-		failures += 1
-		printerr("FAIL: ", message)
+extends "res://tests/manor_test.gd"
 
 func check_gap_surface(main: Manor, at: Vector3, phase: String) -> void:
 	var has_tracks := false
@@ -41,8 +30,7 @@ func run() -> void:
 	check(gap.get_child_count() == 2, "gap contains only slab mesh and slab collider")
 	check(gap.get_child(0).mesh.get_aabb().end.y + gap.get_child(0).position.y == 0, "tracks never rise above slab")
 	gap.queue_free()
-	var main: Manor = load("res://scenes/manor.tscn").instantiate()
-	root.add_child(main)
+	var main := load_manor()
 	main.start_play()
 	main.rules.player = 8
 	main.place_player_at_spawn()
@@ -80,5 +68,4 @@ func run() -> void:
 	check_gap_surface(main, origin + Vector3(-2.5, 0, 1.8), "source slot after landing")
 	main.queue_free()
 	await process_frame
-	print("Slide motion: %d checks, %d failures" % [checks, failures])
-	quit(1 if failures else 0)
+	finish("Slide motion")

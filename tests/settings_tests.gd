@@ -1,18 +1,7 @@
-extends SceneTree
-var checks := 0
-var failures := 0
-func _initialize() -> void:
-	call_deferred("run")
-func check(ok: bool, message: String) -> void:
-	checks += 1
-	if not ok:
-		failures += 1
-		printerr("FAIL: ", message)
+extends "res://tests/manor_test.gd"
+
 func run() -> void:
-	var main: Manor = load("res://scenes/manor.tscn").instantiate()
-	root.add_child(main)
-	main.start_play()
-	main.player.automated = true
+	var main := start_manor()
 	var original := main.preferences
 	var path := "user://settings-test-%d.cfg" % OS.get_process_id()
 	main.preferences.storage_path = path
@@ -64,5 +53,4 @@ func run() -> void:
 	original.apply(main.player)
 	main.queue_free()
 	await process_frame
-	print("Settings: %d checks, %d failures" % [checks, failures])
-	quit(1 if failures else 0)
+	finish("Settings")

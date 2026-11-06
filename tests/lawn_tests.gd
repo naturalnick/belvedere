@@ -1,16 +1,4 @@
-extends SceneTree
-
-var checks := 0
-var failures := 0
-
-func _initialize() -> void:
-	call_deferred("run")
-
-func check(condition: bool, message: String) -> void:
-	checks += 1
-	if not condition:
-		failures += 1
-		printerr("FAIL: ", message)
+extends "res://tests/manor_test.gd"
 
 func lawn_rules() -> void:
 	var state := ManorRules.opening_start()
@@ -40,19 +28,13 @@ func lawn_rules() -> void:
 
 func run() -> void:
 	lawn_rules()
-	var main: Manor = load("res://scenes/manor.tscn").instantiate()
-	root.add_child(main)
-	main.start_play()
-	main.player.automated = true
+	var main := start_manor()
 	await physics_frame
 	await physics_frame
 	check(main.rooms.size() == 8 and main.rules.board.count(-1) == 1, "default launch is eight rooms, one gap")
 	check(main.rules.board == ManorRules.opening_start().board, "default starts with Laundry bottom-center")
 	check(main.rules.valid() and main.rules.lawn_access, "outdoor access remains enabled")
-	var driver: Node = load("res://tools/demo_driver.gd").new()
-	root.add_child(driver)
-	driver.main = main
-	driver.started = Time.get_ticks_msec()
+	var driver := add_driver(main)
 	await driver.complete_opening_slide()
 	for direction in driver.walk_route(7):
 		await driver.walk_direction(direction)
@@ -76,8 +58,7 @@ func run() -> void:
 	for door in main.rooms[7].doors:
 		if door.is_front:
 			check(not door.opened and door.gate.collision_layer == 1, "front door stays locked")
-	print("Lawn: %d checks, %d failures" % [checks, failures])
 	main.queue_free()
 	driver.queue_free()
 	await process_frame
-	quit(1 if failures else 0)
+	finish("Lawn")

@@ -1,29 +1,10 @@
-extends SceneTree
+extends "res://tests/manor_test.gd"
 
-var checks := 0
-var failures := 0
 var acquisitions := 0
-
-func _initialize() -> void:
-	call_deferred("run")
-
-func check(ok: bool, message: String) -> void:
-	checks += 1
-	if not ok:
-		failures += 1
-		printerr("FAIL: ", message)
-
-func press(key: Key) -> InputEventKey:
-	var event := InputEventKey.new()
-	event.physical_keycode = key
-	event.keycode = key
-	event.pressed = true
-	return event
 
 func run() -> void:
 	create_timer(45).timeout.connect(func() -> void: quit(1))
-	var main: Manor = load("res://scenes/manor.tscn").instantiate()
-	root.add_child(main)
+	var main := load_manor()
 	main.player.automated = true
 	var watch := main.stopwatch
 	var hatch := main.foundation_hatch
@@ -61,14 +42,14 @@ func run() -> void:
 	check(not hatch.busy and watch.presenting and main.controls_locked(), "opening automatically starts the watch reward without a second interaction")
 	check(watch.reward_origin.is_equal_approx(resting_pose) and watch.model.global_transform.is_equal_approx(resting_pose), "reward begins at the exact hatch pose without a pop")
 	check(not hatch.interact(), "opened hatch cannot award twice")
-	watch._input(press(KEY_T))
+	watch._input(key_press(KEY_T))
 	check(not watch.accepted, "opening press cannot skip the arriving reward")
 	watch._process(ManorStopwatch.LIFT_TIME / 2)
 	check(watch.model.global_position.y > resting_pose.origin.y and is_equal_approx(watch.model.global_position.x, resting_pose.origin.x) and is_equal_approx(watch.model.global_position.z, resting_pose.origin.z), "watch first rises vertically out of the hatch")
 	check(watch.model.global_basis.get_scale().is_equal_approx(Vector3.ONE), "initial lift preserves the physical watch size")
 	check(hatch.opened and not hatch.busy, "hatch stays fully open while the watch lifts out")
 	watch._process(ManorStopwatch.ARRIVE_TIME - ManorStopwatch.LIFT_TIME / 2 - 0.1)
-	watch._input(press(KEY_T))
+	watch._input(key_press(KEY_T))
 	check(not watch.accepted, "a press during the flight cannot snap the watch into place")
 	check(hatch.emptied and hatch.busy, "hatch closes automatically once the watch clears it")
 	watch._process(1.0)
@@ -90,7 +71,7 @@ func run() -> void:
 	await create_timer(1.0).timeout
 	check(not hatch.opened and not hatch.busy and is_zero_approx(hatch.lid.rotation.x) and hatch.lid_hit.collision_layer == 0, "empty hatch settles shut without an interaction target")
 	watch._process(0.0)
-	watch._input(press(KEY_T))
+	watch._input(key_press(KEY_T))
 	watch._process(0.7)
 	check(watch.owned and not watch.presenting and acquisitions == 1 and watch.phase == ManorStopwatch.Phase.IDLE, "fresh T accepts once without also raising")
 	check(watch.hud.shows_icon() and watch.hud.icon_position() == Vector2(watch.hud.size.x - 146, 40), "owned watch occupies the inventory slot beside coins")
@@ -101,7 +82,7 @@ func run() -> void:
 	# The headless display cannot capture a pointer; the rendered capture exercises T.
 	watch.toggle()
 	check(watch.phase == ManorStopwatch.Phase.RAISING and main.controls_locked(), "T raises owned watch and locks movement")
-	var repeat := press(KEY_T)
+	var repeat := key_press(KEY_T)
 	repeat.echo = true
 	main.player._unhandled_input(repeat)
 	check(watch.phase == ManorStopwatch.Phase.RAISING, "key repeat does not retrigger use")
@@ -110,7 +91,7 @@ func run() -> void:
 	main.binoculars.owned = true
 	check(watch.hud.icon_position().x == watch.hud.size.x - 192, "watch shifts left to make room for owned binoculars")
 	check(not main.binoculars.toggle() and not main.player.begin_interact(), "watch inspection excludes binoculars and world interactions")
-	main.player._unhandled_input(press(KEY_P))
+	main.player._unhandled_input(key_press(KEY_P))
 	watch._process(0.1)
 	check(main.play_gate.visible and not watch.model.visible and not watch.hud.shows_icon(), "P pauses inspection and hides watch behind menu")
 	main.player.automated = true
@@ -124,7 +105,7 @@ func run() -> void:
 	main.resume_play()
 	watch._process(0.0)
 	check(watch.model.visible, "resume restores inspection")
-	main.player._unhandled_input(press(KEY_ESCAPE))
+	main.player._unhandled_input(key_press(KEY_ESCAPE))
 	check(watch.phase == ManorStopwatch.Phase.LOWERING and not main.play_gate.visible, "Escape lowers without opening pause")
 	watch._process(0.4)
 	check(not watch.locks_player() and not watch.model.visible, "lowering restores normal movement")
@@ -189,5 +170,4 @@ func run() -> void:
 	check(not watch.model.visible and not watch.locks_player(), "return to title clears inspection")
 	main.queue_free()
 	await process_frame
-	print("Stopwatch: %d checks, %d failures" % [checks, failures])
-	quit(1 if failures else 0)
+	finish("Stopwatch")

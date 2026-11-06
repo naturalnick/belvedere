@@ -1,23 +1,10 @@
-extends SceneTree
-
-var checks := 0
-var failures := 0
-
-func _initialize() -> void:
-	call_deferred("run")
-
-func check(ok: bool, message: String) -> void:
-	checks += 1
-	if not ok:
-		failures += 1
-		printerr("FAIL: ", message)
+extends "res://tests/manor_test.gd"
 
 func run() -> void:
 	create_timer(30).timeout.connect(func() -> void:
 		printerr("FAIL: web startup tests timed out")
 		quit(1))
-	var main: Manor = load("res://scenes/manor.tscn").instantiate()
-	root.add_child(main)
+	var main := load_manor()
 	check(not ManorShaderWarmup.needed(main), "native and headless runs skip the warm-up")
 	await process_frame
 
@@ -47,9 +34,7 @@ func run() -> void:
 	# The Play reload builds a new scene; decoded web audio must not be thrown away with the old one.
 	main.free()
 	await process_frame
-	var again: Manor = load("res://scenes/manor.tscn").instantiate()
-	root.add_child(again)
+	var again := load_manor()
 	check(again.audio.music.stream == theme and again.audio.streams["slide"][0] == slide, "audio streams survive a scene reload")
 	await process_frame
-	print("%d web startup checks, %d failures" % [checks, failures])
-	quit(1 if failures > 0 else 0)
+	finish("Web startup")

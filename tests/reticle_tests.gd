@@ -1,19 +1,12 @@
-extends SceneTree
+extends "res://tests/manor_test.gd"
 class CountingPlayer extends ManorPlayer:
 	var queries := 0
 	func focus() -> Dictionary:
 		queries += 1
 		return super.focus()
-var failures := 0
-func _initialize() -> void:
-	call_deferred("run")
-func check(ok: bool, message: String) -> void:
-	if not ok:
-		failures += 1
-		printerr("FAIL: ", message)
+
 func run() -> void:
-	var main: Manor = load("res://scenes/manor.tscn").instantiate()
-	root.add_child(main)
+	var main := load_manor()
 	main.start_play()
 	var player := CountingPlayer.new()
 	player.manor = main
@@ -45,5 +38,4 @@ func run() -> void:
 	reticle.queue_free()
 	main.queue_free()
 	await process_frame
-	print("Reticle: 4 checks, %d failures" % failures)
-	quit(1 if failures else 0)
+	finish("Reticle")

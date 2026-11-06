@@ -1,30 +1,6 @@
-extends SceneTree
+extends "res://tests/manor_test.gd"
 
-var checks := 0
-var failures := 0
 var clinks := 0
-
-func _initialize() -> void:
-	call_deferred("run")
-
-func check(ok: bool, message: String) -> void:
-	checks += 1
-	if not ok:
-		failures += 1
-		printerr("FAIL: ", message)
-
-
-func press(key: Key = KEY_SPACE) -> InputEventKey:
-	var event := InputEventKey.new()
-	event.physical_keycode = key
-	event.keycode = key
-	event.pressed = true
-	return event
-
-func receive_coin(main: Manor) -> void:
-	main.coin_hud._process(ManorCoinHUD.HOLD_AT)
-	main.coin_hud._input(press())
-	main.coin_hud._process(ManorCoinHUD.PRESENT_TIME)
 
 func run() -> void:
 	create_timer(40).timeout.connect(func() -> void: quit(1))
@@ -47,10 +23,7 @@ func run() -> void:
 	coins.receive_next()
 	check(coins.pending.is_empty() and coins.available == 0 and not coins.insert_one(), "completed rewards cannot be farmed or deposited twice")
 
-	var main: Manor = load("res://scenes/manor.tscn").instantiate()
-	root.add_child(main)
-	main.start_play()
-	main.player.automated = true
+	var main := start_manor()
 	main.audio.cued.connect(func(group: String) -> void:
 		if group == "coin_insert":
 			clinks += 1)
@@ -66,10 +39,7 @@ func run() -> void:
 	check(lamp.light.light_color == Color("6EBFFF") and lamp.state == 1, "starting target is blue before its slide home")
 	check(lamp.shade.material_override == ManorGeometry.material("B4CFDF", 0.006), "active shade has a subtle blue tint")
 	check(main.objective_display.progress_lights[6].material_override == ManorGeometry.material("595C59"), "Foyer shows Laundry is not yet home")
-	var driver: Node = load("res://tools/demo_driver.gd").new()
-	root.add_child(driver)
-	driver.main = main
-	driver.started = Time.get_ticks_msec()
+	var driver := add_driver(main)
 	for direction in driver.walk_route(8):
 		await driver.walk_direction(direction, true)
 	var guide := main.first_coin_guide
@@ -125,13 +95,13 @@ func run() -> void:
 	main.resume_play()
 	main.coin_hud.presentation = 0.0
 	main.coin_hud._process(0.2)
-	main.coin_hud._input(press())
+	main.coin_hud._input(key_press())
 	check(not main.coin_hud.accepted, "a press while the coin is still arriving is ignored")
 	main.coin_hud._process(0.4)
 	check(main.coins.available == 0 and main.coin_hud.presentation > 0.5, "coin is presented before inventory increments")
 	main.coin_hud._process(5.0)
 	check(main.coins.available == 0 and main.coin_hud.presentation == ManorCoinHUD.HOLD_AT and main.controls_locked(), "presented coin waits in view, with the player held, until a press")
-	main.coin_hud._input(press(KEY_ESCAPE))
+	main.coin_hud._input(key_press(KEY_ESCAPE))
 	check(not main.coin_hud.accepted, "Escape does not accept the coin")
 	var click := InputEventMouseButton.new()
 	click.button_index = MOUSE_BUTTON_LEFT
@@ -197,5 +167,4 @@ func run() -> void:
 	check(main.coins.inserted == 2 and main.coins.awarded.size() == 2, "fall recovery retains earned and deposited coins")
 	main.queue_free()
 	await process_frame
-	print("Coins: %d checks, %d failures" % [checks, failures])
-	quit(1 if failures else 0)
+	finish("Coins")

@@ -1,35 +1,10 @@
-extends SceneTree
+extends "res://tests/manor_test.gd"
 
-var checks := 0
-var failures := 0
 var acquisitions := 0
-
-func _initialize() -> void:
-	call_deferred("run")
-
-func check(ok: bool, message: String) -> void:
-	checks += 1
-	if not ok:
-		failures += 1
-		printerr("FAIL: ", message)
-
-
-func press(key: Key = KEY_SPACE) -> InputEventKey:
-	var event := InputEventKey.new()
-	event.physical_keycode = key
-	event.keycode = key
-	event.pressed = true
-	return event
-
-func receive_coin(main: Manor) -> void:
-	main.coin_hud._process(ManorCoinHUD.HOLD_AT)
-	main.coin_hud._input(press())
-	main.coin_hud._process(ManorCoinHUD.PRESENT_TIME)
 
 func run() -> void:
 	create_timer(35).timeout.connect(func() -> void: quit(1))
-	var main: Manor = load("res://scenes/manor.tscn").instantiate()
-	root.add_child(main)
+	var main := load_manor()
 	var item := main.binoculars
 	item.set_process(false)
 	item.acquired.connect(func() -> void: acquisitions += 1)
@@ -101,9 +76,9 @@ func run() -> void:
 	check(original_shadows.keys().all(func(light: Light3D) -> bool: return light.shadow_enabled == original_shadows[light]), "pausing overview preserves normal shadows")
 	main.resume_play()
 	main.player.automated = false
-	main.player._unhandled_input(press(KEY_ESCAPE))
+	main.player._unhandled_input(key_press(KEY_ESCAPE))
 	check(item.phase == ManorBinoculars.Phase.CLOSING and not main.play_gate.visible, "Escape lowers the overview without pausing")
-	main.player._unhandled_input(press(KEY_ESCAPE))
+	main.player._unhandled_input(key_press(KEY_ESCAPE))
 	check(not main.play_gate.visible, "another Escape during closing does not pause")
 	main.player.automated = true
 	item._process(0.25)
@@ -121,7 +96,7 @@ func run() -> void:
 	item.toggle()
 	item._process(0.25)
 	main.player.automated = false
-	main.player._unhandled_input(press(KEY_ESCAPE))
+	main.player._unhandled_input(key_press(KEY_ESCAPE))
 	check(item.phase == ManorBinoculars.Phase.CLOSING and not main.play_gate.visible, "Escape can cancel raising binoculars")
 	main.player.automated = true
 	item._process(0.25)
@@ -160,7 +135,7 @@ func run() -> void:
 	check(item.presenting and not item.owned and item.reward.visible and item.reward_elapsed == ManorBinoculars.REWARD_HOLD_AT, "binocular reward waits in view until a press")
 	check(item.hud.reward_title.visible and item.hud.reward_title.text == "Binoculars" and item.hud.reward_hint.text == "Press B to use", "reward identifies the item and its use key")
 	check(main.player.camera.unproject_position(item.reward.global_position).x < item.hud.reward_title.position.x, "reward model sits beside its title")
-	item._input(press(KEY_W))
+	item._input(key_press(KEY_W))
 	item._process(ManorBinoculars.REWARD_TIME - ManorBinoculars.REWARD_HOLD_AT)
 	check(item.owned and item.reward_claimed and not item.presenting and not item.reward.visible and acquisitions == 1, "reward arrives in inventory without a pickup")
 	check(not item.hud.reward_title.visible and not item.hud.reward_hint.visible, "reward caption disappears after acquisition")
@@ -190,5 +165,4 @@ func run() -> void:
 	check(item.owned and item.reward_claimed, "fall recovery retains binocular ownership")
 	main.queue_free()
 	await process_frame
-	print("Binoculars: %d checks, %d failures" % [checks, failures])
-	quit(1 if failures else 0)
+	finish("Binoculars")
