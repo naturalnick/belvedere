@@ -18,13 +18,14 @@ Kept in `tools/`; update this list when the scripts change.
 - macOS release build (Developer ID signed and notarized zip, never uploaded): `tools/build_macos_release.sh`
 - Underside QR generate/verify: `tools/gen_qr.sh` (macOS)
 - Laundry wall plan: `python3 tools/gen_plan.py` writes `assets/house_plan.svg`
+- Godot licence notices: `tools/gen_godot_notices.sh` writes `docs/GODOT_COPYRIGHT.txt`; rerun after a Godot upgrade.
 - Export scope/identity preflight (read-only): `python3 tools/check_export_identity.py`
 - Regenerate `assets/audio/` from `tools/audio_sources/` (needs ffmpeg + oggenc): `tools/gen_audio.sh [--conservatory-only]`
 
 ## Rules
 - Visible text is limited to: the title "Belvedere" and "Play"; short functional title/pause/settings/controls labels (Binoculars — B and Stopwatch — T only while owned); the binocular reward's "Binoculars" and "Press B to use"; the token reward's "Token" and "Collect them all"; the stopwatch reward's "Stopwatch", "Shows the fewest shifts needed for assembly." and "Press T to use"; the red key reward’s “Red Key” and “To your success”; the stopwatch's number-only readout; the bed confirmation’s “Start over?”, “Sleep to reset the rooms. Keep your tokens and items.”, “Sleep” and “Cancel”; the coin HUD count; the period-key frame-rate readout ("60 FPS"); the cabinet's number-only readout; Thanks for Playing with Keep Playing / Quit to Menu; the eight overview roof numbers; the three ending lines; and the final run totals labeled “Shifts”, “Sleeps” (with a trailing asterisk when falls are included), “Time”, and “Any key to continue”. No other instructions, room names, counters or taglines. All text uses bundled Fondamento Regular.
 - Audio stays quiet and physical, within the scope listed in SPEC.
-- All art and audio must be original or CC0, with an entry in `docs/CREDITS.md`.
+- All art and audio must be original or CC0. Only third-party assets get an entry in `docs/CREDITS.md`.
 - Never push or publish.
 - The macOS Unsigned Test preset is authorized only for local unsigned/unnotarized testing. Run the identity preflight first.
 - The macOS Release preset is authorized for Developer ID signing and notarization with team `ULBH832X6Q` only. Uploading the result is Nick's.

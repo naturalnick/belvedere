@@ -10,7 +10,8 @@ godot --headless --path . --import
 godot --headless --path . --export-release "Windows Test" "$STAGING/Belvedere.exe"
 cp LICENSE.txt "$STAGING/LICENSE.txt"
 cp docs/CREDITS.md "$STAGING/CREDITS.md"
+cp docs/GODOT_COPYRIGHT.txt "$STAGING/GODOT_COPYRIGHT.txt"
 cp assets/fonts/Fondamento-OFL.txt "$STAGING/Fondamento-OFL.txt"
 rm -f build/windows/belvedere-windows.zip
-(cd "$STAGING" && zip -q -X "../belvedere-windows.zip" Belvedere.exe LICENSE.txt CREDITS.md Fondamento-OFL.txt)
+(cd "$STAGING" && zip -q -X "../belvedere-windows.zip" Belvedere.exe LICENSE.txt CREDITS.md GODOT_COPYRIGHT.txt Fondamento-OFL.txt)
 echo "Built $(pwd)/build/windows/belvedere-windows.zip"

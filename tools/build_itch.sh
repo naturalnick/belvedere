@@ -31,6 +31,7 @@ js_path = source / 'index.js'
 js_path.write_text('/*\n' + notice + '\n*/\n' + js_path.read_text())
 (source / 'LICENSE.txt').write_bytes(Path('LICENSE.txt').read_bytes())
 (source / 'CREDITS.md').write_bytes(Path('docs/CREDITS.md').read_bytes())
+(source / 'GODOT_COPYRIGHT.txt').write_bytes(Path('docs/GODOT_COPYRIGHT.txt').read_bytes())
 font_license = source / 'assets/fonts/Fondamento-OFL.txt'
 font_license.parent.mkdir(parents=True, exist_ok=True)
 font_license.write_bytes(Path('assets/fonts/Fondamento-OFL.txt').read_bytes())
