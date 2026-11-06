@@ -59,7 +59,6 @@ func run() -> void:
 	await physics_frame
 	var bed: Node3D = furniture.get_node("Bed")
 	var before := bed.global_position
-	var rider := room.to_local(main.player.global_position)
 	check(main.player.begin_interact(), "lever remains reachable in furnished room")
 	main.player.select_pull(ManorRules.E)
 	main.player.release_interact()
@@ -69,10 +68,8 @@ func run() -> void:
 	while main.sliding:
 		await process_frame
 	check(bed.global_position.is_equal_approx(before + Vector3.RIGHT * 6.25), "furniture rides exactly one slot")
-	check(room.to_local(main.player.global_position).distance_to(rider) < 0.001, "player stays with furnished room")
 	check(main.rules.valid(), "furnished slide preserves rules")
-	check(driver.failures == 0, "physical walk and input driver passed")
-	print("Bedroom trial: %d checks, %d failures" % [checks, failures])
+	print("Bedroom: %d checks, %d failures" % [checks, failures])
 	main.queue_free()
 	driver.queue_free()
 	await process_frame

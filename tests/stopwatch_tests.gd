@@ -72,7 +72,7 @@ func run() -> void:
 	check(not watch.accepted, "a press during the flight cannot snap the watch into place")
 	check(hatch.emptied and hatch.busy, "hatch closes automatically once the watch clears it")
 	watch._process(1.0)
-	check(watch.presenting and not watch.owned and watch.reward_hint.text == ManorStopwatch.DESCRIPTION, "reward holds with the agreed description")
+	check(watch.presenting and not watch.owned and watch.reward_hint.text == ManorStopwatch.DESCRIPTION, "reward holds with its description")
 	var reward_position := main.player.position
 	main.player.bot_drive = Vector3.RIGHT
 	await physics_frame
@@ -184,7 +184,7 @@ func run() -> void:
 	main.rules = ManorRules.new()
 	main.rules.lawn_access = true
 	watch.refresh_count()
-	check(watch.remaining == 0 and watch.model.readout.text == "0", "assembled house reads zero in the actual game mode")
+	check(watch.remaining == 0 and watch.model.readout.text == "0", "assembled house reads zero")
 	main.return_to_title()
 	check(not watch.model.visible and not watch.locks_player(), "return to title clears inspection")
 	main.queue_free()

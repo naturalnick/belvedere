@@ -2,7 +2,7 @@ extends Node
 
 func run(driver: Node) -> void:
 	var main: Manor = driver.main
-	# Fixed camera locations make this art trial reproducible without a long lawn walk.
+	# Fixed camera locations keep these views reproducible without a long lawn walk.
 	main.player.set_physics_process(false)
 	main.player.position = Vector3(0, -0.02, 15)
 	main.player.aim_at(Vector3(55, 2.2, 25))

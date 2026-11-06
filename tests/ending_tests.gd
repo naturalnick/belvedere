@@ -69,7 +69,7 @@ func run() -> void:
 			await process_frame
 	check(main.controls_locked() and main.play_gate.mode == "victory", "seventh deposit opens the trophy ending")
 	check(main.play_gate.title_label.text == "Thanks for Playing" and main.play_gate.trophy_view.visible, "ending presents a trophy and Thanks for Playing")
-	check(not front.opened and not main.won, "trophy prize leaves the original door locked")
+	check(not front.opened and not main.won, "trophy prize leaves the red door locked")
 	check(main.play_gate.primary.has_focus() and main.play_gate.primary.text == "Keep Playing", "ending offers a keyboard-focusable Keep Playing button")
 	var accept := InputEventKey.new()
 	accept.keycode = KEY_ENTER
@@ -109,7 +109,7 @@ func run() -> void:
 		check(not (absf(at.x) < 1.15 and at.z > 9.2 and at.z < 23), "flowers stay off carpet")
 		var offset := at - main.player.position
 		offset.y = 0
-		check(offset.length() <= 12.01 and offset.length() >= 2.49, "flowers grow within the extended forward range")
+		check(offset.length() <= 12.01 and offset.length() >= 2.49, "flowers grow within the forward range")
 	var saved_fov := main.player.camera.fov
 	for fov in [60, 100]:
 		main.player.camera.fov = fov
@@ -123,7 +123,7 @@ func run() -> void:
 			if main.ending.total_spawned > previous:
 				var newest := main.ending.positions[(main.ending.total_spawned - 1) % ManorEnding.FLOWER_LIMIT]
 				check(main.player.camera.is_position_in_frustum(newest), "moving player's new blooms stay in view at FOV %d" % fov)
-		check(main.ending.total_spawned - before >= 110, "visible planting keeps up with the denser rate at FOV %d" % fov)
+		check(main.ending.total_spawned - before >= 110, "visible planting keeps up with the sprout rate at FOV %d" % fov)
 	main.player.camera.fov = saved_fov
 	main.rules.player = 7
 	main.player.position = Vector3(0, 0, 9.5)

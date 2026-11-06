@@ -24,7 +24,7 @@ func check_gap_surface(main: Manor, at: Vector3, phase: String) -> void:
 	check(has_tracks, phase + " exposes recessed concrete tracks instead of grass")
 
 func run() -> void:
-	check(is_equal_approx(ManorSlideMotion.DURATION, 1.6), "settling pass adds only 0.2 seconds to the slide")
+	check(is_equal_approx(ManorSlideMotion.DURATION, 1.6), "slide lasts 1.6 seconds")
 	check(ManorSlideMotion.travel_progress(0) == 0 and ManorSlideMotion.travel_progress(1) == 1, "slide has exact endpoints")
 	var previous := 0.0
 	for i in range(1, 201):
@@ -35,6 +35,12 @@ func run() -> void:
 	check(1.0 - ManorSlideMotion.travel_progress(0.999) < 0.00001, "travel lands without a velocity jump")
 	var last_tenth := 6.25 * (1.0 - ManorSlideMotion.travel_progress(1.0 - 0.1 / ManorSlideMotion.TRAVEL))
 	check(last_tenth < 0.025, "last tenth of a second settles less than 2.5 cm")
+	var gap := Node3D.new()
+	root.add_child(gap)
+	ManorGeometry.build_gap_floor(gap)
+	check(gap.get_child_count() == 2, "gap contains only slab mesh and slab collider")
+	check(gap.get_child(0).mesh.get_aabb().end.y + gap.get_child(0).position.y == 0, "tracks never rise above slab")
+	gap.queue_free()
 	var main: Manor = load("res://scenes/manor.tscn").instantiate()
 	root.add_child(main)
 	main.start_play()
@@ -70,7 +76,7 @@ func run() -> void:
 	check(room.global_position.is_equal_approx(origin + Vector3.RIGHT * 6.25), "room docks exactly one pitch away")
 	check(room.to_local(main.player.global_position).distance_to(rider) < 0.001, "rider position survives docking")
 	check(main.player.get_parent() == main and main.rules.valid() and main.slides == 1, "docking commits state once and detaches rider")
-	check(main.player.camera.position.is_equal_approx(Vector3(0, 1.65, 0)), "pass adds no camera displacement")
+	check(main.player.camera.position.is_equal_approx(Vector3(0, 1.65, 0)), "slide adds no camera displacement")
 	check_gap_surface(main, origin + Vector3(-2.5, 0, 1.8), "source slot after landing")
 	main.queue_free()
 	await process_frame

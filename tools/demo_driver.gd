@@ -17,8 +17,8 @@ func run(game: Manor) -> void:
 			shots_dir = arg.trim_prefix("--shots=")
 		if arg.begins_with("--mode="):
 			mode = arg.trim_prefix("--mode=")
-	if mode not in ["single-gap", "objectives", "stage3", "furnishings", "trees", "exterior", "fall", "coins", "title", "safe", "binoculars", "stopwatch", "sleep", "conservatory"]:
-		printerr("Capture mode must be single-gap, objectives, stage3, furnishings, trees, exterior, fall, coins, title, safe, binoculars, stopwatch, sleep or conservatory")
+	if mode not in ["single-gap", "objectives", "furnishings", "trees", "exterior", "fall", "coins", "title", "safe", "binoculars", "stopwatch", "sleep", "conservatory"]:
+		printerr("Capture mode must be single-gap, objectives, furnishings, trees, exterior, fall, coins, title, safe, binoculars, stopwatch, sleep or conservatory")
 		get_tree().quit(1)
 		return
 	DirAccess.make_dir_recursive_absolute(shots_dir)
@@ -49,12 +49,10 @@ func run(game: Manor) -> void:
 	elif mode == "exterior":
 		shot_names = ["01_spawn", "01_south_facade", "02_southwest_corner", "03_wall_close", "04_gap", "05_north_facade", "06_east_facade", "07_interior_window", "08_window_onto_neighbour", "09_red_door_inside", "10_red_door_outside"]
 	elif mode == "furnishings":
-		shot_names = ["01_spawn", "bathroom_washstand", "bathroom_bench", "bathroom_toilet", "kitchen_bowl_detail", "dining_shelf_detail", "dining_serving_table", "trophy_case_left", "trophy_case_right"]
+		shot_names = ["01_spawn", "bedroom_north", "bedroom_bed", "bedroom_wardrobe", "bedroom_dresser", "bedroom_chair", "bedroom_slide", "bathroom_washstand", "bathroom_bench", "bathroom_toilet", "kitchen_bowl_detail", "dining_shelf_detail", "dining_serving_table", "trophy_case_left", "trophy_case_right"]
 		for room_name in ["bathroom", "study", "kitchen", "living", "dining", "foyer", "laundry"]:
 			for view in ["north", "south", "slide", "wall_art"]:
 				shot_names.append(room_name + "_" + view)
-	elif mode == "stage3":
-		shot_names = ["01_spawn", "02_settings", "03_cross_tracks", "04_meadow", "05_landscape", "06_bedroom_entry", "07_bed_and_table", "08_wardrobe", "09_bedroom_lever", "10_bedroom_sliding", "11_dresser", "12_reading_chair"]
 	elif mode == "single-gap":
 		shot_names = ["01_spawn", "02_outside", "02_gap_mid_shift", "02_gap_landed", "03_shifted"]
 	elif mode == "objectives":
@@ -129,9 +127,9 @@ func run(game: Manor) -> void:
 		get_tree().quit(1 if failures else 0)
 		return
 	if mode == "trees":
-		var trial: Node = load("res://tools/tree_driver.gd").new()
-		add_child(trial)
-		await trial.run(self)
+		var gallery: Node = load("res://tools/tree_driver.gd").new()
+		add_child(gallery)
+		await gallery.run(self)
 		print("Tree capture: %d screenshots; %d checks, %d failures" % [shot_count, checks, failures])
 		get_tree().quit(1 if failures else 0)
 		return
@@ -147,13 +145,6 @@ func run(game: Manor) -> void:
 		add_child(gallery)
 		await gallery.run(self)
 		print("Furnishing capture: %d screenshots; %d checks, %d failures; %.2fs" % [shot_count, checks, failures, elapsed()])
-		get_tree().quit(1 if failures else 0)
-		return
-	if mode == "stage3":
-		var trial: Node = load("res://tools/stage3_driver.gd").new()
-		add_child(trial)
-		await trial.run(self)
-		print("Stage 3 capture: %d screenshots; %d checks, %d failures; %.2fs" % [shot_count, checks, failures, elapsed()])
 		get_tree().quit(1 if failures else 0)
 		return
 	if mode == "objectives":
@@ -475,6 +466,9 @@ func objective_views() -> void:
 				await shot("02_active_room")
 				first_goal = false
 			await objective_action(action)
+		# The first guided look holds completion until its lamp turns warm.
+		while main.first_coin_guide.active and not main.first_coin_guide.completed:
+			await get_tree().process_frame
 		_check(main.objectives.completed.has(active), "physical target delivery earns completion")
 		await collect_room_coin(active, false, "coin_reward_%d" % active)
 		if not main.objectives.all_completed:

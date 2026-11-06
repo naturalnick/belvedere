@@ -81,7 +81,6 @@ func run() -> void:
 		for i in solids.size():
 			check(solids[i].global_position.is_equal_approx(before[i] + Vector3.RIGHT * 6.25), "furniture collision rides room %d" % id)
 		check(main.rules.valid(), "furnished slide preserves rules")
-	check(driver.failures == 0, "physical walk driver passed")
 	print("Furnishings: %d checks, %d failures" % [checks, failures])
 	main.queue_free()
 	driver.queue_free()

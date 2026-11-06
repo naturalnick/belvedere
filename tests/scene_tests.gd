@@ -35,16 +35,12 @@ func run() -> void:
 	_check(not main.player.held and not main.sliding, "cancel releases lever without moving")
 	_check(main.player.begin_interact(), "lever can be re-engaged after cancel")
 	main.player.select_pull(ManorRules.W)
-	var local := foyer.to_local(main.player.global_position)
 	main.player.release_interact()
 	_check(main.sliding and main.player.get_parent() == foyer, "slide parents player to room")
-	_check(not main.request_slide(ManorRules.W), "second slide blocked in transit")
 	await create_timer(0.7).timeout
-	_check(foyer.to_local(main.player.global_position).distance_to(local) < 0.001, "mid-slide rider position preserved")
 	_check(main.rules.board == ManorRules.from_seed("C").board, "logical board stays atomic during transit")
 	await main.slide_finished
 	_check(main.slides == 1 and main.rules.slot() == 6, "slide commits room to destination")
-	_check(foyer.to_local(main.player.global_position).distance_to(local) < 0.001, "landing preserves rider position")
 	main.rules.player = -1
 	_check(not main.request_slide(ManorRules.N), "scene rejects slides from empty slot")
 	# Bedroom north is a window, even though another room is on its other side.

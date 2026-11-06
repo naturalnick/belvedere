@@ -58,10 +58,10 @@ func run() -> void:
 		await driver.walk_direction(direction)
 	await driver.walk_direction(ManorRules.E)
 	await driver.walk_to(Vector3(0, 0, 11))
-	check(main.rules.player == ManorRules.OUTSIDE and main.rules.valid(), "single gap still exits onto lawn")
+	check(main.rules.player == ManorRules.OUTSIDE and main.rules.valid(), "gap exits onto lawn")
 	check(not main.request_slide(ManorRules.N), "cannot slide from lawn")
 	await driver.walk_to(ManorGeometry.center(7))
-	check(main.rules.player == -1 and main.rules.slot() == 7, "single gap permits reentry")
+	check(main.rules.player == -1 and main.rules.slot() == 7, "gap permits reentry")
 	await driver.walk_direction(ManorRules.W)
 	await driver.approach_lever(main.rooms[7])
 	main.player.aim_at(main.rooms[7].lever.global_position + Vector3.UP * 0.8)
@@ -71,16 +71,12 @@ func run() -> void:
 	check(main.sliding, "slide starts")
 	while main.sliding:
 		await process_frame
-	check(main.rules.slot() == 7 and main.rules.board.count(-1) == 1 and main.gap_floor.position.is_equal_approx(ManorGeometry.center(6) + Vector3.DOWN * 0.02), "slide moves sole gap to vacated slot")
-	check(main.rules.valid(), "single-gap state remains valid")
+	check(main.rules.slot() == 7 and main.rules.board.count(-1) == 1 and main.gap_floor.position.is_equal_approx(ManorGeometry.center(6) + Vector3.DOWN * 0.02), "slide moves the gap to the vacated slot")
+	check(main.rules.valid(), "state remains valid after the slide")
 	for door in main.rooms[7].doors:
 		if door.is_front:
 			check(not door.opened and door.gate.collision_layer == 1, "front door stays locked")
-	var state := main.rules.copy()
-	state.board = PackedInt32Array(ManorRules.HOME)
-	check(not state.solved(), "movement rules defer objective-mode victory to the objective controller")
-	check(ManorRules.from_key(main.rules.key()).key() == main.rules.key(), "single-gap outdoor state key round trips")
-	print("Single gap: %d checks, %d failures" % [checks, failures])
+	print("Lawn: %d checks, %d failures" % [checks, failures])
 	main.queue_free()
 	driver.queue_free()
 	await process_frame

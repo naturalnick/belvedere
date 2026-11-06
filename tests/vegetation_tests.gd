@@ -26,13 +26,13 @@ func run() -> void:
 		var data := ManorMeadow.NEAR_TREES[i]
 		check(trees.any(func(tree: ManorTree) -> bool: return tree.position.x == data.x and tree.position.z == data.y), "near tree %d keeps its composed position" % i)
 	var window_tree: ManorTree = meadow.find_child("BedroomWindowTree", true, false)
-	check(window_tree != null and window_tree.kind == ManorTree.Kind.BROADLEAF and window_tree.casts_shadow and window_tree.position.is_equal_approx(Vector3(-17, -0.05, -6.9)), "opening window keeps its original closest broadleaf tree")
+	check(window_tree != null and window_tree.kind == ManorTree.Kind.BROADLEAF and window_tree.casts_shadow and window_tree.position.is_equal_approx(Vector3(-17, -0.05, -6.9)), "Bedroom window keeps its broadleaf tree")
 	var closest_edge := 7.625
 	for tree in trees:
 		check(tree.find_children("*", "CollisionShape3D", true, false).size() == 1, "every tree keeps a trunk collision")
 		var flat := Vector2(tree.position.x, tree.position.z)
 		var edge_distance := Vector2(maxf(absf(flat.x) - 9.375, 0), maxf(absf(flat.y) - 9.375, 0)).length()
-		check(edge_distance >= closest_edge, "no tree is closer to the house than the original closest tree")
+		check(edge_distance >= closest_edge, "no tree is closer to the house than the minimum clearance")
 		check(tree.casts_shadow == (flat.length() < ManorMeadow.SHADOW_RADIUS), "only trees within shadow range cast shadows")
 		if flat.length() > 30:
 			check(flat.y <= 0 or absf(flat.x) >= 24, "groves keep the south approach open")

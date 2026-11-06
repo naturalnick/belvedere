@@ -59,16 +59,10 @@ func run() -> void:
 		for control: Control in controls.get_children():
 			check(Rect2(Vector2.ZERO, dimensions).encloses(control.get_rect()), "controls fit supported viewport")
 	main.play_gate._close_controls()
-	var gap := Node3D.new()
-	root.add_child(gap)
-	ManorGeometry.build_gap_floor(gap)
-	check(gap.get_child_count() == 2, "gap contains only slab mesh and slab collider")
-	check(gap.get_child(0).mesh.get_aabb().end.y + gap.get_child(0).position.y == 0, "tracks never rise above slab")
 	DirAccess.remove_absolute(path)
 	original.load_file()
 	original.apply(main.player)
 	main.queue_free()
-	gap.queue_free()
 	await process_frame
-	print("Settings and tracks: %d checks, %d failures" % [checks, failures])
+	print("Settings: %d checks, %d failures" % [checks, failures])
 	quit(1 if failures else 0)

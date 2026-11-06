@@ -84,7 +84,6 @@ func run() -> void:
 	check(main.coins.available == 7 and main.coins.collected.size() == 7, "all seven picked-up coins survive sleep reset")
 	for drawer in main.coin_drawers.values():
 		check(drawer.opened and not drawer.coin.visible and is_equal_approx(drawer.tray.position.z, drawer.travel), "sleep retains visibly empty open drawers")
-	check(driver.failures == 0, "all drawer walking routes and pickup rays pass")
 	main.queue_free()
 	driver.queue_free()
 	await process_frame

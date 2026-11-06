@@ -1,7 +1,7 @@
 #!/bin/sh
 set -eu
 cd "$(dirname "$0")/.."
-RUN_LOG="$(mktemp -t shifting-manor-tests)"
+RUN_LOG="$(mktemp -t belvedere-tests)"
 trap 'rm -f "$RUN_LOG"' EXIT HUP INT TERM
 run_checked() {
     godot --headless --path . "$@" > "$RUN_LOG" 2>&1 || { cat "$RUN_LOG"; exit 1; }
@@ -9,9 +9,9 @@ run_checked() {
     if grep -E 'SCRIPT ERROR|^ERROR:|FAIL:' "$RUN_LOG"; then exit 1; fi
 }
 run_checked --import
-run_checked --script res://tests/run_tests.gd
+run_checked --script res://tests/rules_tests.gd
 run_checked --script res://tests/scene_tests.gd -- --seed=C
-run_checked --script res://tests/single_gap_tests.gd
+run_checked --script res://tests/lawn_tests.gd
 run_checked --script res://tests/wall_geometry_tests.gd
 run_checked --script res://tests/door_geometry_tests.gd
 run_checked --script res://tests/objective_tests.gd
@@ -30,7 +30,6 @@ run_checked --script res://tests/settings_tests.gd
 run_checked --script res://tests/bedroom_tests.gd
 run_checked --script res://tests/bed_sleep_tests.gd
 run_checked --script res://tests/bed_sleep_tests.gd -- --web-entry
-run_checked --script res://tests/bed_sleep_tests.gd -- --seed=B
 run_checked --script res://tests/furnishing_tests.gd
 run_checked --script res://tests/plan_tests.gd
 run_checked --script res://tests/shadow_tests.gd

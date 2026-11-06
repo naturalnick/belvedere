@@ -1,7 +1,14 @@
 extends Node
 const FIXTURE = preload("res://tools/furnishing_fixture.gd")
+const BEDROOM_VIEWS := [
+	["north", Vector3(0, 0, 2.2), Vector3(0, 1.05, -1.8)],
+	["bed", Vector3(1.2, 0, 1.0), Vector3(0, 0.8, -1.9)],
+	["wardrobe", Vector3(0, 0, 1.1), Vector3(2.5, 1.0, 1.9)],
+	["dresser", Vector3(0, 0, 1.1), Vector3(-1.9, 1.25, 2.6)],
+	["chair", Vector3(1.3, 0, -0.6), Vector3(2.1, 0.7, -2.0)],
+]
 const PLAN_VIEWS := {"plan_doorway": Vector3(-2.65, 0, 0), "plan_lever": Vector3(-1.25, 0, 0), "plan_near": Vector3(1.6, 0, 0)}
-const NAMES := {1: "bathroom", 2: "study", 3: "kitchen", 5: "living", 6: "dining", 7: "foyer", 8: "laundry"}
+const NAMES := {0: "bedroom", 1: "bathroom", 2: "study", 3: "kitchen", 5: "living", 6: "dining", 7: "foyer", 8: "laundry"}
 
 func run(driver: Node) -> void:
 	var main: Manor = driver.main
@@ -18,12 +25,19 @@ func run(driver: Node) -> void:
 		await get_tree().physics_frame
 		await get_tree().physics_frame
 		var room: ManorRoom = main.rooms[id]
-		await driver.walk_to(room.position + Vector3(0, 0, 2.30))
-		main.player.aim_at(room.position + Vector3(0, 1.0, -1.80))
-		await driver.shot("%s_north" % NAMES[id])
-		await driver.walk_to(room.position + Vector3(0, 0, -2.30))
-		main.player.aim_at(room.position + Vector3(0, 1.0, 1.80))
-		await driver.shot("%s_south" % NAMES[id])
+		if id == 0:
+			# The bed and rug fill the north side, so the Bedroom skips the north and south walks.
+			for view: Array in BEDROOM_VIEWS:
+				await driver.walk_to(room.position + view[1])
+				main.player.aim_at(room.position + view[2])
+				await driver.shot("bedroom_" + view[0])
+		else:
+			await driver.walk_to(room.position + Vector3(0, 0, 2.30))
+			main.player.aim_at(room.position + Vector3(0, 1.0, -1.80))
+			await driver.shot("%s_north" % NAMES[id])
+			await driver.walk_to(room.position + Vector3(0, 0, -2.30))
+			main.player.aim_at(room.position + Vector3(0, 1.0, 1.80))
+			await driver.shot("%s_south" % NAMES[id])
 		var art := room.get_node_or_null("Furnishings/WallArt") as Node3D
 		if art != null:
 			var viewpoint: Vector3 = {1: Vector3(1.2, 0, 0.8), 2: Vector3(1.2, 0, 0.8), 3: Vector3(-1.2, 0, 0), 5: Vector3(1.3, 0, -0.8), 6: Vector3(1.2, 0, -0.8)}[id]
@@ -66,7 +80,7 @@ func run(driver: Node) -> void:
 		main.player.aim_at(room.lever.global_position + Vector3.UP * 0.8)
 		await get_tree().physics_frame
 		await driver.hold_lever_input(ManorRules.E, true)
-		var furniture: Node3D = room.get_node("Furnishings")
+		var furniture: Node3D = room.get_node("BedroomFurnishings" if id == 0 else "Furnishings")
 		var before := furniture.global_position
 		var rider := room.to_local(main.player.global_position)
 		driver.release_lever_input(true)
