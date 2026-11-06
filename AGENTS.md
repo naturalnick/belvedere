@@ -19,6 +19,7 @@ Kept in `tools/`; update this list when the scripts change.
 - Underside QR generate/verify: `tools/gen_qr.sh` (macOS)
 - Laundry wall plan: `python3 tools/gen_plan.py` writes `assets/house_plan.svg`
 - Godot licence notices: `tools/gen_godot_notices.sh` writes `docs/GODOT_COPYRIGHT.txt`; rerun after a Godot upgrade.
+- Native app icons: `python3 tools/gen_icons.py` packages the approved PNGs in `assets/icons/` as ICO and ICNS (macOS).
 - Export scope/identity preflight (read-only): `python3 tools/check_export_identity.py`
 - Regenerate `assets/audio/` from `tools/audio_sources/` (needs ffmpeg + oggenc): `tools/gen_audio.sh [--conservatory-only]`
 
