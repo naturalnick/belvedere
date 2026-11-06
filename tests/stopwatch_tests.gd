@@ -162,12 +162,10 @@ func run() -> void:
 	var expected := watch.remaining
 	check(expected == 8, "ten-slide fixture leaves exactly eight shifts to assemble")
 	main.rules.player = ManorRules.OUTSIDE
-	main.rules.gap_slot = -1
 	watch.refresh_count()
 	check(watch.remaining == expected, "lawn and reachable gap have identical minimum counts")
 	main.rules.player = 3
 	main.player.position = main.rooms[3].position + Vector3(0, 0.02, 1.0)
-	main.rules.gap_slot = -1
 	check(main.request_slide(ManorRules.N), "Kitchen can cover the closed hatch")
 	check(not hatch.visible and hatch.lid_hit.collision_layer == 0, "hatch cannot clip a moving room")
 	check(not watch.toggle(), "cannot inspect during room motion")

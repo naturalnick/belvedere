@@ -46,7 +46,6 @@ func run() -> void:
 	_check(main.slides == 1 and main.rules.slot() == 6, "slide commits room to destination")
 	_check(foyer.to_local(main.player.global_position).distance_to(local) < 0.001, "landing preserves rider position")
 	main.rules.player = -1
-	main.rules.gap_slot = main.rules.board.find(-1)
 	_check(not main.request_slide(ManorRules.N), "scene rejects slides from empty slot")
 	# Bedroom north is a window, even though another room is on its other side.
 	main.rules.player = 0

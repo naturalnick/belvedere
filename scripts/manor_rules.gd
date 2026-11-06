@@ -1,6 +1,6 @@
 class_name ManorRules
 extends RefCounted
-## Player is a room id, -1 for the gap (gap_slot with lawn_access), or OUTSIDE.
+## Player is a room id, -1 for the gap, or OUTSIDE.
 ## The live game has lawn_access; the solvers search without it, since walking outside
 ## only returns to the sole gap.
 
@@ -20,7 +20,6 @@ const FRONT := 2
 var board: PackedInt32Array
 var player: int
 var lawn_access := false
-var gap_slot := -1
 
 func _init(layout: PackedInt32Array = PackedInt32Array(HOME), occupant: int = 7) -> void:
 	board = layout.duplicate()
@@ -48,8 +47,7 @@ static func doorway(room: int, direction: int) -> bool:
 	return room >= 0 and side(room, direction) == DOOR
 
 func slot() -> int:
-	if lawn_access and player < 0:
-		return gap_slot if player == -1 else -1
+	# -1 finds the sole gap; OUTSIDE finds nothing.
 	return board.find(player)
 
 func can_walk(direction: int) -> bool:
@@ -71,12 +69,10 @@ func can_enter_gap(destination: int) -> bool:
 func apply(kind: int, direction: int) -> bool:
 	if kind == ENTER_GAP and can_enter_gap(direction):
 		player = -1
-		gap_slot = direction
 		return true
 	if kind == WALK and can_walk(direction):
 		var destination := neighbor(slot(), direction)
 		player = OUTSIDE if destination < 0 else board[destination]
-		gap_slot = destination if player == -1 else -1
 		return true
 	if kind == SLIDE and can_slide(direction):
 		var p := slot()
@@ -106,7 +102,6 @@ func solved() -> bool:
 func copy() -> ManorRules:
 	var result := ManorRules.new(board, player)
 	result.lawn_access = lawn_access
-	result.gap_slot = gap_slot
 	return result
 
 func valid() -> bool:
@@ -114,9 +109,7 @@ func valid() -> bool:
 	ordered.sort()
 	if ordered != [-1, 0, 1, 2, 3, 5, 6, 7, 8]:
 		return false
-	if lawn_access:
-		return player == OUTSIDE or (player == -1 and gap_slot >= 0 and gap_slot < 9 and board[gap_slot] == -1) or (player >= 0 and board.has(player))
-	return board.has(player)
+	return board.has(player) or (lawn_access and player == OUTSIDE)
 
 func key() -> int:
 	var value := 0
@@ -124,7 +117,7 @@ func key() -> int:
 		value |= (board[i] + 1) << (i * 4)
 	if lawn_access:
 		# The lawn must not alias a room or the gap in state keys.
-		return value | ((player + 2) << 36) | ((gap_slot + 1) << 40) | (1 << 44)
+		return value | ((player + 2) << 36) | (1 << 44)
 	return value | ((player + 1) << 36)
 
 static func from_key(value: int) -> ManorRules:
@@ -134,7 +127,6 @@ static func from_key(value: int) -> ManorRules:
 	var has_lawn := (value & (1 << 44)) != 0
 	var result := ManorRules.new(layout, ((value >> 36) & 15) - (2 if has_lawn else 1))
 	result.lawn_access = has_lawn
-	result.gap_slot = ((value >> 40) & 15) - 1 if has_lawn else -1
 	return result
 
 static func opening_start() -> ManorRules:

@@ -44,13 +44,7 @@ func _reset_layout() -> void:
 	manor.won = false
 	for id in manor.rooms:
 		manor.rooms[id].position = ManorGeometry.center(manor.rules.board.find(id))
-	var floors := manor.gap_floors.values()
-	manor.gap_floors.clear()
-	for slot in 9:
-		if manor.rules.board[slot] == -1:
-			var floor_node: Node3D = floors.pop_back()
-			floor_node.position = ManorGeometry.center(slot) + Vector3.DOWN * 0.02
-			manor.gap_floors[slot] = floor_node
+	manor.gap_floor.position = ManorGeometry.center(manor.rules.board.find(-1)) + Vector3.DOWN * 0.02
 	manor.fall_recovery._wake()
 	manor.carpet.hide()
 	if manor.ending != null:

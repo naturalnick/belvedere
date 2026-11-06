@@ -2,15 +2,14 @@
 
 Follow Nick's global guidelines in `/Users/nick/.codex/AGENTS.md`.
 
-First-person 3D sliding-room puzzle in Godot 4.7 (Compatibility renderer). The current design, reasons and rejected ideas are in `docs/SPEC.md`. Keep it current by editing in place; don't add history or changelog sections. Asset licences: `docs/CREDITS.md` (packed into builds). `docs/FUNTEST.md` is generated.
+First-person 3D sliding-room puzzle in Godot 4.7 (Compatibility renderer). The current design, reasons and rejected ideas are in `docs/SPEC.md`. Keep it current by editing in place; don't add history or changelog sections. Asset licences: `docs/CREDITS.md` (packed into builds).
 
 ## Commands
 Kept in `tools/`; update this list when the scripts change.
-- Run: `tools/run.sh [--seed=A|B|C|random|<index>] [--invert-y]`
+- Run: `tools/run.sh [--seed=A|B|C|random|<index>]`
 - Conservatory playtest (one final Foyer shift south reveals the room): `tools/try_conservatory.sh`
 - Stopwatch playtest (starts on the lawn beside the reachable hatch): `tools/try_stopwatch.sh`
 - Rule, solver and scene tests (headless): `tools/test.sh`
-- House-assembly bots and geometry probes (headless): `tools/fun_test.sh` → `docs/FUNTEST.md`
 - Screenshots (real window): `tools/capture.sh [title|coins|drawers|safe|binoculars|stopwatch|sleep|fall|trees|exterior|furnishings|stage3|objectives|single-gap|conservatory] [seed] [out_dir] [extra flags]`; furnishings accepts `--rooms=5,7`.
 - QR flicker check: `tools/check_qr.sh`. Door close-up pixel check: `tools/check_doors.sh [out_dir]`. Render benchmark: `tools/profile.sh [output_json]`.
 - Web build (local zip, never uploaded): `tools/build_itch.sh`

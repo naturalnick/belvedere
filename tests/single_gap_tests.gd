@@ -16,7 +16,6 @@ func lawn_rules() -> void:
 	var state := ManorRules.opening_start()
 	state.lawn_access = true
 	state.player = -1
-	state.gap_slot = 8
 	check(state.valid() and state.slot() == 8, "gap has a player position")
 	check(not state.can_slide(ManorRules.N), "no slides while in the gap")
 	check(state.apply(ManorRules.WALK, ManorRules.S) and state.player == ManorRules.OUTSIDE, "edge gap exits to lawn")
@@ -47,7 +46,7 @@ func run() -> void:
 	main.player.automated = true
 	await physics_frame
 	await physics_frame
-	check(main.rooms.size() == 8 and main.gap_floors.size() == 1, "default launch is eight rooms, one gap")
+	check(main.rooms.size() == 8 and main.rules.board.count(-1) == 1, "default launch is eight rooms, one gap")
 	check(main.rules.board == ManorRules.opening_start().board, "default starts with Laundry bottom-center")
 	check(main.rules.valid() and main.rules.lawn_access, "outdoor access remains enabled")
 	var driver: Node = load("res://tools/demo_driver.gd").new()
@@ -72,7 +71,7 @@ func run() -> void:
 	check(main.sliding, "slide starts")
 	while main.sliding:
 		await process_frame
-	check(main.rules.slot() == 7 and main.rules.board.count(-1) == 1 and main.gap_floors.has(6), "slide moves sole gap to vacated slot")
+	check(main.rules.slot() == 7 and main.rules.board.count(-1) == 1 and main.gap_floor.position.is_equal_approx(ManorGeometry.center(6) + Vector3.DOWN * 0.02), "slide moves sole gap to vacated slot")
 	check(main.rules.valid(), "single-gap state remains valid")
 	for door in main.rooms[7].doors:
 		if door.is_front:

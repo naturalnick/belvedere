@@ -50,8 +50,6 @@ func run() -> void:
 	main.rules = state
 	for id in main.rooms:
 		main.rooms[id].position = ManorGeometry.center(state.board.find(id))
-	main.gap_floors.clear()
-	main.gap_floors[4] = main.gap_floor
 	main.gap_floor.position = ManorGeometry.center(4) + Vector3.DOWN * 0.02
 	main.player.position = room.position + Vector3(0, 0.02, 1.2)
 	main.refresh_doors(true)

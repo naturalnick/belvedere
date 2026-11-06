@@ -40,7 +40,6 @@ func run() -> void:
 	check(stats.time_text() == "1:01:01", "long runs include hours")
 	stats.elapsed_seconds = 13
 	main.rules.player = 8
-	main.rules.gap_slot = -1
 	main.player.position = main.rooms[8].position + Vector3(0, 0.02, 1.2)
 	var opening := main.rules.board.duplicate()
 	check(not main.request_slide(ManorRules.N) and stats.shifts == 0, "blocked shifts do not count")

@@ -45,5 +45,4 @@ func _wake() -> void:
 	manor.player.bot_drive = Vector3.ZERO
 	manor.player.aim_at(bedroom.to_global(Vector3(0, 0.7, -1.9)))
 	manor.rules.player = 0
-	manor.rules.gap_slot = -1
 	woke.emit()

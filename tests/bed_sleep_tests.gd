@@ -21,7 +21,6 @@ func shift_once(main: Manor) -> void:
 	for room in main.rooms:
 		var state := main.rules.copy()
 		state.player = room
-		state.gap_slot = -1
 		for direction in 4:
 			if not state.can_slide(direction):
 				continue
@@ -102,8 +101,7 @@ func run() -> void:
 	check(main.rules.player == 0 and main.rules.valid() and main.player.position.distance_to(main.rooms[0].to_global(ManorFallRecovery.BEDSIDE)) < 0.1, "player wakes safely by the bed in its original room position")
 	for room in main.rooms:
 		check(main.rooms[room].position.is_equal_approx(ManorGeometry.center(opening.find(room))), "room geometry returns to the opening layout")
-	for slot in main.gap_floors:
-		check(opening[slot] == -1 and main.gap_floors[slot].position.is_equal_approx(ManorGeometry.center(slot) + Vector3.DOWN * 0.02), "gap floors return to the opening gaps")
+	check(main.gap_floor.position.is_equal_approx(ManorGeometry.center(opening.find(-1)) + Vector3.DOWN * 0.02), "gap floor returns to the opening gap")
 	check(not main.bed_sleep.available() and not main.player.begin_interact(), "bed waits for another shift after sleep")
 	if main.coins != null:
 		check(main.objectives.completed == [1, 3, 8] and main.coins.awarded == [1, 3, 8] and main.coins.available == 2 and main.coins.inserted == 1 and main.coins.pending.is_empty(), "sleep preserves collected and deposited tokens without awarding duplicates")
@@ -131,8 +129,6 @@ func run() -> void:
 		main.slides = 1
 		for room in main.rooms:
 			main.rooms[room].position = ManorGeometry.center(room)
-		main.gap_floors.clear()
-		main.gap_floors[4] = main.gap_floor
 		main.gap_floor.position = ManorGeometry.center(4) + Vector3.DOWN * 0.02
 		await face_bed(main)
 		main.refresh_progress()

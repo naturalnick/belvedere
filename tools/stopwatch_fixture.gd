@@ -16,7 +16,6 @@ static func place(main: Manor, on_lawn: bool = false) -> void:
 		main.objectives.advance(main.rules)
 	assert(main.slides == 10 and main.rules.board[0] == -1 and main.rules.player == -1)
 	main.rules.lawn_access = true
-	main.rules.gap_slot = 0
 	main.first_coin_guide.seen = true
 	main.coins.awarded.assign(main.objectives.completed)
 	main.coins.collected.assign(main.objectives.completed)
@@ -25,14 +24,11 @@ static func place(main: Manor, on_lawn: bool = false) -> void:
 	main.coins.changed.emit()
 	for id in main.rooms:
 		main.rooms[id].position = ManorGeometry.center(main.rules.board.find(id))
-	main.gap_floors.clear()
-	main.gap_floors[0] = main.gap_floor
 	main.gap_floor.position = ManorGeometry.center(0) + Vector3.DOWN * 0.02
 	main.player.position = main.foundation_hatch.position + Vector3(0, 0.02, 1.0)
 	if on_lawn:
 		main.player.position = Vector3(-10.5, 0.02, -5.75)
 		main.rules.player = ManorRules.OUTSIDE
-		main.rules.gap_slot = -1
 	main.player.velocity = Vector3.ZERO
 	main.player.bot_drive = Vector3.ZERO
 	main.player.aim_at(main.foundation_hatch.handle.global_position)

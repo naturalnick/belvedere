@@ -34,11 +34,11 @@ var parts: Dictionary[String, Array] = {}
 var center_ground: Node3D
 var center_collision: StaticBody3D
 
-func build(ground_value: float, use_ground_height: bool) -> void:
+func build(ground_value: float) -> void:
 	ground_y = ground_value
 	var grass: ShaderMaterial = ManorGeometry.material("9DB86E", 0.0).duplicate()
 	grass.set_shader_parameter("meadow", true)
-	_build_ground(grass, ground_y if use_ground_height else -0.02)
+	_build_ground(grass, -0.02)
 	var island := ManorIsland.new()
 	add_child(island)
 	island.build(ground_y)

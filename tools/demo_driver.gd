@@ -178,7 +178,7 @@ func single_gap_views() -> void:
 	await complete_opening_slide()
 	for direction in walk_route(7):
 		await walk_direction(direction)
-	_check(main.rooms.size() == 8 and main.gap_floors.size() == 1, "eight rooms and one gap")
+	_check(main.rooms.size() == 8 and main.rules.board.count(-1) == 1, "eight rooms and one gap")
 	await check_pointer_input()
 	await walk_direction(ManorRules.E)
 	await walk_to(Vector3(0, 0, 12))
@@ -206,7 +206,7 @@ func single_gap_views() -> void:
 	await shot("02_gap_landed")
 	main.player.camera.make_current()
 	gap_camera.queue_free()
-	_check(main.rules.slot() == 7 and main.rules.board.count(-1) == 1 and main.gap_floors.has(6), "slide preserves one gap")
+	_check(main.rules.slot() == 7 and main.rules.board.count(-1) == 1 and main.gap_floor.position.is_equal_approx(ManorGeometry.center(6) + Vector3.DOWN * 0.02), "slide preserves one gap")
 	_check(not main.won and not main.carpet.visible, "ordinary slide does not trigger a win")
 	main.player.aim_at(ManorGeometry.center(6) + Vector3.UP * 1.4)
 	await shot("03_shifted")
@@ -441,8 +441,6 @@ func objective_views() -> void:
 		main.rules.player = 7
 		for id in main.rooms:
 			main.rooms[id].position = ManorGeometry.center(id)
-		main.gap_floors.clear()
-		main.gap_floors[4] = main.gap_floor
 		main.gap_floor.position = ManorGeometry.center(4) + Vector3.DOWN * 0.02
 		main.player.position = ManorGeometry.center(7) + Vector3(0, 0.02, 1.5)
 		main.refresh_progress()

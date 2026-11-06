@@ -69,7 +69,7 @@ func _center_visible() -> bool:
 	return not door.is_front and ManorRules.neighbor(door.room_id, door.direction) == 4
 
 func _start_reveal() -> void:
-	slab = manor.gap_floors[4]
+	slab = manor.gap_floor
 	_build_shaft()
 	manor.meadow.open_center()
 	room = ConservatoryArt.new()

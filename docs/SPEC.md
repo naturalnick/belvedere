@@ -17,7 +17,7 @@ This file holds the current design and the reasons behind non-obvious choices. E
 ## Starts and modes
 - Default launch = seed A opening `[6,2,5,0,1,3,7,8,-1]`: Laundry starts bottom-center, with the gap to its right. The game opens on the Bedroom wall title. Other seeds keep their original spawns, 1.7 m behind the lever facing the gap, and skip the wall title.
 - `--seed=B|C|random|<index>` picks from `data/accepted_14_20.json`: 1,816 states that are 14–20 optimal slides from solved, with the player's room having a doorway open to the gap. The spec's random-walk scramble was replaced because simulation (`tools/sim/`) showed random walks barely leave solved. Only 7% of boards are reachable; there are no dead states.
-- `--invert-y`, `--web-entry` (exercises the web play-gesture path natively).
+- `--web-entry` exercises the web play-gesture path natively.
 
 ## Rooms and furnishings
 Accent colours: Bedroom dusty blue, Bathroom sea-glass, Study deep green, Kitchen mustard, Living terracotta, Dining plum, Foyer cream/wood with a checker floor, Laundry slate blue. The accent goes on one wall and on the door casings, so a room can be identified through any neighbour's glass.
@@ -83,7 +83,7 @@ The reward uses the same fresh-press acceptance as other items, with “Stopwatc
 
 ## Art and rendering
 - Late-afternoon warm light, cream plaster, warm wood, one strong accent per room, chunky readable furniture and little clutter. Flat-shaded low poly, original geometry generated in code; no downloaded models or textures. No reference images are stored.
-- Godot 4.7 Compatibility renderer, so web matches desktop. One shared toon shader (`shaders/toon.gdshader`): 3-band ramp, room shadow tint and a faint paper grain. Inverted-hull warm-brown ink outlines, never black. The grain, outline wobble, planks and tiles are sampled in mesh-local space, because world-space sampling made surfaces swim during slides. No post-processing, bloom or fog.
+- Godot 4.7 Compatibility renderer, so web matches desktop. One shared toon shader (`shaders/toon.gdshader`): 3-band ramp and a faint paper grain. Inverted-hull warm-brown ink outlines, never black. The grain, outline wobble, planks and tiles are sampled in mesh-local space, because world-space sampling made surfaces swim during slides. No post-processing, bloom or fog.
 - Exterior: only window walls and the red front-door wall—the exterior faces of the finished puzzle—have warm-grey lap siding over a 0.3 m charcoal base on their outward face (mesh −Z; interior trims sit on +Z). This finish stays with each wall as rooms shift; ordinary connecting-door walls retain their plain room colour, including when exposed to the lawn, gap or a neighbour's window. The toon shader supplies one siding colour for the whole house with no added geometry. Courses are 0.18 m with a lap shadow line. They use world height, which slides never change, so they line up across wall pieces and rooms. Lines widen to at least a pixel and lighten to match, so distant walls don't alias. Sided east/west walls' outer end faces are house corners and get siding (`siding_corners`). Other end and reveal faces on sided walls (door jambs, window reveals) are cream casings. `tools/capture.sh exterior` checks facades, the gap, corners and interior windows.
 - Sun `#FFD9A8`, pitch −28°, yaw 235°, 2 PSSM splits, 40 m shadows; sun patches on floors are a key image. Wall corners are butt-jointed and trims sit on their owner's interior side: no coplanar opaque faces with different colours (tested). No hull expansion on adjoining wall planes or thin door joinery, which caused detached ink strips.
 
@@ -94,7 +94,7 @@ Most cost is the sun's shadow pass. Batched outline shells are separate non-cast
 Camera shake (and its setting); pulsing, scaling or animated objective indicators; floor targets, arrows and check marks; a target diagram in the overview; completion chimes; outdoor wind, per-room ambient loops and a front-door creak; a separate rug footstep; tonal or bright hard-floor steps; birds indoors; digits or tally marks on the safe; menu hover pills, a circular Play icon and ornamental diamonds; a smiley meadow underside; billboard or pancake trees and evenly scattered trees; ordinary doorway borders in the overview; lit decorative lamps; per-room exterior siding tints.
 
 ## Open items
-- A five-person human playtest is still owed. The original pass bar: at least 4/5 testers make their first slide within 90 s and solve in 5–20 minutes. The bot proxy in `docs/FUNTEST.md` covers house assembly only, not the room objectives.
+- A five-person human playtest is still owed. The original pass bar: at least 4/5 testers make their first slide within 90 s and solve in 5–20 minutes.
 - The objective guidance has not been validated with human players.
 
 ## Exports and notices

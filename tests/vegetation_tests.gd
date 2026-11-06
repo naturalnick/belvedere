@@ -15,7 +15,7 @@ func check(ok: bool, message: String) -> void:
 func run() -> void:
 	var meadow := ManorMeadow.new()
 	root.add_child(meadow)
-	meadow.build(-0.04, true)
+	meadow.build(-0.04)
 	await process_frame
 	var trees: Array[ManorTree] = meadow.trees
 	check(trees.size() == meadow.find_children("*", "ManorTree", true, false).size(), "every tree marker is tracked")
@@ -84,7 +84,7 @@ func run() -> void:
 	for point in [Vector3(-4, 0, 0), Vector3(4, 0, 0), Vector3(0, 0, -4), Vector3(0, 0, 4)]:
 		var ray := PhysicsRayQueryParameters3D.create(point + Vector3.UP, point + Vector3.DOWN)
 		var hit := space.intersect_ray(ray)
-		check(not hit.is_empty() and is_equal_approx(hit.position.y, -0.04), "shaft opening preserves the surrounding lawn collision")
+		check(not hit.is_empty() and is_equal_approx(hit.position.y, -0.02), "shaft opening preserves the surrounding lawn collision")
 	meadow.queue_free()
 	await process_frame
 	print("Vegetation: %d checks, %d failures" % [checks, failures])

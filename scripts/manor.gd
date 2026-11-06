@@ -8,7 +8,6 @@ const NOTICE := "Belvedere (c) 2026 Puzzaholics LLC. All rights reserved. Belved
 signal slide_started
 signal slide_refused
 signal slide_finished
-signal puzzle_solved
 
 var rules: ManorRules
 var rooms: Dictionary[int, ManorRoom] = {}
@@ -17,7 +16,6 @@ var sliding := false
 var won := false
 var slides := 0
 var gap_floor: Node3D
-var gap_floors: Dictionary[int, Node3D] = {}
 var carpet: MeshInstance3D
 var seed_name := "A"
 var play_gate: Control
@@ -85,16 +83,10 @@ func _ready() -> void:
 		room.build(id)
 		room.position = ManorGeometry.center(rules.board.find(id))
 		rooms[id] = room
-	for slot_index in 9:
-		if rules.board[slot_index] != -1:
-			continue
-		var floor_node := Node3D.new()
-		add_child(floor_node)
-		ManorGeometry.build_gap_floor(floor_node)
-		floor_node.position = ManorGeometry.center(slot_index) + Vector3.DOWN * 0.02
-		gap_floors[slot_index] = floor_node
-		if gap_floor == null:
-			gap_floor = floor_node
+	gap_floor = Node3D.new()
+	add_child(gap_floor)
+	ManorGeometry.build_gap_floor(gap_floor)
+	gap_floor.position = ManorGeometry.center(rules.board.find(-1)) + Vector3.DOWN * 0.02
 	player = ManorPlayer.new()
 	player.manor = self
 	player.automated = demo
@@ -109,10 +101,6 @@ func _ready() -> void:
 		rooms[0].add_child(wall_title)
 		rules.player = 0
 		wall_title.frame_player(player)
-	for arg in OS.get_cmdline_user_args():
-		if arg == "--invert-y":
-			preferences.invert_y = true
-			preferences.apply(player)
 	refresh_doors(true)
 	var scene_layer := CanvasLayer.new()
 	scene_layer.layer = 0
@@ -288,7 +276,6 @@ func return_to_title() -> void:
 	fade.color.a = 0
 	if wall_title != null:
 		rules.player = 0
-		rules.gap_slot = -1
 		wall_title.frame_player(player)
 	play_gate.show_mode("title")
 
@@ -383,7 +370,7 @@ func _build_world() -> void:
 	# The meadow supplies level walking collision and a removable center over the lift shaft.
 	meadow = ManorMeadow.new()
 	add_child(meadow)
-	meadow.build(-0.04, false)
+	meadow.build(-0.04)
 	carpet = ManorGeometry.box(self, Vector3(1.8, 0.025, 13), Vector3(0, 0, 15.8), ManorGeometry.material("B3363A", 0.0))
 	for x in [-0.84, 0.84]:
 		ManorGeometry.box(carpet, Vector3(0.06, 0.006, 13), Vector3(x, 0.016, 0), ManorGeometry.material("C9A04A", 0.0))
@@ -462,16 +449,11 @@ func request_slide(direction: int) -> bool:
 	tween.tween_callback(func() -> void:
 		rules.apply(ManorRules.SLIDE, direction)
 		player.reparent(self, true)
-		var vacated_floor: Node3D = gap_floors[destination_slot]
-		gap_floors.erase(destination_slot)
-		gap_floors[old_slot] = vacated_floor
-		vacated_floor.position = ManorGeometry.center(old_slot) + Vector3.DOWN * 0.02
+		gap_floor.position = ManorGeometry.center(old_slot) + Vector3.DOWN * 0.02
 		departing_floor.queue_free()
 		slides += 1
 		sliding = false
 		room.show_pull(-1, -1, false)
 		refresh_progress()
-		if won:
-			puzzle_solved.emit()
 		slide_finished.emit())
 	return true

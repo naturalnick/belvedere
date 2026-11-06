@@ -15,7 +15,6 @@ uniform vec4 meadow_far : source_color = vec4(0.7255, 0.7882, 0.5569, 1.0);
 varying vec3 world_position;
 uniform vec4 track_groove : source_color = vec4(0.239, 0.271, 0.278, 1.0);
 uniform vec4 track_steel : source_color = vec4(0.545, 0.573, 0.557, 1.0);
-uniform vec4 shadow_tint : source_color = vec4(0.35, 0.28, 0.25, 1.0);
 // Room wall boxes face outward along mesh -Z (interior trims sit on +Z).
 uniform bool exterior_siding = false;
 // Bit 1: the +X end face is a house corner; bit 2: the -X end. Other ends are opening reveals.

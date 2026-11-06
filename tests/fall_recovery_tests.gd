@@ -48,7 +48,7 @@ func run() -> void:
 	check(not main.recovering and is_zero_approx(main.fade.color.a), "wake-up fades back in and restores controls")
 	check(main.run_stats.sleeps == 1 and main.run_stats.falls == 1 and main.run_stats.sleep_count() == "1*", "walking off the map counts exactly one marked sleep")
 	check(main.player.position.distance_to(main.rooms[0].to_global(ManorFallRecovery.BEDSIDE)) < 0.1, "wake beside bed in moved Bedroom")
-	check(main.rules.player == 0 and main.rules.gap_slot == -1, "respawn restores room occupancy")
+	check(main.rules.player == 0, "respawn restores room occupancy")
 	check(main.rules.board == layout and main.objectives.completed == earned and main.slides == 0, "recovery preserves puzzle and objective progress")
 	await create_timer(0.4).timeout
 	check(main.player.is_on_floor(), "bedside position is safe on the floor")
