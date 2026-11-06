@@ -7,7 +7,7 @@ static func place(main: Manor, id: int) -> void:
 	board[previous] = board[3]
 	board[3] = id
 	main.rules = ManorRules.new(board, id)
-	main.rules.courtyards = true
+	main.rules.lawn_access = true
 	main.won = false
 	main.objectives = null
 	for room_id in main.rooms:

@@ -43,8 +43,8 @@ assert human_median is not None and 8 <= human_median <= 20, 'Planner moved outs
 planner_minutes = sorted(r['human_seconds'] / 60 for r in all_planner if r['solved'])
 randoms = [r for r in results if r['seed'] not in ('A', 'B', 'C')]
 lines = [
-    '# Fun-test proxy (classic mode)', '',
-    'These measurements cover the single-goal puzzle launched with `--classic`. They do not measure the default game with seven room objectives.', '',
+    '# Fun-test proxy (house assembly)', '',
+    'These measurements cover assembling the house from the accepted starts, without walking on the lawn. They do not measure the seven room objectives.', '',
     '**A real five-person human playtest is still owed to Nick.** Pass bar: at least 4/5 solve in 5–20 minutes and make their first slide within 90 seconds. Bot results cannot establish this.', '',
     'Run `tools/fun_test.sh` from any working directory. It runs entirely headlessly and regenerates this report. Raw per-run results and probe failures are local files in `build/fun/` (git-ignored).', '',
     '## Method', '',
@@ -80,7 +80,7 @@ for key, count in sorted(probes['view_counts'].items()):
     lines.append(f'| {key} | {count:,} |')
 lines += ['',
           'Optical rays use temporary, test-only trimesh colliders derived from the live opaque render meshes. Transparent glass and invisible movement boundaries are omitted. The first hit is classified by its room, gap slab or exterior ownership. Window/door pane scans originate at eye height 1.65 m from reachable positions inside the room. These checks validate geometry and distinguish edge/neighbour/empty (the solid front door must instead read as occluded); they do **not** validate human colour recognition, lighting, or whether the unseen neighbour’s identity is visually unambiguous through an opaque wall.', '',
-          'The bot measurements above remain historical classic-mode results. Geometry probes exercise the current live architecture, including the intentionally opaque front door.']
+          'The bots play the rules without any 3D scene. Geometry probes exercise the current live architecture, including the intentionally opaque front door.']
 text = '\n'.join(lines) + '\n'
 (ROOT / 'docs/FUNTEST.md').write_text(text)
 print(table(results))

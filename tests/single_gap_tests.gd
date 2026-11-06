@@ -12,7 +12,35 @@ func check(condition: bool, message: String) -> void:
 		failures += 1
 		printerr("FAIL: ", message)
 
+func lawn_rules() -> void:
+	var state := ManorRules.opening_start()
+	state.lawn_access = true
+	state.player = -1
+	state.gap_slot = 8
+	check(state.valid() and state.slot() == 8, "gap has a player position")
+	check(not state.can_slide(ManorRules.N), "no slides while in the gap")
+	check(state.apply(ManorRules.WALK, ManorRules.S) and state.player == ManorRules.OUTSIDE, "edge gap exits to lawn")
+	check(not state.can_slide(ManorRules.N), "no slides from lawn")
+	check(not state.apply(ManorRules.ENTER_GAP, 6), "cannot enter occupied cell from lawn")
+	check(state.apply(ManorRules.ENTER_GAP, 8) and state.slot() == 8, "can reenter through the gap")
+	var center := ManorRules.new(PackedInt32Array(ManorRules.HOME), ManorRules.OUTSIDE)
+	center.lawn_access = true
+	check(not center.apply(ManorRules.ENTER_GAP, 4), "cannot enter interior cell from lawn")
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 60203
+	for i in 3000:
+		var actions := state.moves()
+		check(not actions.is_empty(), "lawn state has a legal action")
+		if actions.is_empty():
+			break
+		var action := actions[rng.randi_range(0, actions.size() - 1)]
+		check(state.apply(action.x, action.y), "enumerated action applies")
+		check(state.valid(), "walks and slides preserve lawn state")
+		check(state.copy().key() == state.key(), "copy retains gap and outside position")
+		check(ManorRules.from_key(state.key()).key() == state.key(), "key round trip retains lawn state")
+
 func run() -> void:
+	lawn_rules()
 	var main: Manor = load("res://scenes/manor.tscn").instantiate()
 	root.add_child(main)
 	main.start_play()
@@ -21,7 +49,7 @@ func run() -> void:
 	await physics_frame
 	check(main.rooms.size() == 8 and main.gap_floors.size() == 1, "default launch is eight rooms, one gap")
 	check(main.rules.board == ManorRules.opening_start().board, "default starts with Laundry bottom-center")
-	check(main.rules.valid() and main.rules.courtyards and main.perimeter.is_empty(), "outdoor access remains enabled")
+	check(main.rules.valid() and main.rules.lawn_access, "outdoor access remains enabled")
 	var driver: Node = load("res://tools/demo_driver.gd").new()
 	root.add_child(driver)
 	driver.main = main

@@ -7,24 +7,24 @@ var failures := 0
 var shot_count := 0
 var started := 0
 var action_number := 0
-var mode := "solve"
+var mode := "single-gap"
 
 func run(game: Manor) -> void:
 	main = game
-	shots_dir = ProjectSettings.globalize_path("res://screenshots/stage1")
+	shots_dir = ProjectSettings.globalize_path("res://screenshots/capture")
 	for arg in OS.get_cmdline_user_args():
 		if arg.begins_with("--shots="):
 			shots_dir = arg.trim_prefix("--shots=")
 		if arg.begins_with("--mode="):
 			mode = arg.trim_prefix("--mode=")
-	if mode not in ["solve", "review", "courtyard", "single-gap", "objectives", "stage3", "furnishings", "trees", "exterior", "fall", "coins", "title", "safe", "binoculars", "stopwatch", "sleep", "conservatory"]:
-		printerr("Capture mode must be solve, review, courtyard, single-gap, objectives, stage3, furnishings, trees, exterior, fall, coins, title, safe, binoculars, stopwatch, sleep or conservatory")
+	if mode not in ["single-gap", "objectives", "stage3", "furnishings", "trees", "exterior", "fall", "coins", "title", "safe", "binoculars", "stopwatch", "sleep", "conservatory"]:
+		printerr("Capture mode must be single-gap, objectives, stage3, furnishings, trees, exterior, fall, coins, title, safe, binoculars, stopwatch, sleep or conservatory")
 		get_tree().quit(1)
 		return
 	DirAccess.make_dir_recursive_absolute(shots_dir)
 	started = Time.get_ticks_msec()
 	# Remove this mode's outputs so stale success frames cannot survive a failed run.
-	var shot_names := ["01_spawn", "02_window", "03_lever_held", "04_mid_slide", "05_solved", "06_front_door_open"]
+	var shot_names: Array = []
 	if mode == "conservatory":
 		shot_names = ["01_spawn", "conservatory_retracting", "conservatory_rising", "conservatory_docked", "conservatory_interior", "conservatory_roof", "conservatory_shaft", "conservatory_seating", "conservatory_planting", "red_key_pedestal", "red_key_reward", "red_door_keyhole", "red_key_unlocking", "red_key_inventory", "red_key_inventory_portrait", "red_door_unlocked"]
 	elif mode == "sleep":
@@ -55,8 +55,6 @@ func run(game: Manor) -> void:
 				shot_names.append(room_name + "_" + view)
 	elif mode == "stage3":
 		shot_names = ["01_spawn", "02_settings", "03_cross_tracks", "04_meadow", "05_landscape", "06_bedroom_entry", "07_bed_and_table", "08_wardrobe", "09_bedroom_lever", "10_bedroom_sliding", "11_dresser", "12_reading_chair"]
-	elif mode == "courtyard":
-		shot_names = ["01_spawn", "02_courtyards", "03_outside", "04_lever_held", "05_mid_slide", "06_multiple_directions", "07_shifted"]
 	elif mode == "single-gap":
 		shot_names = ["01_spawn", "02_outside", "02_gap_mid_shift", "02_gap_landed", "03_shifted"]
 	elif mode == "objectives":
@@ -175,85 +173,6 @@ func run(game: Manor) -> void:
 		print("Single-gap capture: %d screenshots; %d checks, %d failures; %.2fs" % [shot_count, checks, failures, elapsed()])
 		get_tree().quit(1 if failures else 0)
 		return
-	if mode == "courtyard":
-		await courtyard_views()
-		print("Courtyard capture: %d screenshots; %d checks, %d failures; %.2fs" % [shot_count, checks, failures, elapsed()])
-		get_tree().quit(1 if failures else 0)
-		return
-	print("Spawn room %d slot %d, gap slot %d, yaw %.1f°" % [main.rules.player, main.rules.slot(), main.rules.board.find(-1), rad_to_deg(main.player.rotation.y)])
-	if mode == "review":
-		await review_views()
-		get_tree().quit(1 if failures else 0)
-		return
-	await check_pointer_input()
-	var room: ManorRoom = main.rooms[main.rules.player]
-	var solver := ManorSolver.new()
-	solver.build()
-	var path := solver.solution(main.rules, true)
-	var expected := solver.distance[main.rules.key()]
-	print("Capture seed %s: %d actions, %d optimal slides" % [main.seed_name, path.size(), expected])
-	var first_slide := true
-	var window_captured := false
-	for action in path:
-		action_number += 1
-		var action_started := Time.get_ticks_msec()
-		print("Action %d/%d %s %s | t=%.2fs room=%d slot=%d" % [action_number, path.size(), "walk" if action.x == ManorRules.WALK else "slide", ["N", "E", "S", "W"][action.y], elapsed(), main.rules.player, main.rules.slot()])
-		var expected_state := main.rules.copy()
-		_check(expected_state.apply(action.x, action.y), "solver action is legal before physical execution")
-		if action.x == ManorRules.WALK:
-			await walk_direction(action.y)
-		else:
-			room = main.rooms[main.rules.player]
-			await approach_lever(room)
-			main.player.aim_at(room.lever.global_position + Vector3.UP * 0.8)
-			await get_tree().physics_frame
-			await hold_lever_input(action.y, main.slides % 2 == 0)
-			await get_tree().create_timer(0.18).timeout
-			if first_slide:
-				await shot("03_lever_held")
-			var rider_local := room.to_local(main.player.global_position)
-			release_lever_input(main.slides % 2 == 0)
-			_check(main.sliding, "lever release starts slide")
-			_check(not main.request_slide(action.y), "input is locked during slide")
-			if first_slide:
-				main.player.aim_at(room.global_position + ManorGeometry.DIRECTIONS[action.y] * 4.0 + Vector3.UP * 1.3)
-				await get_tree().create_timer(0.7).timeout
-				_check(room.to_local(main.player.global_position).distance_to(rider_local) < 0.001, "player rides room at mid-slide")
-				await shot("04_mid_slide")
-				if OS.get_cmdline_user_args().has("--stall-mid-slide"):
-					await get_tree().create_timer(1.0).timeout
-					_check(not main.sliding, "forced late screenshot wait outlives slide signal")
-			# A screenshot or slow frame can outlive the tween and its one-shot signal.
-			while main.sliding:
-				await get_tree().process_frame
-			_check(room.to_local(main.player.global_position).distance_to(rider_local) < 0.001, "player stays in room on landing")
-			await get_tree().create_timer(0.45).timeout
-			first_slide = false
-		_check(main.rules.key() == expected_state.key(), "physical action matches solver state")
-		print("  complete in %.2fs, slides=%d" % [(Time.get_ticks_msec() - action_started) / 1000.0, main.slides])
-		if not window_captured and main.rules.player >= 0:
-			window_captured = await capture_window()
-	_check(main.won and main.rules.solved(), "physical solve reaches home")
-	await collect_red_key()
-	_check(main.slides == expected, "capture used optimal slide count")
-	main.player.aim_at(ManorGeometry.center(4) + Vector3.UP * 1.4)
-	await shot("05_solved")
-	# Finish by physically walking to the Foyer, then onto the lawn.
-	var route := walk_route(7)
-	for direction in route:
-		await walk_direction(direction)
-	var foyer: ManorRoom = main.rooms[7]
-	await walk_to(foyer.global_position + Vector3(0, 0, 1.5))
-	main.player.aim_at(Vector3(0, 1.4, 22))
-	await unlock_red_door()
-	for door in foyer.doors:
-		if door.is_front:
-			_check(door.opened and door.gate.collision_layer == 0, "front door unlocks after using the red key")
-	await shot("06_front_door_open")
-	await walk_to(Vector3(0, 0, 11))
-	_check(main.player.global_position.z > 9.5, "unlocked front door can be walked through")
-	print("Capture: %d screenshots; %d checks, %d failures; %d slides; %.2fs" % [shot_count, checks, failures, main.slides, elapsed()])
-	get_tree().quit(1 if failures else 0)
 
 func single_gap_views() -> void:
 	await complete_opening_slide()
@@ -291,70 +210,6 @@ func single_gap_views() -> void:
 	_check(not main.won and not main.carpet.visible, "ordinary slide does not trigger a win")
 	main.player.aim_at(ManorGeometry.center(6) + Vector3.UP * 1.4)
 	await shot("03_shifted")
-
-func courtyard_views() -> void:
-	_check(main.rules.courtyards and main.rooms.size() == 6 and main.gap_floors.size() == 3, "six-room courtyard scene")
-	await check_pointer_input()
-	await walk_direction(ManorRules.E)
-	await walk_direction(ManorRules.E)
-	_check(main.rules.player == -1 and main.rules.slot() == 8, "walk across two distinct gaps")
-	main.player.aim_at(Vector3(-3, 1.4, 0))
-	await shot("02_courtyards")
-	await walk_to(Vector3(6.25, 0, 11))
-	_check(main.rules.player == ManorRules.OUTSIDE, "walk from edge gap onto lawn")
-	_check(not main.request_slide(ManorRules.N), "cannot slide from lawn")
-	await walk_to(Vector3(11, 0, 11))
-	main.player.aim_at(Vector3(0, 1.4, 0))
-	await shot("03_outside")
-	await walk_to(Vector3(6.25, 0, 11))
-	await walk_to(ManorGeometry.center(8))
-	_check(main.rules.player == -1 and main.rules.slot() == 8, "return from lawn onto courtyard floor")
-	await walk_direction(ManorRules.W)
-	await walk_direction(ManorRules.W)
-	_check(main.rules.player == 7, "return through doorway to Foyer")
-	await approach_lever(main.rooms[7])
-	main.player.aim_at(main.rooms[7].lever.global_position + Vector3.UP * 0.8)
-	await hold_lever_input(ManorRules.E, true)
-	await shot("04_lever_held")
-	var local := main.rooms[7].to_local(main.player.global_position)
-	release_lever_input(true)
-	await get_tree().create_timer(0.7).timeout
-	_check(main.sliding, "input starts courtyard slide")
-	_check(main.rooms[7].to_local(main.player.global_position).distance_to(local) < 0.001, "rider stays on moving room")
-	await shot("05_mid_slide")
-	while main.sliding:
-		await get_tree().process_frame
-	_check(main.rules.slot() == 7 and main.gap_floors.has(6) and not main.gap_floors.has(7), "selected gap is filled and old slot becomes a gap")
-	await get_tree().create_timer(0.5).timeout
-	main.player.aim_at(main.rooms[7].lever.global_position + Vector3.UP * 0.8)
-	await hold_lever_input(ManorRules.E, false)
-	_check(main.rules.can_slide(ManorRules.E) and main.rules.can_slide(ManorRules.W), "two lever choices available")
-	await shot("06_multiple_directions")
-	release_lever_input(false)
-	while main.sliding:
-		await get_tree().process_frame
-	_check(main.rules.slot() == 8 and main.rules.board[8] == 7, "second slide chooses east, not first gap in board")
-	_check(not main.won and not main.carpet.visible, "prototype has no solve reward")
-	for door in main.rooms[7].doors:
-		if door.is_front or ManorRules.neighbor(8, door.direction) < 0:
-			_check(not door.opened and door.gate.collision_layer == 1, "exterior doors stay closed")
-	main.player.aim_at(Vector3(0, 1.4, 0))
-	await shot("07_shifted")
-
-
-func capture_window() -> bool:
-	var room: ManorRoom = main.rooms[main.rules.player]
-	for d in 4:
-		if ManorRules.side(room.room_id, d) != ManorRules.WINDOW:
-			continue
-		var side: Vector3 = ManorGeometry.DIRECTIONS[d]
-		var tangent: Vector3 = ManorGeometry.DIRECTIONS[(d + 1) % 4] * 1.6
-		# Furnishings occupy window corners; take this view from the clear central aisle.
-		await walk_to(room.global_position + Vector3.RIGHT * 1.2)
-		main.player.aim_at(room.global_position + tangent + side * 3.125 + Vector3.UP * 1.65)
-		await shot("02_window")
-		return true
-	return false
 
 func approach_lever(room: ManorRoom) -> void:
 	var offset := main.player.global_position - room.global_position
@@ -579,27 +434,6 @@ func release_lever_input(keyboard: bool) -> void:
 		mouse_button(false)
 	main.player.automated = true
 
-func review_views() -> void:
-	main.rules = ManorRules.new()
-	main.won = true
-	for id in main.rooms:
-		main.rooms[id].position = ManorGeometry.center(id)
-	main.gap_floor.position = ManorGeometry.center(4) + Vector3.DOWN * 0.02
-	preload("res://tools/conservatory_fixture.gd").finish_reveal(main)
-	for door in main.rooms[7].doors:
-		if door.is_front:
-			main.conservatory.unlock_exit(door)
-			main.conservatory._process(ManorConservatory.UNLOCK_TIME)
-	main.refresh_doors(true)
-	main.carpet.visible = true
-	main.player.position = ManorGeometry.center(7) + Vector3(0, 0, 1.5)
-	main.player.aim_at(Vector3(0, 1.4, 22))
-	await get_tree().create_timer(0.4).timeout
-	await shot("06_front_door_open")
-	main.rules.player = 0
-	main.player.position = ManorGeometry.center(0) + Vector3(1.6, 0, 0)
-	await capture_window()
-
 func objective_views() -> void:
 	if OS.get_cmdline_user_args().has("--ending-only"):
 		# Visual fixture for ending framing; the full capture separately proves both solves.
@@ -660,8 +494,8 @@ func objective_views() -> void:
 	_check(not main.play_gate.visible, "Keep Playing returns to optional house puzzle")
 	var solver := ManorSolver.new()
 	solver.build()
-	var classic := ManorRules.new(main.rules.board, main.rules.player)
-	var path := solver.solution(classic, true)
+	var search_state := ManorRules.new(main.rules.board, main.rules.player)
+	var path := solver.solution(search_state, true)
 	print("Bonus: %d actions; t=%.2fs" % [path.size(), elapsed()])
 	for action in path:
 		await objective_action(action)

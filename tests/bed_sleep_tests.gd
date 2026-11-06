@@ -127,7 +127,7 @@ func run() -> void:
 		check(main.objectives.all_completed and main.objectives.active == -1 and not main.won and main.coins.available == 6, "completed token quest and tokens survive resetting the rooms")
 	if main.rooms.size() == 8:
 		main.rules = ManorRules.new(PackedInt32Array(ManorRules.HOME), 0)
-		main.rules.courtyards = main.bed_sleep.opening_rules.courtyards
+		main.rules.lawn_access = main.bed_sleep.opening_rules.lawn_access
 		main.slides = 1
 		for room in main.rooms:
 			main.rooms[room].position = ManorGeometry.center(room)

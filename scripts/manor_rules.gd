@@ -1,6 +1,8 @@
 class_name ManorRules
 extends RefCounted
-## Player is a room id, -1 for a gap (gap_slot in courtyard mode), or OUTSIDE.
+## Player is a room id, -1 for the gap (gap_slot with lawn_access), or OUTSIDE.
+## The live game has lawn_access; the solvers search without it, since walking outside
+## only returns to the sole gap.
 
 const HOME := [0, 1, 2, 3, -1, 5, 6, 7, 8]
 const N := 0
@@ -11,14 +13,13 @@ const WALK := 0
 const SLIDE := 1
 const ENTER_GAP := 2
 const OUTSIDE := -2
-const COURTYARD_START := [-1, 2, 5, 0, 1, 3, 7, -1, -1]
 const WINDOW := 0
 const DOOR := 1
 const FRONT := 2
 
 var board: PackedInt32Array
 var player: int
-var courtyards := false
+var lawn_access := false
 var gap_slot := -1
 
 func _init(layout: PackedInt32Array = PackedInt32Array(HOME), occupant: int = 7) -> void:
@@ -47,7 +48,7 @@ static func doorway(room: int, direction: int) -> bool:
 	return room >= 0 and side(room, direction) == DOOR
 
 func slot() -> int:
-	if courtyards and player < 0:
+	if lawn_access and player < 0:
 		return gap_slot if player == -1 else -1
 	return board.find(player)
 
@@ -56,7 +57,7 @@ func can_walk(direction: int) -> bool:
 		return false
 	var q := neighbor(slot(), direction)
 	if q < 0:
-		return courtyards and player == -1
+		return lawn_access and player == -1
 	var other := board[q]
 	return (player == -1 or doorway(player, direction)) and (other == -1 or doorway(other, opposite(direction)))
 
@@ -65,7 +66,7 @@ func can_slide(direction: int) -> bool:
 	return player >= 0 and q >= 0 and board[q] == -1
 
 func can_enter_gap(destination: int) -> bool:
-	return courtyards and player == OUTSIDE and destination >= 0 and destination < 9 and board[destination] == -1 and destination != 4
+	return lawn_access and player == OUTSIDE and destination >= 0 and destination < 9 and board[destination] == -1 and destination != 4
 
 func apply(kind: int, direction: int) -> bool:
 	if kind == ENTER_GAP and can_enter_gap(direction):
@@ -100,28 +101,29 @@ func moves() -> Array[Vector2i]:
 	return result
 
 func solved() -> bool:
-	return not courtyards and board == PackedInt32Array(HOME)
+	return not lawn_access and board == PackedInt32Array(HOME)
 
 func copy() -> ManorRules:
 	var result := ManorRules.new(board, player)
-	result.courtyards = courtyards
+	result.lawn_access = lawn_access
 	result.gap_slot = gap_slot
 	return result
 
 func valid() -> bool:
 	var ordered := Array(board)
 	ordered.sort()
-	if courtyards:
-		var layout_valid := ordered == [-1, -1, -1, 0, 1, 2, 3, 5, 7] or ordered == [-1, 0, 1, 2, 3, 5, 6, 7, 8]
-		return layout_valid and (player == OUTSIDE or (player == -1 and gap_slot >= 0 and gap_slot < 9 and board[gap_slot] == -1) or (player >= 0 and board.has(player)))
-	return ordered == [-1, 0, 1, 2, 3, 5, 6, 7, 8] and board.has(player)
+	if ordered != [-1, 0, 1, 2, 3, 5, 6, 7, 8]:
+		return false
+	if lawn_access:
+		return player == OUTSIDE or (player == -1 and gap_slot >= 0 and gap_slot < 9 and board[gap_slot] == -1) or (player >= 0 and board.has(player))
+	return board.has(player)
 
 func key() -> int:
 	var value := 0
 	for i in 9:
 		value |= (board[i] + 1) << (i * 4)
-	if courtyards:
-		# Separate open cells and the lawn must not alias one another in state keys.
+	if lawn_access:
+		# The lawn must not alias a room or the gap in state keys.
 		return value | ((player + 2) << 36) | ((gap_slot + 1) << 40) | (1 << 44)
 	return value | ((player + 1) << 36)
 
@@ -129,19 +131,14 @@ static func from_key(value: int) -> ManorRules:
 	var layout := PackedInt32Array()
 	for i in 9:
 		layout.append(((value >> (i * 4)) & 15) - 1)
-	var courtyard_mode := (value & (1 << 44)) != 0
-	var result := ManorRules.new(layout, ((value >> 36) & 15) - (2 if courtyard_mode else 1))
-	result.courtyards = courtyard_mode
-	result.gap_slot = ((value >> 40) & 15) - 1 if courtyard_mode else -1
-	return result
-
-static func courtyard_start() -> ManorRules:
-	var result := ManorRules.new(PackedInt32Array(COURTYARD_START), 7)
-	result.courtyards = true
+	var has_lawn := (value & (1 << 44)) != 0
+	var result := ManorRules.new(layout, ((value >> 36) & 15) - (2 if has_lawn else 1))
+	result.lawn_access = has_lawn
+	result.gap_slot = ((value >> 40) & 15) - 1 if has_lawn else -1
 	return result
 
 static func opening_start() -> ManorRules:
-	# Laundry must slide home before the first coin; keep archived classic seeds intact.
+	# Laundry must slide home before the first coin.
 	return ManorRules.new(PackedInt32Array([6, 2, 5, 0, 1, 3, 7, 8, -1]), 0)
 
 static func from_seed(seed_name: String) -> ManorRules:

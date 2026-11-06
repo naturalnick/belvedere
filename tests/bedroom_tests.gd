@@ -46,7 +46,7 @@ func run() -> void:
 	check(main.player.position.distance_to(room.position + Vector3(-2.0, 0, -2.0)) < 0.15, "west aisle reaches the north windows beside the bed and table")
 	await driver.walk_to(room.position + Vector3(-2.0, 0, 0))
 	var state := ManorRules.new([1, 2, 3, 0, -1, 5, 6, 7, 8], 0)
-	state.courtyards = true
+	state.lawn_access = true
 	main.rules = state
 	for id in main.rooms:
 		main.rooms[id].position = ManorGeometry.center(state.board.find(id))

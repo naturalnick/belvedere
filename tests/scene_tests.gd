@@ -14,7 +14,7 @@ func run() -> void:
 	main.player.automated = true
 	await physics_frame
 	await physics_frame
-	_check(main.rules.key() == ManorRules.from_seed("A").key(), "scene starts from requested seed A")
+	_check(main.rules.board == ManorRules.from_seed("C").board and main.rules.player == 7, "scene starts from requested seed C")
 	_check(main.player.camera.fov == main.preferences.fov and is_equal_approx(main.player.camera.position.y, 1.65), "first-person scale respects saved FOV")
 	for id in main.rooms:
 		var room: ManorRoom = main.rooms[id]
@@ -27,32 +27,27 @@ func run() -> void:
 	var foyer: ManorRoom = main.rooms[7]
 	main.player.aim_at(foyer.global_position + Vector3.UP * 0.8)
 	_check(main.player.begin_interact(), "spawn lever reachable without walking")
-	main.player.select_pull(ManorRules.W)
+	main.player.select_pull(ManorRules.E)
 	main.player.release_interact()
 	_check(not main.sliding and main.slides == 0, "invalid lever direction does not slide")
 	_check(main.player.begin_interact(), "lever can be held again")
 	main.player.cancel_pull()
 	_check(not main.player.held and not main.sliding, "cancel releases lever without moving")
 	_check(main.player.begin_interact(), "lever can be re-engaged after cancel")
-	main.player.select_pull(ManorRules.E)
+	main.player.select_pull(ManorRules.W)
 	var local := foyer.to_local(main.player.global_position)
 	main.player.release_interact()
 	_check(main.sliding and main.player.get_parent() == foyer, "slide parents player to room")
-	_check(not main.request_slide(ManorRules.E), "second slide blocked in transit")
+	_check(not main.request_slide(ManorRules.W), "second slide blocked in transit")
 	await create_timer(0.7).timeout
 	_check(foyer.to_local(main.player.global_position).distance_to(local) < 0.001, "mid-slide rider position preserved")
-	_check(main.rules.board == ManorRules.from_seed("A").board, "logical board stays atomic during transit")
+	_check(main.rules.board == ManorRules.from_seed("C").board, "logical board stays atomic during transit")
 	await main.slide_finished
-	_check(main.slides == 1 and main.rules.slot() == 7, "slide commits room to destination")
+	_check(main.slides == 1 and main.rules.slot() == 6, "slide commits room to destination")
 	_check(foyer.to_local(main.player.global_position).distance_to(local) < 0.001, "landing preserves rider position")
-	# Deliberately place the test actor in the edge gap to probe the unsolved boundary.
 	main.rules.player = -1
-	main.player.position = ManorGeometry.center(main.rules.slot()) + Vector3(0, 0.02, 1.5)
-	main.player.bot_drive = Vector3.BACK
-	await create_timer(1.2).timeout
-	_check(main.player.position.z < 9.1 and main.rules.player == -1, "edge gap cannot bypass the house on the lawn")
+	main.rules.gap_slot = main.rules.board.find(-1)
 	_check(not main.request_slide(ManorRules.N), "scene rejects slides from empty slot")
-	main.player.bot_drive = Vector3.ZERO
 	# Bedroom north is a window, even though another room is on its other side.
 	main.rules.player = 0
 	var bedroom: ManorRoom = main.rooms[0]
@@ -92,5 +87,5 @@ func _check_all_spawn_yaws() -> void:
 	main.player.camera.fov = saved_fov
 	main.rules = original
 	main.place_player_at_spawn()
-	_check(is_equal_approx(main.player.rotation.y, -PI / 2.0), "seed A spawn faces east, yaw -90 degrees")
+	_check(is_equal_approx(main.player.rotation.y, PI / 2.0), "seed C spawn faces west, yaw 90 degrees")
 	print("Spawn yaw and lever framing: all 1,816 accepted seeds verified")

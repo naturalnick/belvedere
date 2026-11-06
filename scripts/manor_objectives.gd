@@ -32,7 +32,7 @@ func advance(state: ManorRules) -> Array[int]:
 	return earned
 
 static func nearest_goal(start: ManorRules, targets: Array[int], enter_room: bool = false) -> Dictionary:
-	# Outside walking returns to the same sole gap, so the classic walk graph is equivalent.
+	# Outside walking returns to the same sole gap, so searching without the lawn is equivalent.
 	var origin := ManorRules.new(start.board, -1 if start.player == ManorRules.OUTSIDE else start.player)
 	var deque: Dictionary[int, int] = {0: origin.key()}
 	var distance: Dictionary[int, int] = {origin.key(): 0}

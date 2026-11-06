@@ -184,7 +184,7 @@ func run() -> void:
 	main.fall_recovery._wake()
 	check(watch.owned and watch.claimed, "fall recovery retains the stopwatch")
 	main.rules = ManorRules.new()
-	main.rules.courtyards = true
+	main.rules.lawn_access = true
 	watch.refresh_count()
 	check(watch.remaining == 0 and watch.model.readout.text == "0", "assembled house reads zero in the actual game mode")
 	main.return_to_title()

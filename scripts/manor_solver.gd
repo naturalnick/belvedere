@@ -62,8 +62,8 @@ func assembly_distance(state: ManorRules) -> int:
 	if not ready:
 		return -1
 	# With one gap the lawn reconnects only to that gap; walking outside is free.
-	var classic := ManorRules.new(state.board, -1 if state.player == ManorRules.OUTSIDE else state.player)
-	return distance.get(classic.key(), -1)
+	var search_state := ManorRules.new(state.board, -1 if state.player == ManorRules.OUTSIDE else state.player)
+	return distance.get(search_state.key(), -1)
 
 func solution(start: ManorRules, minimize_walks: bool = false) -> Array[Vector2i]:
 	if minimize_walks:

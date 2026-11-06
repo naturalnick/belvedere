@@ -15,9 +15,8 @@ This file holds the current design and the reasons behind non-obvious choices. E
 - Every room carries its furniture, fixtures, clues and floor patterns when it slides.
 
 ## Starts and modes
-- Default launch = seed A opening `[6,2,5,0,1,3,7,8,-1]`: Laundry starts bottom-center, with the gap to its right. The game opens on the Bedroom wall title. Classic seed A retains its original arrangement; other seeds keep their original spawns, 1.7 m behind the lever facing the gap.
+- Default launch = seed A opening `[6,2,5,0,1,3,7,8,-1]`: Laundry starts bottom-center, with the gap to its right. The game opens on the Bedroom wall title. Other seeds keep their original spawns, 1.7 m behind the lever facing the gap, and skip the wall title.
 - `--seed=B|C|random|<index>` picks from `data/accepted_14_20.json`: 1,816 states that are 14–20 optimal slides from solved, with the player's room having a doorway open to the gap. The spec's random-walk scramble was replaced because simulation (`tools/sim/`) showed random walks barely leave solved. Only 7% of boards are reachable; there are no dead states.
-- `--classic` = the original single-goal jam puzzle with a perimeter barrier (random accepted start unless `--seed`). `--courtyard` = archived six-room/three-gap experiment. Both keep their tests; don't extend them.
 - `--invert-y`, `--web-entry` (exercises the web play-gesture path natively).
 
 ## Rooms and furnishings
@@ -95,7 +94,7 @@ Most cost is the sun's shadow pass. Batched outline shells are separate non-cast
 Camera shake (and its setting); pulsing, scaling or animated objective indicators; floor targets, arrows and check marks; a target diagram in the overview; completion chimes; outdoor wind, per-room ambient loops and a front-door creak; a separate rug footstep; tonal or bright hard-floor steps; birds indoors; digits or tally marks on the safe; menu hover pills, a circular Play icon and ornamental diamonds; a smiley meadow underside; billboard or pancake trees and evenly scattered trees; ordinary doorway borders in the overview; lit decorative lamps; per-room exterior siding tints.
 
 ## Open items
-- A five-person human playtest is still owed. The original pass bar: at least 4/5 testers make their first slide within 90 s and solve in 5–20 minutes. The bot proxy in `docs/FUNTEST.md` covers classic mode only.
+- A five-person human playtest is still owed. The original pass bar: at least 4/5 testers make their first slide within 90 s and solve in 5–20 minutes. The bot proxy in `docs/FUNTEST.md` covers house assembly only, not the room objectives.
 - The objective guidance has not been validated with human players.
 
 ## Exports and notices

@@ -6,7 +6,7 @@ static func prepare(main: Manor, last_room: int = 7) -> void:
 	board[4] = last_room
 	board[last_room] = -1
 	main.rules = ManorRules.new(board, last_room)
-	main.rules.courtyards = true
+	main.rules.lawn_access = true
 	for id in main.rooms:
 		main.rooms[id].position = ManorGeometry.center(board.find(id))
 	main.gap_floors.clear()

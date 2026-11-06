@@ -19,8 +19,7 @@ var slides := 0
 var gap_floor: Node3D
 var gap_floors: Dictionary[int, Node3D] = {}
 var carpet: MeshInstance3D
-var seed_name := "random"
-var perimeter: Array[StaticBody3D] = []
+var seed_name := "A"
 var play_gate: Control
 var preferences: ManorPreferences
 static var gesture_start := false
@@ -59,29 +58,16 @@ var meadow: ManorMeadow
 func _ready() -> void:
 	set_process(false)
 	var demo := false
-	var classic := OS.get_cmdline_user_args().has("--classic")
-	var three_gaps := OS.get_cmdline_user_args().has("--courtyard")
-	if three_gaps:
-		seed_name = "courtyard"
-	elif not classic:
-		seed_name = "A"
 	for arg in OS.get_cmdline_user_args():
 		if arg.begins_with("--seed="):
 			seed_name = arg.trim_prefix("--seed=")
 		elif arg == "--demo":
 			demo = true
-	if three_gaps and seed_name not in ["courtyard", "A"]:
-		printerr("The three-gap prototype has one fixed start; omit --courtyard to use other seeds.")
-		get_tree().quit(1)
-		return
-	rules = ManorRules.courtyard_start() if three_gaps else ManorRules.from_seed(seed_name)
-	if not classic and not three_gaps and seed_name == "A":
-		rules = ManorRules.opening_start()
+	rules = ManorRules.opening_start() if seed_name == "A" else ManorRules.from_seed(seed_name)
 	if rules == null:
 		get_tree().quit(1)
 		return
-	if not classic:
-		rules.courtyards = true
+	rules.lawn_access = true
 	bed_sleep = ManorBedSleep.new()
 	bed_sleep.manor = self
 	bed_sleep.opening_rules = rules.copy()
@@ -118,7 +104,7 @@ func _ready() -> void:
 	preferences.changed.connect(func() -> void: preferences.apply(player))
 	preferences.apply(player)
 	place_player_at_spawn()
-	if not classic and not three_gaps and seed_name == "A":
+	if seed_name == "A":
 		wall_title = ManorWallTitle.new()
 		rooms[0].add_child(wall_title)
 		rules.player = 0
@@ -148,54 +134,52 @@ func _ready() -> void:
 	play_gate.manor = self
 	hud.add_child(play_gate)
 	play_gate.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	if not classic and not three_gaps:
-		objectives = ManorObjectives.new()
-		coins = ManorCoins.new()
-		objectives.start(rules)
-		objective_display = ManorObjectiveDisplay.new()
-		add_child(objective_display)
-		objective_display.setup(self)
-		objective_display.refresh(objectives, rules)
-		if wall_title != null:
-			wall_title.refresh(objectives.active, rules.board)
-		coin_device = ManorCoinDevice.new()
-		coin_device.manor = self
-		coin_device.position = Vector3(-1.85, 0, -2.50)
-		rooms[7].add_child(coin_device)
-		study_safe = ManorSafe.new()
-		study_safe.manor = self
-		study_safe.position = Vector3(2.61, 0, 0)
-		study_safe.rotation.y = -PI / 2
-		rooms[2].add_child(study_safe)
-		for kind in ManorFruitClue.ROOMS.size():
-			var clue := ManorFruitClue.new()
-			clue.kind = kind
-			clue.room = rooms[ManorFruitClue.ROOMS[kind]]
-			clue.room.add_child(clue)
-			fruit_clues.append(clue)
-		first_coin_guide = ManorFirstCoinGuide.new()
-		first_coin_guide.manor = self
-		add_child(first_coin_guide)
-		coin_hud = ManorCoinHUD.new()
-		coin_hud.manor = self
-		hud.add_child(coin_hud)
-		hud.move_child(coin_hud, 0)
-		ending = ManorEnding.new()
-		ending.player = player
-		add_child(ending)
-		binoculars = ManorBinoculars.new()
-		add_child(binoculars)
-		binoculars.setup(self, hud)
-		foundation_hatch = ManorFoundationHatch.new()
-		foundation_hatch.manor = self
-		add_child(foundation_hatch)
-		stopwatch = ManorStopwatch.new()
-		add_child(stopwatch)
-		stopwatch.setup(self, hud)
-	if rooms.size() == 8:
-		conservatory = ManorConservatory.new()
-		add_child(conservatory)
-		conservatory.setup(self, hud)
+	objectives = ManorObjectives.new()
+	coins = ManorCoins.new()
+	objectives.start(rules)
+	objective_display = ManorObjectiveDisplay.new()
+	add_child(objective_display)
+	objective_display.setup(self)
+	objective_display.refresh(objectives, rules)
+	if wall_title != null:
+		wall_title.refresh(objectives.active, rules.board)
+	coin_device = ManorCoinDevice.new()
+	coin_device.manor = self
+	coin_device.position = Vector3(-1.85, 0, -2.50)
+	rooms[7].add_child(coin_device)
+	study_safe = ManorSafe.new()
+	study_safe.manor = self
+	study_safe.position = Vector3(2.61, 0, 0)
+	study_safe.rotation.y = -PI / 2
+	rooms[2].add_child(study_safe)
+	for kind in ManorFruitClue.ROOMS.size():
+		var clue := ManorFruitClue.new()
+		clue.kind = kind
+		clue.room = rooms[ManorFruitClue.ROOMS[kind]]
+		clue.room.add_child(clue)
+		fruit_clues.append(clue)
+	first_coin_guide = ManorFirstCoinGuide.new()
+	first_coin_guide.manor = self
+	add_child(first_coin_guide)
+	coin_hud = ManorCoinHUD.new()
+	coin_hud.manor = self
+	hud.add_child(coin_hud)
+	hud.move_child(coin_hud, 0)
+	ending = ManorEnding.new()
+	ending.player = player
+	add_child(ending)
+	binoculars = ManorBinoculars.new()
+	add_child(binoculars)
+	binoculars.setup(self, hud)
+	foundation_hatch = ManorFoundationHatch.new()
+	foundation_hatch.manor = self
+	add_child(foundation_hatch)
+	stopwatch = ManorStopwatch.new()
+	add_child(stopwatch)
+	stopwatch.setup(self, hud)
+	conservatory = ManorConservatory.new()
+	add_child(conservatory)
+	conservatory.setup(self, hud)
 	run_summary = ManorRunSummary.new()
 	run_summary.manor = self
 	hud.add_child(run_summary)
@@ -328,8 +312,6 @@ func refresh_progress() -> void:
 
 func open_exit() -> void:
 	carpet.visible = true
-	for barrier in perimeter:
-		barrier.collision_layer = 0
 	if ending != null:
 		ending.activate()
 	refresh_doors()
@@ -401,15 +383,11 @@ func _build_world() -> void:
 	# The meadow supplies level walking collision and a removable center over the lift shaft.
 	meadow = ManorMeadow.new()
 	add_child(meadow)
-	meadow.build(-0.04 if rules.courtyards else -0.15, not rules.courtyards)
+	meadow.build(-0.04, false)
 	carpet = ManorGeometry.box(self, Vector3(1.8, 0.025, 13), Vector3(0, 0, 15.8), ManorGeometry.material("B3363A", 0.0))
 	for x in [-0.84, 0.84]:
 		ManorGeometry.box(carpet, Vector3(0.06, 0.006, 13), Vector3(x, 0.016, 0), ManorGeometry.material("C9A04A", 0.0))
 	carpet.visible = false
-	if not rules.courtyards:
-		for d in 4:
-			var size := Vector3(18.75, 3, 0.1) if d % 2 == 0 else Vector3(0.1, 3, 18.75)
-			perimeter.append(ManorGeometry.barrier(self, size, ManorGeometry.DIRECTIONS[d] * 9.425 + Vector3.UP * 1.5))
 
 func refresh_doors(instant: bool = false) -> void:
 	var revealing := conservatory != null and conservatory.revealing()
@@ -431,7 +409,7 @@ func update_occupant() -> void:
 	var col := int(floor((p.x + ManorGeometry.PITCH * 1.5) / ManorGeometry.PITCH))
 	var row := int(floor((p.z + ManorGeometry.PITCH * 1.5) / ManorGeometry.PITCH))
 	if row < 0 or row > 2 or col < 0 or col > 2:
-		if rules.courtyards and rules.player == -1:
+		if rules.lawn_access and rules.player == -1:
 			for d in 4:
 				if ManorRules.neighbor(rules.slot(), d) < 0:
 					rules.apply(ManorRules.WALK, d)
@@ -449,17 +427,6 @@ func update_occupant() -> void:
 			if objectives != null and objectives.active >= 0 and rules.player == objectives.active and rules.board[rules.player] == rules.player:
 				refresh_progress()
 			return
-	# One physics tick can cross both grid axes at a corner of connected courtyards.
-	if rules.courtyards and rules.player == -1 and rules.board[new_slot] == -1:
-		for d in 4:
-			var middle := ManorRules.neighbor(rules.slot(), d)
-			if middle < 0 or rules.board[middle] != -1:
-				continue
-			for onward in 4:
-				if ManorRules.neighbor(middle, onward) == new_slot:
-					rules.apply(ManorRules.WALK, d)
-					rules.apply(ManorRules.WALK, onward)
-					return
 
 func request_slide(direction: int) -> bool:
 	if controls_locked():

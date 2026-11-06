@@ -10,8 +10,7 @@ run_checked() {
 }
 run_checked --import
 run_checked --script res://tests/run_tests.gd
-run_checked --script res://tests/scene_tests.gd -- --classic --seed=A
-run_checked --script res://tests/courtyard_tests.gd -- --courtyard
+run_checked --script res://tests/scene_tests.gd -- --seed=C
 run_checked --script res://tests/single_gap_tests.gd
 run_checked --script res://tests/wall_geometry_tests.gd
 run_checked --script res://tests/door_geometry_tests.gd
@@ -31,8 +30,7 @@ run_checked --script res://tests/settings_tests.gd
 run_checked --script res://tests/bedroom_tests.gd
 run_checked --script res://tests/bed_sleep_tests.gd
 run_checked --script res://tests/bed_sleep_tests.gd -- --web-entry
-run_checked --script res://tests/bed_sleep_tests.gd -- --classic --seed=random
-run_checked --script res://tests/bed_sleep_tests.gd -- --courtyard
+run_checked --script res://tests/bed_sleep_tests.gd -- --seed=B
 run_checked --script res://tests/furnishing_tests.gd
 run_checked --script res://tests/plan_tests.gd
 run_checked --script res://tests/shadow_tests.gd

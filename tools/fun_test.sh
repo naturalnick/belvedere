@@ -10,5 +10,5 @@ run_checked() {
 }
 run_checked --import
 run_checked --script res://tools/fun/benchmark.gd
-run_checked --script res://tools/fun/probes.gd -- --classic --seed=A
+run_checked --script res://tools/fun/probes.gd -- --seed=C
 python3 tools/fun/report.py

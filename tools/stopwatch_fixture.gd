@@ -15,7 +15,7 @@ static func place(main: Manor, on_lawn: bool = false) -> void:
 		main.slides += code / 4
 		main.objectives.advance(main.rules)
 	assert(main.slides == 10 and main.rules.board[0] == -1 and main.rules.player == -1)
-	main.rules.courtyards = true
+	main.rules.lawn_access = true
 	main.rules.gap_slot = 0
 	main.first_coin_guide.seen = true
 	main.coins.awarded.assign(main.objectives.completed)

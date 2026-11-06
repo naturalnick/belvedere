@@ -6,12 +6,12 @@ First-person 3D sliding-room puzzle in Godot 4.7 (Compatibility renderer). The c
 
 ## Commands
 Kept in `tools/`; update this list when the scripts change.
-- Run: `tools/run.sh [--seed=A|B|C|random|<index>] [--classic|--courtyard] [--invert-y]`
+- Run: `tools/run.sh [--seed=A|B|C|random|<index>] [--invert-y]`
 - Conservatory playtest (one final Foyer shift south reveals the room): `tools/try_conservatory.sh`
 - Stopwatch playtest (starts on the lawn beside the reachable hatch): `tools/try_stopwatch.sh`
 - Rule, solver and scene tests (headless): `tools/test.sh`
-- Classic-mode bots and geometry probes (headless): `tools/fun_test.sh` → `docs/FUNTEST.md`
-- Screenshots (real window): `tools/capture.sh [title|coins|drawers|safe|binoculars|stopwatch|sleep|fall|trees|exterior|furnishings|stage3|objectives|single-gap|courtyard|conservatory|solve|review] [seed] [out_dir] [extra flags]`; furnishings accepts `--rooms=5,7`.
+- House-assembly bots and geometry probes (headless): `tools/fun_test.sh` → `docs/FUNTEST.md`
+- Screenshots (real window): `tools/capture.sh [title|coins|drawers|safe|binoculars|stopwatch|sleep|fall|trees|exterior|furnishings|stage3|objectives|single-gap|conservatory] [seed] [out_dir] [extra flags]`; furnishings accepts `--rooms=5,7`.
 - QR flicker check: `tools/check_qr.sh`. Door close-up pixel check: `tools/check_doors.sh [out_dir]`. Render benchmark: `tools/profile.sh [output_json]`.
 - Web build (local zip, never uploaded): `tools/build_itch.sh`
 - Windows test build (local unsigned zip, never uploaded): `tools/build_windows.sh`

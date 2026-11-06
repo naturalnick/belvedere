@@ -53,8 +53,6 @@ func _reset_layout() -> void:
 			manor.gap_floors[slot] = floor_node
 	manor.fall_recovery._wake()
 	manor.carpet.hide()
-	for barrier in manor.perimeter:
-		barrier.collision_layer = 1
 	if manor.ending != null:
 		manor.ending.reset()
 	if manor.objectives != null:

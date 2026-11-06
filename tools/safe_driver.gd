@@ -11,7 +11,7 @@ func run(driver: Node) -> void:
 		board[previous] = board[slot]
 		board[slot] = clue.room.room_id
 		main.rules = ManorRules.new(board, ManorRules.OUTSIDE)
-		main.rules.courtyards = true
+		main.rules.lawn_access = true
 		for id in main.rooms:
 			main.rooms[id].position = ManorGeometry.center(board.find(id))
 		main.gap_floor.position = Vector3(0, -0.02, 0)
