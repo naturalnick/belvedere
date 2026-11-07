@@ -9,7 +9,7 @@ static func place(main: Manor, id: int) -> void:
 	main.rules = ManorRules.new(board, id)
 	main.rules.lawn_access = true
 	main.won = false
-	main.objectives = null
+	main.first_home_guide.seen = true
 	for room_id in main.rooms:
 		main.rooms[room_id].position = ManorGeometry.center(board.find(room_id))
 	main.gap_floor.position = ManorGeometry.center(4) + Vector3.DOWN * 0.02

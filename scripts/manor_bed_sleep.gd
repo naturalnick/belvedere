@@ -38,7 +38,7 @@ func sleep() -> void:
 		manor.recovering = false)
 
 func _reset_layout() -> void:
-	# Keep the existing reward and inventory objects; only the room arrangement resets.
+	# Rewards, inventory and bell progress all stay; only the room arrangement resets.
 	manor.rules = opening_rules.copy()
 	manor.slides = 0
 	manor.won = false
@@ -49,16 +49,7 @@ func _reset_layout() -> void:
 	manor.carpet.hide()
 	if manor.ending != null:
 		manor.ending.reset()
-	if manor.objectives != null:
-		manor.objectives.bonus_won = false
-		var remaining: Array[int] = []
-		for room in ManorObjectives.ROOMS:
-			if not manor.objectives.completed.has(room):
-				remaining.append(room)
-		manor.objectives.active = -1 if remaining.is_empty() else ManorObjectives.nearest_goal(manor.rules, remaining).room
-		manor.objective_display.refresh(manor.objectives, manor.rules)
-		if manor.wall_title != null:
-			manor.wall_title.refresh(manor.objectives.active, manor.rules.board)
+	manor.home_lights.refresh(manor.rules)
 	if manor.foundation_hatch != null:
 		manor.foundation_hatch.refresh()
 	if manor.stopwatch != null:

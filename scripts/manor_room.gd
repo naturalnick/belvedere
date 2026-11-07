@@ -3,6 +3,7 @@ extends Node3D
 
 const OVERVIEW_BORDER_WIDTH := 0.34
 const OVERVIEW_BORDER_INSET := 0.035
+const WALL_LETTER_SIZE := 0.62
 
 var room_id: int
 var doors: Array[ManorDoor] = []
@@ -66,6 +67,8 @@ func build(id: int) -> void:
 			for x in [-1.6, 1.6]:
 				_window(wall, x)
 			ManorGeometry.barrier(wall, Vector3(6.25, 3, 0.125), Vector3(0, 1.5, 0))
+		if ManorBells.LETTERS.has(id) and d == (first_window() + 2) % 4:
+			_build_wall_letter(wall)
 		_build_overview_edge(d)
 	var fill := OmniLight3D.new()
 	fill.position.y = 2.6
@@ -89,6 +92,28 @@ func build(id: int) -> void:
 		skip.append_array(door.leaves)
 		skip.append_array(door.emblems)
 	ManorStaticBatch.combine(self, skip)
+
+# Painted on the outside of the accent wall, so a neighbouring room hides it and the wall's colour
+# says whose letter it is. Toon-lit mesh lettering takes the sun and shadows like the wall beneath.
+func _build_wall_letter(wall: Node3D) -> void:
+	var text := TextMesh.new()
+	text.text = ManorBells.LETTERS[room_id]
+	text.font = preload("res://assets/fonts/StardosStencil-Bold.ttf")
+	text.font_size = 200
+	text.pixel_size = WALL_LETTER_SIZE / text.font_size
+	text.depth = 0.0
+	var letter := MeshInstance3D.new()
+	letter.name = "WallLetter"
+	letter.mesh = text
+	# Dark paint where cream would disappear against the accent colour, faded toward the wall like an old brand.
+	var paint := Color("2E2823" if room_id in [3, 7] else "F2E8D5")
+	letter.material_override = ManorGeometry.material(Color(ManorGeometry.ACCENTS[room_id]).lerp(paint, 0.45).to_html(false), 0.0)
+	letter.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	wall.add_child(letter)
+	# Low in the corner, out of the sightlines through doors and windows; clear of the wall face to
+	# avoid the flicker a coplanar decal gets.
+	letter.position = Vector3(2.55, 0.42, -0.0625 - 0.004)
+	letter.rotation.y = PI
 
 func set_overview(enabled: bool) -> void:
 	ceiling.visible = not enabled

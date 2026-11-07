@@ -13,10 +13,7 @@ static func prepare(main: Manor, last_room: int = 7) -> void:
 	main.player.position = ManorGeometry.center(last_room).normalized() * 1.25 + Vector3.UP * 0.02
 	main.player.velocity = Vector3.ZERO
 	main.player.bot_drive = Vector3.ZERO
-	if main.objectives != null:
-		main.first_coin_guide.seen = true
-		main.objectives.completed.assign(ManorObjectives.ROOMS)
-		main.objectives.active = -1
+	main.first_home_guide.seen = true
 	main.refresh_doors(true)
 
 # Ending/statistics tests exercise the old finale independently of the reveal's real-time tests.

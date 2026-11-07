@@ -22,7 +22,6 @@ func run() -> void:
 	var fixture_board := main.rules.board.duplicate()
 	var fixed_position := hatch.global_position
 	check(main.slides == 10 and hatch.exposed(), "legal ten-slide fixture exposes the northwest hatch")
-	check(main.objectives.completed.size() > 0 and not main.objectives.all_completed, "fixture retains partial blue-token progress")
 	for tick in 6:
 		await physics_frame
 	var ray := main.player.focus()

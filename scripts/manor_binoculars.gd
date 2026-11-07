@@ -117,7 +117,7 @@ func reset_view() -> void:
 	hud.queue_redraw()
 
 func _suspended() -> bool:
-	return manor.at_title or manor.in_finale or manor.recovering or manor.sliding or manor.play_gate.visible or (manor.first_coin_guide != null and manor.first_coin_guide.active) or manor.coin_device.releasing
+	return manor.at_title or manor.in_finale or manor.recovering or manor.sliding or manor.play_gate.visible or (manor.first_home_guide != null and manor.first_home_guide.active)
 
 func _process(delta: float) -> void:
 	if manor == null:

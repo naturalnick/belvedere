@@ -17,6 +17,57 @@
       "url": "https://freesound.org/people/Magnesus/sounds/723913/",
       "download": "https://cdn.freesound.org/previews/723/723913_2008500-hq.ogg",
       "note": "Freesound high-quality Ogg preview (192 kbps, 48 kHz stereo); the original WAV requires a login."
+    },
+    "piano-placeholder-sugerencia.ogg": {
+      "title": "Sugerencia",
+      "author": "Salim Perchy and Gerardo Sarria's algorithm; audio by Leo Waltmann",
+      "license": "CC0-1.0",
+      "url": "https://commons.wikimedia.org/wiki/File:Sugerencia.ogg",
+      "note": "Placeholder for the player piano until the composer's songs arrive."
+    },
+    "small-bell-350616.mp3": {
+      "title": "2016.07.22 Bell Single 01.wav",
+      "author": "RP1312",
+      "license": "CC0-1.0",
+      "url": "https://freesound.org/people/RP1312/sounds/350616/",
+      "download": "https://cdn.freesound.org/previews/350/350616_4582947-hq.mp3",
+      "note": "Freesound high-quality MP3 preview; the original WAV requires a login."
+    },
+    "piano-drifting-piano.mp3": {
+      "title": "Drifting Piano",
+      "author": "HoliznaCC0",
+      "license": "CC0-1.0",
+      "url": "https://freemusicarchive.org/music/holiznacc0/background-music/drifting-piano/"
+    },
+    "piano-game-travel-1-piano.mp3": {
+      "title": "Game Travel 1 (Piano)",
+      "author": "HoliznaCC0",
+      "license": "CC0-1.0",
+      "url": "https://freemusicarchive.org/music/holiznacc0/background-music/game-travel-1-piano/"
+    },
+    "piano-ondrosik-pilgrimage.mp3": {
+      "title": "Pilgrimage",
+      "author": "Ondrosik",
+      "license": "CC0-1.0",
+      "url": "https://freemusicarchive.org/music/Ondrosik/whispered/pilgrimage/"
+    },
+    "piano-ondrosik-sunday-evening.mp3": {
+      "title": "sunday evening",
+      "author": "Ondrosik",
+      "license": "CC0-1.0",
+      "url": "https://freemusicarchive.org/music/Ondrosik/whispered/sunday-evening/"
+    },
+    "piano-ondrosik-whispered.mp3": {
+      "title": "Whispered",
+      "author": "Ondrosik",
+      "license": "CC0-1.0",
+      "url": "https://freemusicarchive.org/music/Ondrosik/whispered/whispered/"
+    },
+    "piano-ondrosik-fairitale-2.mp3": {
+      "title": "fairitale 2",
+      "author": "Ondrosik",
+      "license": "CC0-1.0",
+      "url": "https://freemusicarchive.org/music/Ondrosik/whispered/fairitale-2/"
     }
   },
   "sha256": {
@@ -52,6 +103,14 @@
     "rpg/metalClick.ogg": "9851a69d0c613e13bceef08060ecc4148f098ef487927cbebe270d642398a3b3",
     "rpg/metalLatch.ogg": "ba9ba60b172b3ebc131a940f25793cd2e207aca7af73dc80d637277f060f1708",
     "rpg/handleCoins.ogg": "8a91f969e932df709df80ee124d86a51389eed9b67f22e5e716bc2bbf60d8dab",
-    "rpg/handleCoins2.ogg": "4b857968d64f9ac9336a10ffac6694d7547e1f01566ad6857b30bc8db3ee6c32"
+    "rpg/handleCoins2.ogg": "4b857968d64f9ac9336a10ffac6694d7547e1f01566ad6857b30bc8db3ee6c32",
+    "piano-placeholder-sugerencia.ogg": "979fb1ebb6d67e109d7d2e41e9ccad125f67be0bf943a6a775c54c7a9d44bb07",
+    "small-bell-350616.mp3": "4124a311f3906eda8fa765eb8f0ad11c4601fe9fc1181fa5cb57a00ac7657e16",
+    "piano-drifting-piano.mp3": "5d1d80af901c244bcedb618b5350b83874167258ba4fa17da83a2a005a26f95e",
+    "piano-game-travel-1-piano.mp3": "ce270b4b4b9e490893bbd36abba505698ed78fe1d7b0805b3aea09b953815de2",
+    "piano-ondrosik-pilgrimage.mp3": "0198ba7cd369cc0e101f338826f51b7e0f3f0910cec827ad346f7d3250f28267",
+    "piano-ondrosik-sunday-evening.mp3": "9745b87a9e2d99778aee299a4b0378887015710170ba1dbd543f8c8baa8288e1",
+    "piano-ondrosik-whispered.mp3": "be24689e9075387900045550de80625dd8e53046e0377a352857cf8a939f664e",
+    "piano-ondrosik-fairitale-2.mp3": "be3581ad605844a8faff9a73af26e1fc8aa0c5236c9359d4804e7ebd37ed7eba"
   }
 }

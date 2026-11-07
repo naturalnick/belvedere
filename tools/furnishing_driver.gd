@@ -40,7 +40,7 @@ func run(driver: Node) -> void:
 			await driver.shot("%s_south" % NAMES[id])
 		var art := room.get_node_or_null("Furnishings/WallArt") as Node3D
 		if art != null:
-			var viewpoint: Vector3 = {1: Vector3(1.2, 0, 0.8), 2: Vector3(1.2, 0, 0.8), 3: Vector3(-1.2, 0, 0), 5: Vector3(1.3, 0, -0.8), 6: Vector3(1.2, 0, -0.8)}[id]
+			var viewpoint: Vector3 = {1: Vector3(1.2, 0, 0.8), 2: Vector3(1.2, 0, 0.8), 3: Vector3(-1.2, 0, 0), 5: Vector3(-0.9, 0, 0.4), 6: Vector3(1.2, 0, -0.8)}[id]
 			await driver.walk_to(room.position + viewpoint)
 			main.player.aim_at(art.global_position)
 			await driver.shot("%s_wall_art" % NAMES[id])
@@ -67,8 +67,8 @@ func run(driver: Node) -> void:
 			await driver.shot("dining_serving_table")
 		if id == 7:
 			for side in [-1, 1]:
-				await driver.walk_to(main.coin_device.to_global(Vector3(side * 0.80, 0, 1.15)))
-				main.player.aim_at(main.coin_device.to_global(Vector3(0, 1.48, 0)))
+				await driver.walk_to(main.trophy_case.to_global(Vector3(side * 0.80, 0, 1.15)))
+				main.player.aim_at(main.trophy_case.to_global(Vector3(0, 1.48, 0)))
 				await driver.shot("trophy_case_left" if side < 0 else "trophy_case_right")
 		if id == 8:
 			var plan := room.position + Vector3(2.99, 1.62, 0)

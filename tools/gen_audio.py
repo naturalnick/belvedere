@@ -175,6 +175,49 @@ def coin_effects():
         latch = source('rpg', 'metalClick', cutoff=3800)
         write(f'coin_insert_{i}', mix(max(.65, len(coins) / RATE + .12),
               [(0, latch, .14), (.10, coins, 1.)]), .34, .002, .06)
+    # A drawer's lock releasing as its room comes home: the real latch, with a light knock of the drawer front.
+    latch = source('rpg', 'metalLatch', cutoff=5000)
+    knock = source('impact', 'impactWood_light_000', 1.1, 2400)
+    write('drawer_unlock_0', mix(max(.4, len(latch) / RATE + .05), [(0, latch, 1.), (.03, knock, .25)]), .36, .002, .08)
+
+
+def bell_effects():
+    # RP1312's single small-bell strike, at its natural length.
+    ring = trim(filt(read(SOURCE / 'small-bell-350616.mp3'), 45, 'highpass'), .002)
+    write('bell_clear', ring, .60, .001, .25, ogg=True)
+    # A wrong ring is the same recording a semitone flat and slightly darker, not a separate failure sound.
+    write('bell_off', filt(signal.resample_poly(ring, 100, 94), 3200), .60, .001, .25, ogg=True)
+
+
+PIANO_SONGS = ('piano-placeholder-sugerencia.ogg', 'piano-drifting-piano.mp3', 'piano-game-travel-1-piano.mp3',
+               'piano-ondrosik-pilgrimage.mp3', 'piano-ondrosik-sunday-evening.mp3', 'piano-ondrosik-whispered.mp3',
+               'piano-ondrosik-fairitale-2.mp3')
+
+
+def piano_sources_present():
+    return all((SOURCE / name).exists() for name in PIANO_SONGS)
+
+
+def piano_songs():
+    # The stand-in recordings stay out of git (sources.json has their links and hashes); without
+    # them the committed piano_song files are kept as they are.
+    if not piano_sources_present():
+        print('Piano sources missing; keeping the existing piano_song files.')
+        return
+    # One song per token, in this order; the game plays whichever piano_song_N exist.
+    for i, name in enumerate(PIANO_SONGS):
+        # Mono: the piano is a single point in the room, and it halves the download and web memory.
+        x = read(SOURCE / name)
+        active = np.flatnonzero(np.abs(x) > .003)
+        x = x[active[0]:]
+        if len(x) > 60 * RATE:
+            # Each token buys under a minute, so longer pieces end at their quietest half-second between 45 and 57 s.
+            window = int(.5 * RATE)
+            energy = [np.mean(x[t:t + window] ** 2) for t in range(45 * RATE, 57 * RATE, window // 2)]
+            x = fade(x[:45 * RATE + int(np.argmin(energy)) * (window // 2) + window], 0, 3.)
+        # Matched loudness so no token sounds louder than the last, without letting a peak clip.
+        x = x * min(10 ** (-24.5 / 20) / np.sqrt(np.mean(x * x)), .9 / np.max(np.abs(x)))
+        write(f'piano_song_{i}', x, np.max(np.abs(x)), 0, .05, ogg=True)
 
 
 def birds():
@@ -244,21 +287,25 @@ def music():
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--conservatory-only', action='store_true', help='Regenerate only the creak-free slab and lift sounds')
+    parser.add_argument('--bells-only', action='store_true', help='Regenerate only the bells and the player-piano songs')
     args = parser.parse_args()
     manifest=json.loads((SOURCE/'sources.json').read_text())
     for name, digest in manifest['sha256'].items():
+        if name in PIANO_SONGS and not (SOURCE/name).exists(): continue
         assert hashlib.sha256((SOURCE/name).read_bytes()).hexdigest() == digest, name
     OUT.mkdir(parents=True, exist_ok=True)
     if args.conservatory_only:
         conservatory_effects()
+    elif args.bells_only:
+        bell_effects();piano_songs()
     else:
         for stale in list(OUT.glob('*.wav')) + list(OUT.glob('*.ogg')):
-            stale.unlink()
-        effects();birds();music();conservatory_effects()
+            if not (stale.name.startswith('piano_song_') and not piano_sources_present()): stale.unlink()
+        effects();birds();music();conservatory_effects();bell_effects();piano_songs()
     for orphan in OUT.glob('*.import'):
         if not orphan.with_suffix('').exists(): orphan.unlink()
     target=ROOT/'build/audio-metrics.json'
-    metrics = json.loads(target.read_text()) if args.conservatory_only and target.exists() else {}
+    metrics = json.loads(target.read_text()) if (args.conservatory_only or args.bells_only) and target.exists() else {}
     metrics.update(REPORT)
     target.write_text(json.dumps(metrics,indent=2)+'\n')
     print(f'Prepared {len(REPORT)} assets; {sum(x["bytes"] for x in REPORT.values()) / 1e6:.2f} MB. Metrics: {target}')

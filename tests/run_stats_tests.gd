@@ -13,10 +13,10 @@ func run() -> void:
 	check(stats.elapsed_seconds == 0 and not stats.started, "title time is excluded")
 	main.start_play()
 	main.player.automated = true
-	main.first_coin_guide.seen = true
+	main.first_home_guide.seen = true
 	stats._process(12.75)
 	check(stats.elapsed_seconds == 12.75 and stats.time_text() == "0:12", "active play accumulates time with a minutes and seconds readout")
-	for mode in ["pause", "settings", "controls", "sleep", "victory"]:
+	for mode in ["pause", "settings", "controls", "sleep"]:
 		main.play_gate.show_mode(mode)
 		stats._process(20)
 		check(stats.elapsed_seconds == 12.75, "%s menu pauses the timer" % mode)

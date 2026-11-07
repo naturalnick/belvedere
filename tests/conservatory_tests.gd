@@ -8,9 +8,6 @@ func run() -> void:
 	main.audio.cued.connect(func(group: String) -> void: cues.append(group))
 	check(c.room == null and not c.is_processing(), "unsolved game has no conservatory geometry or per-frame work")
 	FIXTURE.prepare(main)
-	# Exercise a direct house solve with the blue-light quest still unfinished.
-	main.objectives.completed.clear()
-	main.objectives.active = 8
 	main.player.aim_at(Vector3(0, 1.4, 10))
 	await physics_frame
 	check(main.request_slide(ManorRules.S), "actual final room shift starts")
@@ -18,7 +15,7 @@ func run() -> void:
 		await process_frame
 	c.set_process(false)
 	check(main.won and c.phase == ManorConservatory.Phase.WAITING, "assembly waits for player to see the center")
-	check(main.coins.awarded.is_empty() and main.coins.pending.is_empty() and main.objectives.completed.is_empty() and main.objectives.active == 8, "direct assembly starts the conservatory without awarding or skipping blue-light coins")
+	check(main.coins.collected.is_empty() and main.coins.pending.is_empty(), "direct assembly starts the conservatory without awarding coins")
 	check(not main.controls_locked(true), "waiting for reveal leaves walking and looking available")
 	main.binoculars.owned = true
 	main.stopwatch.owned = true
@@ -39,7 +36,6 @@ func run() -> void:
 	check(main.player.position.x > before.x + 0.3, "player can physically walk around while doors are closed")
 	main.player.position = Vector3(0, 0.02, 7.5)
 	main.player.aim_at(Vector3(0, 1.4, 0))
-	main.coins.award([0])
 	main.coins.collect(0)
 	c._process(20)
 	check(c.room == null, "queued reward prevents an obscured reveal")

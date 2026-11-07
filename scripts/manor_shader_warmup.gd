@@ -14,8 +14,6 @@ static func needed(manor: Manor) -> bool:
 
 static func run(manor: Manor) -> void:
 	var sketch := _add_hud_sketch(manor)
-	# The trophy screen has its own lights, so its variants differ from anything in the house.
-	manor.play_gate.trophy_viewport.render_target_update_mode = SubViewport.UPDATE_ONCE
 	# The title view first, while the player's camera is still current. A scene that starts the
 	# game resumes from this wait before its first draw, so one frame could skip the view.
 	await manor.get_tree().process_frame

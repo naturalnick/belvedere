@@ -25,7 +25,7 @@ func shift_once(main: Manor) -> void:
 func run() -> void:
 	create_timer(45).timeout.connect(func() -> void: quit(1))
 	var main := start_manor()
-	main.first_coin_guide.seen = true
+	main.first_home_guide.seen = true
 	var opening := main.rules.board.duplicate()
 	await face_bed(main)
 	var hit := main.player.focus()
@@ -50,9 +50,9 @@ func run() -> void:
 	if web_entry:
 		check(main.play_gate.mode == "pause", "browser Escape leaves Resume available for pointer recapture")
 		main.resume_play()
-	main.objectives.completed.assign([1, 3, 8])
-	main.coins.awarded.assign([1, 3, 8])
 	main.coins.collected.assign([1, 3, 8])
+	main.bells.ring(0)
+	main.bells.ring(6)
 	main.coins.available = 2
 	main.coins.inserted = 1
 	main.coins.changed.emit()
@@ -85,25 +85,22 @@ func run() -> void:
 		check(main.rooms[room].position.is_equal_approx(ManorGeometry.center(opening.find(room))), "room geometry returns to the opening layout")
 	check(main.gap_floor.position.is_equal_approx(ManorGeometry.center(opening.find(-1)) + Vector3.DOWN * 0.02), "gap floor returns to the opening gap")
 	check(not main.bed_sleep.available() and not main.player.begin_interact(), "bed waits for another shift after sleep")
-	check(main.objectives.completed == [1, 3, 8] and main.coins.awarded == [1, 3, 8] and main.coins.available == 2 and main.coins.inserted == 1 and main.coins.pending.is_empty(), "sleep preserves collected and deposited tokens without awarding duplicates")
-	check(main.objectives.active not in main.objectives.completed and main.objectives.active >= 0, "new blue target is an uncollected room")
+	check(main.coins.collected == [1, 3, 8] and main.coins.available == 2 and main.coins.inserted == 1 and main.coins.pending.is_empty(), "sleep preserves collected and spent tokens without awarding duplicates")
+	check(main.bells.progress == 2, "sleep keeps bell progress")
 	check(main.binoculars.owned and main.binoculars.reward_claimed and main.study_safe.unlocked and is_equal_approx(main.study_safe.door.rotation.y, deg_to_rad(-105)), "binoculars and their open safe retain progress")
 	check(main.stopwatch.owned and main.stopwatch.claimed and main.foundation_hatch.emptied, "stopwatch and emptied hatch retain progress")
 	check(main.stopwatch.remaining == main.stopwatch.solver.assembly_distance(main.rules), "stopwatch hint updates to the reset layout")
 	check(main.stopwatch.toggle(), "retained stopwatch remains usable after waking")
 	main.stopwatch.reset_view()
 	# Tokens may be finished while the house still needs assembling.
-	main.objectives.completed.assign(ManorObjectives.ROOMS)
-	main.objectives.all_completed = true
-	main.coins.awarded.assign(ManorObjectives.ROOMS)
-	main.coins.collected.assign(ManorObjectives.ROOMS)
-	main.coins.available = ManorCoins.REQUIRED - main.coins.inserted
+	main.coins.collected.assign(ManorCoins.ROOMS)
+	main.coins.available = ManorCoins.ROOMS.size() - main.coins.inserted
 	main.slides = 1
 	check(main.player.begin_interact(), "finishing the token quest still allows resetting an unfinished house")
 	main.play_gate._activate_primary()
 	while main.bed_sleep.sleeping:
 		await process_frame
-	check(main.objectives.all_completed and main.objectives.active == -1 and not main.won and main.coins.available == 6, "completed token quest and tokens survive resetting the rooms")
+	check(main.coins.collected.size() == 7 and not main.won and main.coins.available == 6, "tokens survive resetting the rooms")
 	main.rules = ManorRules.new(PackedInt32Array(ManorRules.HOME), 0)
 	main.rules.lawn_access = main.bed_sleep.opening_rules.lawn_access
 	main.slides = 1

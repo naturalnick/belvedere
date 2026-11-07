@@ -99,6 +99,10 @@ func moves() -> Array[Vector2i]:
 func solved() -> bool:
 	return not lawn_access and board == PackedInt32Array(HOME)
 
+# The game always allows the lawn, which solved() rules out; this is the assembled house itself.
+func assembled() -> bool:
+	return board == PackedInt32Array(HOME)
+
 func copy() -> ManorRules:
 	var result := ManorRules.new(board, player)
 	result.lawn_access = lawn_access

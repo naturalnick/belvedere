@@ -4,8 +4,7 @@ func run(driver: Node) -> void:
 	var main: Manor = driver.main
 	var wall := main.wall_title
 	driver._check(main.at_title and main.rules.player == 0 and main.controls_locked(), "new game opens at the Bedroom wall")
-	driver._check(wall.lettering.visible and wall.tiles.size() == 9 and main.coins.awarded.is_empty(), "title has nine permanent squares and no starting reward")
-	driver._check(wall.tiles[7].material_override == wall.blue_material, "opening target is the middle-left blue square")
+	driver._check(wall.lettering.visible and wall.tiles.size() == 9 and main.coins.collected.is_empty(), "title has nine permanent squares and no starting reward")
 	await driver.shot("00_scene_fade")
 	await get_tree().create_timer(1.0).timeout
 	await driver.shot("01_title")
@@ -67,10 +66,6 @@ func run(driver: Node) -> void:
 	main.release_pointer()
 	await driver.hover_button(main.play_gate.primary, "hover_resume")
 	main.resume_play()
-	main.objectives.active = 3
-	main.refresh_progress()
-	driver._check(wall.tiles[main.rules.board.find(3)].material_override == wall.blue_material and wall.tiles[8].material_override == ManorGeometry.material(ManorWallTitle.TILE_COLOR, 0.0), "blue square locates the target room in the current layout")
-	await driver.shot("05_grid_target")
 	main.return_to_title()
 	driver._check(main.at_title and wall.lettering.visible, "return to menu restores the Bedroom wall title")
 	await driver.shot("06_title_return")

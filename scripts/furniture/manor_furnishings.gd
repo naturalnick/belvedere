@@ -133,16 +133,6 @@ func living() -> void:
 		box(sofa, Vector3(0.78, 0.10, 0.61), Vector3(x, 0.42, 0.05), "B9654D")
 	solid(sofa, Vector3(2.0, 0.86, 0.88), Vector3(0, 0.43, 0))
 	table("CoffeeTable", Vector3(-1.85, 0, -1.45), 1.16, 0.46, 0.40)
-	var fireplace := group("Fireplace", Vector3(1.85, 0, -2.64))
-	box(fireplace, Vector3(1.48, 0.06, 0.62), Vector3(0, 0.03, 0), "8F8577")
-	box(fireplace, Vector3(1.17, 0.91, 0.055), Vector3(0, 0.52, -0.16), "3E3A36", 0.0)
-	for x in [-0.59, 0.59]:
-		box(fireplace, Vector3(0.24, 1.02, 0.39), Vector3(x, 0.57, 0), "B5654A")
-	box(fireplace, Vector3(1.42, 0.23, 0.39), Vector3(0, 1.045, 0), "B5654A")
-	box(fireplace, Vector3(1.58, 0.07, 0.49), Vector3(0, 1.195, 0), "D3B695")
-	for x in [-0.18, 0.18]:
-		rod(fireplace, Vector3(x - 0.14, 0.17, -0.07), Vector3(x + 0.12, 0.17, 0.20), 0.08, "68503B")
-	solid(fireplace, Vector3(1.58, 1.23, 0.62), Vector3(0, 0.615, 0))
 	chair("Armchair", Vector3(-2.05, 0, 1.9), 3 * PI / 4, "A34E36", true)
 	var floor_lamp := group("FloorLamp", Vector3(-2.65, 0, 2.55))
 	lamp(floor_lamp, Vector3.ZERO, 1.55)
@@ -150,7 +140,7 @@ func living() -> void:
 	var console := cabinet("LowSideboard", Vector3(2.56, 0, 1.60), 1.45, 0.90, 0.52, WOOD, -PI / 2, true)
 	for i in 2:
 		box(console, Vector3(0.38, 0.045, 0.26), Vector3(-0.34, 0.928 + i * 0.047, 0.16), "768D80" if i == 0 else "AA8865", 0.003)
-	wall_art(preload("res://assets/wall_art/living.svg"), Vector3(1.85, 1.96, -2.995), Vector2(0.96, 0.72))
+	wall_art(preload("res://assets/wall_art/living.svg"), Vector3(-1.83, 1.70, -2.995), Vector2(0.96, 0.72))
 
 func dining() -> void:
 	var dining_table := table("DiningTable", Vector3(-1.55, 0, 0), 0.80, 2.30, 0.75, "6A3A2A")

@@ -22,7 +22,7 @@ func _process(_delta: float) -> void:
 			next_highlight = true
 		else:
 			var hit := player.focus()
-			next_highlight = not hit.is_empty() and (hit.collider.has_meta("coin_drawer") or hit.collider.has_meta("drawer_coin") or hit.collider.has_meta("lever_room") or hit.collider.has_meta("door") or hit.collider.has_meta("coin_device") or hit.collider.has_meta("safe") or hit.collider.has_meta("foundation_hatch") or hit.collider.has_meta("red_key") or (hit.collider.has_meta("bed") and player.manor.bed_sleep.available()))
+			next_highlight = not hit.is_empty() and (hit.collider.has_meta("coin_drawer") or hit.collider.has_meta("drawer_coin") or hit.collider.has_meta("lever_room") or hit.collider.has_meta("door") or hit.collider.has_meta("piano") or hit.collider.has_meta("bell") or hit.collider.has_meta("safe") or hit.collider.has_meta("foundation_hatch") or hit.collider.has_meta("red_key") or hit.collider.has_meta("trophy") or (hit.collider.has_meta("bed") and player.manor.bed_sleep.available()))
 	if not initialized or locked != last_locked or next_highlight != highlighted or viewport_size != last_size:
 		queue_redraw()
 	last_camera = camera_transform

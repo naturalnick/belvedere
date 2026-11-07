@@ -4,12 +4,11 @@ func run() -> void:
 	var main := start_manor()
 	await physics_frame
 	await physics_frame
-	check(main.objective_display.lamps.size() == 7 and not main.objective_display.lamps.has(7), "exactly seven pendants, excluding Foyer")
-	check(main.objective_display.progress_lights.size() == 7, "separate Foyer chandelier tracks seven room placements")
-	check(main.objective_display.lamps[main.objectives.active].state == 1, "active room has active pendant")
-	for lamp: ManorBeacon in main.objective_display.lamps.values():
-		check(not lamp.is_processing() and lamp.globe.scale == Vector3.ONE, "objective lamps have no continuous animation or scaling")
-		check((lamp.light.light_energy > 0) == (lamp.state > 0), "target and in-place rooms emit light")
+	check(main.home_lights.lamps.size() == 7 and not main.home_lights.lamps.has(7), "exactly seven pendants, excluding Foyer")
+	check(main.home_lights.progress_lights.size() == 7, "separate Foyer chandelier tracks seven room placements")
+	for lamp: ManorBeacon in main.home_lights.lamps.values():
+		check(not lamp.is_processing() and lamp.globe.scale == Vector3.ONE, "home lamps have no continuous animation or scaling")
+		check((lamp.light.light_energy > 0) == lamp.lit, "only rooms that are home emit light")
 	var front: ManorDoor
 	for door in main.rooms[7].doors:
 		if door.is_front:
@@ -17,43 +16,24 @@ func run() -> void:
 	for mesh: MeshInstance3D in front.find_children("*", "MeshInstance3D", true, false):
 		check(not mesh.material_override is StandardMaterial3D, "front door has no transparent glass material")
 	check(not front.opened and front.gate.collision_layer == 1, "bonus door starts locked")
-	main.objectives.completed.assign([0, 1, 2, 3, 5, 6])
-	main.objectives.active = 8
 	main.rules.player = 8
-	check(main.rules.apply(ManorRules.SLIDE, ManorRules.E), "last objective slides home in the ending fixture")
+	check(main.rules.apply(ManorRules.SLIDE, ManorRules.E), "Laundry slides home in the ending fixture")
 	main.refresh_progress()
-	for id in main.objective_display.lamps:
-		var lamp: ManorBeacon = main.objective_display.lamps[id]
-		check(lamp.state == (2 if main.rules.board[id] == id else 0), "completed room lamp tracks placement, not earned progress")
-	check(main.objectives.all_completed and not main.won, "all coins can be earned independently of assembled house")
-	while not main.coins.pending.is_empty():
-		receive_coin(main)
-	check(not main.controls_locked() and not main.play_gate.visible, "earning the last coin does not end play")
-	check(not front.opened and not main.carpet.visible and not main.ending.active, "coin objectives do not unlock bonus exit")
-	main.coins.award(ManorObjectives.ROOMS)
-	for room in ManorObjectives.ROOMS:
+	for id in main.home_lights.lamps:
+		check(main.home_lights.lamps[id].lit == (main.rules.board[id] == id), "a room's lamp tracks whether it is home")
+	for room in ManorCoins.ROOMS:
 		main.coins.collect(room)
 	while not main.coins.pending.is_empty():
 		receive_coin(main)
 	for i in 7:
-		check(main.coin_device.interact(), "device accepts coin %d" % (i + 1))
-		while main.coin_device.busy:
+		check(main.player_piano.interact(), "piano accepts coin %d" % (i + 1))
+		while main.player_piano.busy:
 			await process_frame
-	check(main.controls_locked() and main.play_gate.mode == "victory", "seventh deposit opens the trophy ending")
-	check(main.play_gate.title_label.text == "Thanks for Playing" and main.play_gate.trophy_view.visible, "ending presents a trophy and Thanks for Playing")
-	check(not front.opened and not main.won, "trophy prize leaves the red door locked")
-	check(main.play_gate.primary.has_focus() and main.play_gate.primary.text == "Keep Playing", "ending offers a keyboard-focusable Keep Playing button")
-	var accept := InputEventKey.new()
-	accept.keycode = KEY_ENTER
-	accept.physical_keycode = KEY_ENTER
-	accept.pressed = true
-	Input.parse_input_event(accept)
-	await process_frame
-	var release: InputEventKey = accept.duplicate()
-	release.pressed = false
-	Input.parse_input_event(release)
-	await process_frame
-	check(not main.controls_locked(), "Enter continues after trophy victory")
+	main.audio.end_song()
+	check(not main.controls_locked() and not main.play_gate.visible and not front.opened and not main.won, "spending every coin neither ends play nor unlocks the exit")
+	for bell_room in ManorBells.WORD:
+		main.bells.ring(ManorBells.LETTERS.find_key(bell_room))
+	check(main.bells.complete and not main.controls_locked() and not main.play_gate.visible and not front.opened and not main.won, "finishing the bells neither ends play nor unlocks the exit")
 	main.rules.board = PackedInt32Array(ManorRules.HOME)
 	for id in main.rooms:
 		main.rooms[id].position = ManorGeometry.center(id)
@@ -159,11 +139,11 @@ func run() -> void:
 	await process_frame
 	var fresh := start_manor()
 	check(fresh.run_stats.shifts == 0 and fresh.run_stats.sleeps == 0 and fresh.run_stats.falls == 0 and fresh.run_stats.elapsed_seconds == 0, "a new game starts with fresh run statistics")
-	check(fresh.coins.inserted == 0 and fresh.coins.available == 0 and fresh.coins.pending.is_empty() and fresh.objectives.active == 8, "a fresh game resets the wallet, device and presentation queue")
+	check(fresh.coins.inserted == 0 and fresh.coins.available == 0 and fresh.coins.pending.is_empty() and fresh.bells.progress == 0 and not fresh.bells.complete, "a fresh game resets the wallet, songs, bells and presentation queue")
 	fresh.rules.board = PackedInt32Array(ManorRules.HOME)
 	fresh.refresh_progress()
-	check(fresh.won and fresh.coins.awarded.is_empty() and fresh.coins.pending.is_empty() and fresh.objectives.active == 8, "assembling the house first preserves the blue-light quest without awarding coins")
-	check(not fresh.play_gate.visible and fresh.coins.inserted == 0, "house-first ending never bypasses the trophy's coin deposits")
+	check(fresh.won and fresh.coins.collected.is_empty() and fresh.coins.pending.is_empty(), "assembling the house awards no coins")
+	check(not fresh.play_gate.visible and not fresh.bells.complete and not fresh.trophy_case.opened and not fresh.trophy_case.owned, "assembling the house leaves the trophy to the bells")
 	fresh.queue_free()
 	await process_frame
 	finish("Endings")

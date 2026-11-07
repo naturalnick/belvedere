@@ -15,7 +15,7 @@ func run() -> void:
 		print("Room %d: %d furniture meshes" % [id, meshes.size()])
 		check(meshes.size() <= 90, "room %d furniture mesh budget" % id)
 		check(not furniture.is_processing(), "furniture is static")
-		check(furniture.find_children("*", "Light3D", true, false).is_empty(), "decorative lamps cannot compete with objective light")
+		check(furniture.find_children("*", "Light3D", true, false).is_empty(), "decorative lamps cannot compete with the home lamps")
 		for i in range(1, 13 if id == 6 else 25):
 			var angle := i * TAU / 24.0
 			var target := room.position + Vector3(sin(angle), 0, cos(angle)) * 1.2

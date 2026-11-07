@@ -21,15 +21,17 @@ var seed_name := "A"
 var play_gate: Control
 var preferences: ManorPreferences
 static var gesture_start := false
-var objectives: ManorObjectives
-var objective_display: ManorObjectiveDisplay
+var home_lights: ManorHomeLights
 var coins: ManorCoins
+var bells: ManorBells
+var bell_mounts: Dictionary[int, ManorBell] = {}
 var coin_drawers: Dictionary[int, ManorCoinDrawer] = {}
 var coin_hud: ManorCoinHUD
-var first_coin_guide: ManorFirstCoinGuide
+var first_home_guide: ManorFirstHomeGuide
 var wall_title: ManorWallTitle
 var fresh_title := true
-var coin_device: ManorCoinDevice
+var trophy_case: ManorTrophyCase
+var player_piano: ManorPlayerPiano
 var study_safe: ManorSafe
 var fruit_clues: Array[ManorFruitClue] = []
 var foundation_hatch: ManorFoundationHatch
@@ -122,19 +124,28 @@ func _ready() -> void:
 	play_gate.manor = self
 	hud.add_child(play_gate)
 	play_gate.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	objectives = ManorObjectives.new()
 	coins = ManorCoins.new()
-	objectives.start(rules)
-	objective_display = ManorObjectiveDisplay.new()
-	add_child(objective_display)
-	objective_display.setup(self)
-	objective_display.refresh(objectives, rules)
-	if wall_title != null:
-		wall_title.refresh(objectives.active, rules.board)
-	coin_device = ManorCoinDevice.new()
-	coin_device.manor = self
-	coin_device.position = Vector3(-1.85, 0, -2.50)
-	rooms[7].add_child(coin_device)
+	bells = ManorBells.new()
+	home_lights = ManorHomeLights.new()
+	add_child(home_lights)
+	home_lights.setup(self)
+	home_lights.refresh(rules)
+	for id in ManorBells.MOUNTS:
+		var bell := ManorBell.new()
+		bell.manor = self
+		bell.room_id = id
+		bell.position = ManorBells.MOUNTS[id][0]
+		bell.rotation.y = ManorBells.MOUNTS[id][1]
+		rooms[id].add_child(bell)
+		bell_mounts[id] = bell
+	trophy_case = ManorTrophyCase.new()
+	trophy_case.manor = self
+	trophy_case.position = Vector3(-1.85, 0, -2.50)
+	rooms[7].add_child(trophy_case)
+	player_piano = ManorPlayerPiano.new()
+	player_piano.manor = self
+	player_piano.position = Vector3(1.85, 0, -ManorPlayerPiano.WALL_Z + ManorPianoArt.DEPTH / 2)
+	rooms[5].add_child(player_piano)
 	study_safe = ManorSafe.new()
 	study_safe.manor = self
 	study_safe.position = Vector3(2.61, 0, 0)
@@ -146,9 +157,9 @@ func _ready() -> void:
 		clue.room = rooms[ManorFruitClue.ROOMS[kind]]
 		clue.room.add_child(clue)
 		fruit_clues.append(clue)
-	first_coin_guide = ManorFirstCoinGuide.new()
-	first_coin_guide.manor = self
-	add_child(first_coin_guide)
+	first_home_guide = ManorFirstHomeGuide.new()
+	first_home_guide.manor = self
+	add_child(first_home_guide)
 	coin_hud = ManorCoinHUD.new()
 	coin_hud.manor = self
 	hud.add_child(coin_hud)
@@ -168,6 +179,7 @@ func _ready() -> void:
 	conservatory = ManorConservatory.new()
 	add_child(conservatory)
 	conservatory.setup(self, hud)
+	trophy_case.setup_hud(hud)
 	run_summary = ManorRunSummary.new()
 	run_summary.manor = self
 	hud.add_child(run_summary)
@@ -182,11 +194,10 @@ func _ready() -> void:
 	audio = ManorAudio.new()
 	audio.manor = self
 	add_child(audio)
-	if coins != null:
-		for id in ManorObjectives.ROOMS:
-			var drawer := rooms[id].find_child("CoinDrawer", true, false) as ManorCoinDrawer
-			coin_drawers[id] = drawer
-			drawer.setup(self, id)
+	for id in ManorCoins.ROOMS:
+		var drawer := rooms[id].find_child("CoinDrawer", true, false) as ManorCoinDrawer
+		coin_drawers[id] = drawer
+		drawer.setup(self, id)
 	if OS.has_feature("web") or OS.get_cmdline_user_args().has("--web-entry"):
 		pointer_watch = ManorPointerWatch.new()
 		pointer_watch.manor = self
@@ -257,7 +268,7 @@ func release_pointer() -> void:
 		run_summary.hide()
 
 func controls_locked(for_movement := false) -> bool:
-	return (conservatory != null and (conservatory.collecting or conservatory.unlocking)) or (foundation_hatch != null and foundation_hatch.busy) or (stopwatch != null and stopwatch.locks_player(for_movement)) or (binoculars != null and binoculars.locks_player()) or (first_coin_guide != null and first_coin_guide.active) or (coin_hud != null and coin_hud.presenting()) or recovering or sliding or in_finale or at_title or (play_gate != null and play_gate.visible) or (coin_device != null and coin_device.releasing)
+	return (conservatory != null and (conservatory.collecting or conservatory.unlocking)) or (foundation_hatch != null and foundation_hatch.busy) or (stopwatch != null and stopwatch.locks_player(for_movement)) or (binoculars != null and binoculars.locks_player()) or (first_home_guide != null and first_home_guide.active) or (coin_hud != null and coin_hud.presenting()) or (trophy_case != null and trophy_case.presenting) or recovering or sliding or in_finale or at_title or (play_gate != null and play_gate.visible)
 
 func return_to_title() -> void:
 	at_title = true
@@ -267,6 +278,7 @@ func return_to_title() -> void:
 		stopwatch.reset_view()
 	if binoculars != null:
 		binoculars.reset_view()
+	audio.end_song()
 	set_process(false)
 	if ending != null:
 		ending.set_process(false)
@@ -280,19 +292,18 @@ func return_to_title() -> void:
 	play_gate.show_mode("title")
 
 func refresh_progress() -> void:
-	if objectives != null and first_coin_guide != null and not first_coin_guide.seen and objectives.completed.is_empty() and objectives.active >= 0 and rules.player == objectives.active and rules.board[objectives.active] == objectives.active:
-		first_coin_guide.begin()
+	# Seed A's forced first slide lands here, so every new game sees one lamp turn warm.
+	if first_home_guide != null and not first_home_guide.seen and slides > 0 and rules.player in ManorCoins.ROOMS and rules.board[rules.player] == rules.player:
+		first_home_guide.begin(rules.player)
+		# Only the lamp waits for the guided look; the doors open on docking as usual.
+		refresh_doors()
 		return
-	if first_coin_guide != null and first_coin_guide.active and not first_coin_guide.completed:
+	if first_home_guide != null and first_home_guide.active and not first_home_guide.completed:
 		return
-	if objectives == null:
-		won = rules.solved()
-	else:
-		coins.award(objectives.advance(rules))
-		objective_display.refresh(objectives, rules)
-		if wall_title != null:
-			wall_title.refresh(objectives.active, rules.board)
-		won = objectives.bonus_won
+	home_lights.refresh(rules)
+	for drawer: ManorCoinDrawer in coin_drawers.values():
+		drawer.refresh_home()
+	won = rules.assembled()
 	if won and conservatory != null:
 		conservatory.begin()
 	refresh_doors()
@@ -303,13 +314,6 @@ func open_exit() -> void:
 		ending.activate()
 	refresh_doors()
 
-func show_coin_ending() -> void:
-	player.cancel_pull()
-	player.velocity = Vector3.ZERO
-	player.bot_drive = Vector3.ZERO
-	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
-	play_gate.show_mode("victory")
-
 func begin_finale() -> void:
 	if in_finale or ending == null or not won or conservatory == null or not conservatory.exit_unlocked:
 		return
@@ -317,6 +321,7 @@ func begin_finale() -> void:
 		if door.is_front and door.gate.collision_layer != 0:
 			return
 	in_finale = true
+	audio.end_song()
 	run_stats.finished = true
 	set_process(true)
 	player.cancel_pull()
@@ -390,7 +395,7 @@ func update_occupant() -> void:
 	if sliding:
 		return
 	var p := player.global_position
-	if won and objectives != null and rules.player == 7 and p.z > 9.45 and absf(p.x) < 0.7:
+	if won and rules.player == 7 and p.z > 9.45 and absf(p.x) < 0.7:
 		begin_finale()
 		return
 	var col := int(floor((p.x + ManorGeometry.PITCH * 1.5) / ManorGeometry.PITCH))
@@ -411,8 +416,6 @@ func update_occupant() -> void:
 	for d in 4:
 		if ManorRules.neighbor(rules.slot(), d) == new_slot and rules.can_walk(d):
 			rules.apply(ManorRules.WALK, d)
-			if objectives != null and objectives.active >= 0 and rules.player == objectives.active and rules.board[rules.player] == rules.player:
-				refresh_progress()
 			return
 
 func request_slide(direction: int) -> bool:

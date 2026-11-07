@@ -132,6 +132,8 @@ func begin_interact() -> bool:
 		return collider.get_meta("drawer_coin").take_coin()
 	if collider.has_meta("coin_drawer"):
 		return collider.get_meta("coin_drawer").interact()
+	if collider.has_meta("trophy"):
+		return collider.get_meta("trophy").take()
 	if collider.has_meta("red_key"):
 		return collider.get_meta("red_key").take_key()
 	if collider.has_meta("bed"):
@@ -141,9 +143,10 @@ func begin_interact() -> bool:
 	if collider.has_meta("safe"):
 		var safe: ManorSafe = collider.get_meta("safe")
 		return safe.interact(int(collider.get_meta("safe_button")))
-	if collider.has_meta("coin_device"):
-		var device: ManorCoinDevice = collider.get_meta("coin_device")
-		return device.interact()
+	if collider.has_meta("piano"):
+		return collider.get_meta("piano").interact()
+	if collider.has_meta("bell"):
+		return collider.get_meta("bell").interact()
 	if collider.has_meta("door"):
 		var door: ManorDoor = collider.get_meta("door")
 		if door.is_front and manor.conservatory != null and manor.conservatory.unlock_exit(door):

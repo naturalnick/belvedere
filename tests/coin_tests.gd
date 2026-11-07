@@ -1,61 +1,63 @@
 extends "res://tests/manor_test.gd"
 
-var clinks := 0
+func opening_slides() -> Array[Vector2i]:
+	var slides: Array[Vector2i] = []
+	var opening := ManorRules.opening_start()
+	var reachable: Array[ManorRules] = [opening]
+	var visited: Array[int] = [opening.player]
+	while not reachable.is_empty():
+		var state: ManorRules = reachable.pop_front()
+		for direction in 4:
+			if state.can_slide(direction):
+				slides.append(Vector2i(state.player, direction))
+			if state.can_walk(direction):
+				var next := state.copy()
+				next.apply(ManorRules.WALK, direction)
+				if not visited.has(next.player):
+					visited.append(next.player)
+					reachable.append(next)
+	return slides
 
 func run() -> void:
 	create_timer(40).timeout.connect(func() -> void: quit(1))
+	check(opening_slides() == [Vector2i(8, ManorRules.E)], "Laundry east is the only slide reachable from the Bedroom opening")
 	var coins := ManorCoins.new()
-	coins.award([0, 0, 7, 1])
-	check(coins.awarded == [0, 1] and coins.pending.is_empty() and coins.available == 0, "completed objectives unlock coins without collecting them")
-	check(not coins.collect(7) and coins.collect(0) and coins.collect(1) and not coins.collect(0), "only unlocked uncollected coins can be picked up once")
+	check(not coins.collect(7), "the Foyer has no coin")
+	check(coins.collect(0) and coins.collect(1) and not coins.collect(0), "each room's coin can be picked up once")
 	check(not coins.insert_one(), "pending coins cannot be spent before presentation")
 	coins.receive_next()
 	check(coins.available == 1 and coins.pending == [1], "presentation credits exactly one coin")
-	check(coins.insert_one() and coins.available == 0 and coins.remaining() == 6, "one deposit consumes one coin")
-	coins.award(ManorObjectives.ROOMS)
-	for room in ManorObjectives.ROOMS:
-		coins.collect(room)
-	while not coins.pending.is_empty():
-		coins.receive_next()
-	while coins.remaining() > 0:
-		check(coins.insert_one(), "remaining distinct rewards can be deposited")
-	coins.award(ManorObjectives.ROOMS)
-	coins.receive_next()
-	check(coins.pending.is_empty() and coins.available == 0 and not coins.insert_one(), "completed rewards cannot be farmed or deposited twice")
+	check(coins.insert_one() and coins.available == 0 and coins.inserted == 1, "one insertion spends one coin")
 
 	var main := start_manor()
-	main.audio.cued.connect(func(group: String) -> void:
-		if group == "coin_insert":
-			clinks += 1)
 	await physics_frame
 	await physics_frame
-	check(main.coins.pending.is_empty() and main.coins.available == 0 and main.objectives.active == 8 and main.rules.board[7] == 8 and main.rules.board[8] == -1, "Laundry starts blue at bottom-center with the gap to its right and no coin")
-	main.coin_hud._process(3.0)
-	main.refresh_progress()
-	check(main.coins.pending.is_empty() and main.coins.available == 0, "waiting or refreshing cannot earn the first coin")
+	check(main.coins.pending.is_empty() and main.coins.available == 0 and main.rules.board[7] == 8 and main.rules.board[8] == -1, "Laundry starts bottom-center with the gap to its right and no coin")
 	check(not main.coin_hud.count.visible, "an empty wallet shows no coin count")
-	var target := main.objectives.active
-	var lamp := main.objective_display.lamps[target]
-	check(lamp.light.light_color == Color("6EBFFF") and lamp.state == 1, "starting target is blue before its slide home")
-	check(lamp.shade.material_override == ManorGeometry.material("B4CFDF", 0.006), "active shade has a subtle blue tint")
-	check(main.objective_display.progress_lights[6].material_override == ManorGeometry.material("595C59"), "Foyer shows Laundry is not yet home")
+	var lamp := main.home_lights.lamps[8]
+	check(main.home_lights.lamps.values().all(func(each: ManorBeacon) -> bool: return not each.lit), "no lamp is lit while no room is home")
+	check(main.home_lights.progress_lights[6].material_override == ManorGeometry.material("595C59"), "Foyer shows Laundry is not yet home")
 	var driver := add_driver(main)
 	for direction in driver.walk_route(8):
 		await driver.walk_direction(direction, true)
-	var guide := main.first_coin_guide
+	var guide := main.first_home_guide
 	guide.set_process(false)
-	main.refresh_progress()
-	check(main.rules.player == 8 and not guide.active and not main.controls_locked() and lamp.state == 1 and main.coins.pending.is_empty(), "entering Laundry leaves its lamp blue and earns nothing")
+	check(main.rules.player == 8 and not guide.active and not main.controls_locked() and not lamp.lit, "entering the Laundry away from home does nothing")
+	var openings := [0]
+	for id in main.rooms:
+		for door in main.rooms[id].doors:
+			door.swung.connect(func(opening: bool) -> void: openings[0] += int(opening))
 	await driver.objective_action(Vector2i(ManorRules.SLIDE, ManorRules.E), true)
-	check(main.rules.board[8] == 8 and main.rules.board[7] == -1 and guide.active and main.controls_locked() and lamp.state == 1 and main.coins.pending.is_empty(), "sliding Laundry home starts the guided look before awarding")
+	check(openings[0] > 0, "the doors open on docking without waiting for the guided look")
+	check(main.rules.board[8] == 8 and guide.active and main.controls_locked() and not lamp.lit and main.coins.pending.is_empty(), "sliding the Laundry home starts the guided look with the lamp still off")
 	var entry_position := main.player.position
 	guide._process(0.95)
 	var toward_lamp := (lamp.globe.global_position - main.player.camera.global_position).normalized()
-	check((-main.player.camera.global_basis.z).dot(toward_lamp) > 0.999, "guided view centers the actual target lamp")
+	check((-main.player.camera.global_basis.z).dot(toward_lamp) > 0.999, "guided view centers the actual lamp")
 	var elapsed_before := guide.elapsed
 	main.release_pointer()
 	guide._process(3.0)
-	check(guide.elapsed == elapsed_before and lamp.state == 1, "pause freezes the guided look before completion")
+	check(guide.elapsed == elapsed_before and not lamp.lit, "pause freezes the guided look")
 	main.resume_play()
 	var guided_yaw := main.player.rotation.y
 	main.player.automated = false
@@ -69,24 +71,25 @@ func run() -> void:
 	main.player.bot_drive = Vector3.ZERO
 	check(main.player.rotation.y == guided_yaw and main.player.position == entry_position and not main.player.begin_interact(), "guided look blocks mouse, movement and interactions")
 	guide._process(0.85)
-	main.coin_hud._process(0.4)
-	check(lamp.state == 2 and guide.holding_reward() and main.coin_hud.presentation == 0, "warm light is shown before the token presentation starts")
-	guide._process(0.95)
+	check(lamp.lit and lamp.light.light_color == Color("FFF0DA") and guide.active, "the lamp turns warm during the look")
+	guide._process(1.0)
 	var drawer := main.coin_drawers[8]
-	drawer._process(ManorCoinDrawer.OPEN_TIME)
-	guide._process(0.95)
-	check(not guide.active and not main.controls_locked() and main.coins.pending.is_empty() and drawer.opened and drawer.coin.visible, "tutorial leaves an open drawer and waits for a physical pickup")
-	var toward_drawer := (drawer.coin.global_position - main.player.camera.global_position).normalized()
-	check((-main.player.camera.global_basis.z).dot(toward_drawer) > 0.999, "first guided look ends on the opened coin drawer")
+	check(not guide.active and not main.controls_locked() and not drawer.opened and main.coins.pending.is_empty(), "the look ends on the lamp and leaves the drawer closed")
+	main.refresh_progress()
+	check(not guide.active, "refreshing never repeats the guided look")
+	check(main.home_lights.progress_lights[6].material_override == ManorGeometry.glowing_material("FFF0DA"), "Foyer globe lights when Laundry comes home")
+
 	main.player.global_position = drawer.to_global(Vector3(0, 0, drawer.travel + 0.85))
 	main.player.global_position.y = 0.02
+	main.player.aim_at(drawer.front_hit.global_position)
+	await physics_frame
+	await physics_frame
+	check(main.player.begin_interact() and drawer.opened, "trying the drawer of a home room opens it")
+	drawer._process(ManorCoinDrawer.OPEN_TIME)
 	main.player.aim_at(drawer.coin.global_position)
 	await physics_frame
 	await physics_frame
 	check(main.player.begin_interact() and main.coins.pending == [8], "normal interaction picks the physical coin up from the drawer")
-	check(main.objectives.completed.has(8) and main.objectives.active != 8, "first slide completes the initial target and selects the next one")
-	check(lamp.state == 2 and lamp.light.light_color == Color("FFF0DA"), "visited home room becomes warm")
-	check(lamp.shade.material_override == ManorGeometry.material("DDD3BD", 0.006), "completed shade returns to cream")
 	driver.queue_free()
 	var before := main.coin_hud.presentation
 	main.release_pointer()
@@ -108,63 +111,40 @@ func run() -> void:
 	click.pressed = true
 	main.coin_hud._input(click)
 	main.coin_hud._process(ManorCoinHUD.PRESENT_TIME - ManorCoinHUD.HOLD_AT)
-	check(main.coins.available == 1 and main.coin_hud.count.text == "1", "a mouse press sends the coin to the visible inventory count")
-	check(main.coin_hud.count.visible, "the wallet appears when the first coin arrives")
-	guide._process(0.0)
-	guide.set_process(true)
-	check(not guide.active and not main.controls_locked(), "control returns only after the token arrives in the wallet")
-	main.refresh_progress()
-	check(not guide.active, "revisiting or refreshing never repeats the guided look")
-	check(main.coins.available == 1 and main.coins.pending.is_empty(), "refreshing the same board cannot grant another coin")
+	check(main.coins.available == 1 and main.coin_hud.count.text == "1" and main.coin_hud.count.visible, "a mouse press sends the coin to the visible inventory count")
 
-	# Move a completed room away in a fixture: lighting changes, ownership does not.
+	# Move the Laundry away in a fixture: lighting changes, ownership and the open drawer do not.
 	main.rules.board[8] = -1
 	main.rules.board[7] = 8
 	main.refresh_progress()
-	check(main.objective_display.lamps[8].state == 0 and main.coins.available == 1, "moving an earned room away extinguishes its lamp without removing its coin")
-	var globe := main.objective_display.progress_lights[6]
+	check(not lamp.lit and main.coins.available == 1 and drawer.opened, "moving a room away puts out its lamp without touching its coin")
+	var globe := main.home_lights.progress_lights[6]
 	check(globe.material_override == ManorGeometry.material("595C59"), "Foyer globe goes dark when its room leaves home")
 	main.rules.board[7] = -1
 	main.rules.board[8] = 8
 	main.refresh_progress()
-	check(globe.material_override == ManorGeometry.glowing_material("FFF0DA"), "Foyer globe relights when the room returns")
-	check(main.coins.available == 1 and main.coins.pending.is_empty(), "returning a completed room cannot farm coins")
+	check(lamp.lit and globe.material_override == ManorGeometry.glowing_material("FFF0DA"), "lamp and Foyer globe relight when the room returns")
+	check(main.coins.available == 1 and main.coins.pending.is_empty(), "returning a room cannot farm coins")
 
-	main.rules.player = 7
-	main.player.global_position = main.coin_device.to_global(Vector3(0, 0.02, 1.55))
-	main.player.aim_at(main.coin_device.to_global(Vector3(0, 0.84, 0.32)))
-	await physics_frame
-	await physics_frame
-	var hit := main.player.focus()
-	check(not hit.is_empty() and hit.collider.has_meta("coin_device"), "device slot is reachable through the real interaction ray")
-	main.player.begin_interact()
-	await process_frame
-	check(main.coins.available == 0 and main.coins.inserted == 1 and main.coin_hud.count.text == "0", "focused interaction inserts exactly one coin and updates HUD")
-	check(not main.coin_hud.count.visible, "depositing the last held coin hides the wallet again")
-	for piece in main.coin_device.token.find_children("*", "MeshInstance3D", true, false):
-		check(piece.material_override is ShaderMaterial, "the slot coin compiles no shader of its own on first insert")
-	check(main.coin_device.token.visible and main.coin_device.remaining_label.text == "6", "device presents an insertion and remaining requirement")
-	main.player.release_interact()
-	main.release_pointer()
-	await create_timer(0.8).timeout
-	check(main.coin_device.busy and clinks == 0 and main.coins.inserted == 1, "pausing an insertion preserves its single deposit and suspends its clink")
-	main.resume_play()
-	await create_timer(0.75).timeout
-	check(clinks == 1 and not main.coin_device.token.visible, "accepted insertion produces one recorded coin clink")
-	main.coins.award([0])
-	main.coins.collect(0)
-	receive_coin(main)
-	main.player.begin_interact()
-	check(not main.player.begin_interact(), "device rejects overlapping insertions while its slot is occupied")
-	main.player.release_interact()
-	await create_timer(0.75).timeout
-	check(main.coins.inserted == 2 and main.coins.available == 0 and clinks == 2, "another interaction inserts one coin and clinks once")
-	main.player.begin_interact()
-	main.player.release_interact()
-	await create_timer(0.75).timeout
-	check(main.coins.inserted == 2 and clinks == 2, "empty interaction neither deposits nor plays a false clink")
+	# An unopened drawer only works while its room is home.
+	var bedroom_drawer := main.coin_drawers[0]
+	check(main.rules.board[0] != 0, "fixture Bedroom is away from home")
+	check(bedroom_drawer.interact() and not bedroom_drawer.opened, "an away room's drawer rattles instead of opening")
+	bedroom_drawer._process(1)
+	var home_board := main.rules.board.duplicate()
+	var bedroom_slot := home_board.find(0)
+	var bedroom_occupant := home_board[0]
+	home_board[bedroom_slot] = bedroom_occupant
+	home_board[0] = 0
+	main.rules.board = home_board
+	check(bedroom_drawer.interact() and bedroom_drawer.opened, "the same drawer opens once its room is home")
+	home_board[0] = bedroom_occupant
+	home_board[bedroom_slot] = 0
+	main.rules.board = home_board
+	bedroom_drawer._process(ManorCoinDrawer.OPEN_TIME)
+	check(bedroom_drawer.opened and bedroom_drawer.coin.visible, "an opened drawer stays open and keeps its coin after its room leaves home")
 	main.fall_recovery._wake()
-	check(main.coins.inserted == 2 and main.coins.awarded.size() == 2, "fall recovery retains earned and deposited coins")
+	check(main.coins.available == 1, "fall recovery retains coins")
 	main.queue_free()
 	await process_frame
 	finish("Coins")

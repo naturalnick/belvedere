@@ -8,11 +8,7 @@ func run() -> void:
 	check(main.rules.player == 0 and main.rules.valid(), "Bedroom start has valid occupancy")
 	check(wall.tiles.size() == 9 and wall.get_parent() == main.rooms[0], "nine squares are attached to the Bedroom")
 	for slot in 9:
-		if slot != 7:
-			check(wall.tiles[slot].material_override == ManorGeometry.material(ManorWallTitle.TILE_COLOR, 0.0), "non-target square stays dark")
-	check(wall.tiles[7].material_override == wall.blue_material and main.coins.awarded.is_empty(), "bottom-center target grants no starting coin")
-	check(wall.tiles[7].position.is_equal_approx(Vector3(-0.235, 2.18, 0)), "south-center starting target appears middle-left when facing west")
-	check(wall.tiles[0].position.is_equal_approx(Vector3(0.235, 2.415, 0)), "northwest board corner appears top-right on the wall map")
+		check(wall.tiles[slot].material_override == ManorGeometry.material(ManorWallTitle.TILE_COLOR, 0.0), "every square is the same plain colour")
 	var opening_view := main.player.camera.global_transform
 	main.play_gate._open_settings()
 	check(not wall.lettering.visible and main.at_title, "settings hide wall lettering without starting play")
@@ -31,9 +27,6 @@ func run() -> void:
 	check(main.player.camera.global_transform == opening_view and not main.controls_locked(), "starting play preserves the camera and unlocks control")
 	main.play_gate._layout()
 	check(not wall.lettering.visible, "resizing during play cannot restore the temporary title")
-	main.objectives.active = 3
-	main.refresh_progress()
-	check(wall.tiles[5].material_override == wall.blue_material and wall.tiles[8].material_override != wall.blue_material, "blue marker uses target room 3 current slot 5, not its home slot")
 	main.rules.board = PackedInt32Array([6, 2, 5, 0, -1, 3, 7, 1, 8])
 	main.rules.player = 3
 	for id in main.rooms:
@@ -41,12 +34,9 @@ func run() -> void:
 	main.gap_floor.position = ManorGeometry.center(4) + Vector3.DOWN * 0.02
 	main.player.global_position = main.rooms[3].to_global(Vector3(0, 0.02, 1.2))
 	main.player.automated = true
-	check(main.request_slide(ManorRules.W), "target room can slide into the adjacent gap")
+	check(main.request_slide(ManorRules.W), "a room can slide into the adjacent gap")
 	await main.slide_finished
-	check(main.objectives.active == 3 and wall.tiles[4].material_override == wall.blue_material and wall.tiles[5].material_override != wall.blue_material, "blue marker follows the target room after a real slide")
-	main.objectives.active = -1
-	wall.refresh(-1, main.rules.board)
-	check(wall.tiles.all(func(tile: MeshInstance3D) -> bool: return tile.material_override != wall.blue_material), "no blue square remains after all targets are complete")
+	check(wall.tiles.all(func(tile: MeshInstance3D) -> bool: return tile.material_override == ManorGeometry.material(ManorWallTitle.TILE_COLOR, 0.0)), "the grid stays plain after a slide")
 	var tile_position := wall.tiles[0].global_position
 	main.rooms[0].position += Vector3.RIGHT * ManorGeometry.PITCH
 	check(wall.tiles[0].global_position.is_equal_approx(tile_position + Vector3.RIGHT * ManorGeometry.PITCH), "fixture travels with its Bedroom wall")

@@ -2,7 +2,7 @@ extends Node
 
 func run(driver: Node) -> void:
 	var main: Manor = driver.main
-	main.objectives = null
+	main.first_home_guide.seen = true
 	var viewpoints: Array[Vector3] = [Vector3(-4.05, 0.02, 1.55), Vector3(-0.35, 0.02, 4.40), Vector3(3.65, 0.02, 1.60), Vector3(-3.65, 0.02, 1.2)]
 	for clue in main.fruit_clues:
 		var slot: int = [3, 7, 5, 3][clue.kind]

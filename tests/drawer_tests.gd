@@ -5,7 +5,7 @@ func run() -> void:
 		printerr("FAIL: drawer route timed out")
 		quit(1))
 	var main := start_manor()
-	main.first_coin_guide.seen = true
+	main.first_home_guide.seen = true
 	var driver := add_driver(main)
 	var capture := false
 	for arg in OS.get_cmdline_user_args():
@@ -17,14 +17,19 @@ func run() -> void:
 		Engine.time_scale = 3.0
 	var cues: Array[String] = []
 	main.audio.cued.connect(func(group: String) -> void: cues.append(group))
-	check(main.coin_drawers.size() == 7, "exactly seven objective rooms have coin drawers")
-	for id in ManorObjectives.ROOMS:
+	check(main.coin_drawers.size() == 7, "seven rooms have coin drawers")
+	for id in ManorCoins.ROOMS:
 		preload("res://tools/furnishing_fixture.gd").place(main, id)
 		var drawer := main.coin_drawers[id]
 		await physics_frame
 		var approach := drawer.to_global(Vector3(0, 0, drawer.travel + 0.85))
 		approach.y = 0.02
 		await driver.walk_to(approach)
+		var fixture_board := main.rules.board.duplicate()
+		if id == 3:
+			# The fixture's west slot is the Kitchen's real home, so test its lock from a swapped board.
+			main.rules.board[3] = fixture_board[5]
+			main.rules.board[5] = 3
 		main.player.aim_at(drawer.front_hit.global_position)
 		await physics_frame
 		var sound_before := cues.count("lever_blocked")
@@ -37,8 +42,31 @@ func run() -> void:
 		check(is_zero_approx(drawer.tray.position.z), "rattle returns to its closed position")
 		if capture:
 			await driver.shot("drawer_%d_closed" % id)
-		main.coins.award([id])
-		check(main.coins.pending.is_empty() and not main.controls_locked(), "objective completion opens a drawer without presenting or collecting its coin")
+		# The fixture keeps the room away from home, so bring it home the way a slide would.
+		var away := main.rules.board.find(id)
+		var occupant := main.rules.board[id]
+		main.rules.board[id] = id
+		main.rules.board[away] = occupant
+		drawer.was_home = false
+		main.home_lights.refresh(main.rules)
+		drawer.refresh_home()
+		var clicks := cues.count("drawer_unlock")
+		drawer._process(ManorCoinDrawer.UNLOCK_DELAY * 0.5)
+		check(cues.count("drawer_unlock") == clicks, "room %d unlock waits until after the lamp lights" % id)
+		main.sliding = true
+		drawer._process(ManorCoinDrawer.UNLOCK_DELAY * 0.8)
+		main.sliding = false
+		drawer._process(ManorCoinDrawer.UNLOCK_DELAY * 0.8)
+		check(cues.count("drawer_unlock") == clicks, "room %d unlock restarts its wait after another slide" % id)
+		drawer._process(ManorCoinDrawer.UNLOCK_DELAY * 0.3)
+		check(cues.count("drawer_unlock") == clicks + 1, "room %d drawer clicks unlocked once" % id)
+		check(not drawer.opened and drawer.tray.position.z == 0.0 and main.coins.pending.is_empty(), "a room coming home never opens its drawer by itself")
+		main.player.aim_at(drawer.front_hit.global_position)
+		await physics_frame
+		var hit := main.player.focus()
+		check(not hit.is_empty() and hit.collider == drawer.front_hit, "room %d drawer front is reachable" % id)
+		check(main.player.begin_interact() and drawer.opened and main.coins.pending.is_empty(), "trying the drawer of a home room opens it without collecting its coin")
+		main.rules.board = fixture_board
 		drawer._process(0.2)
 		main.release_pointer()
 		var at := drawer.tray.position

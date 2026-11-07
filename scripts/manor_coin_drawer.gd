@@ -3,6 +3,8 @@ extends Node3D
 
 const OPEN_TIME := 0.65
 const RATTLE_TIME := 0.28
+# Past the end of the doors' swing sounds at docking, so the latch is heard on its own.
+const UNLOCK_DELAY := 1.2
 var manor: Manor
 var room_id: int
 var tray: Node3D
@@ -15,6 +17,8 @@ var opening := 0.0
 var rattling := 0.0
 var rattles := false
 var opening_sounded := false
+var was_home := false
+var unlock_wait := -1.0
 
 func build(width: float, height: float, depth: float, color: String, front_color: String) -> void:
 	name = "CoinDrawer"
@@ -73,14 +77,21 @@ func setup(game: Manor, id: int) -> void:
 	manor = game
 	room_id = id
 	manor.coins.changed.connect(_refresh)
+	was_home = _home()
 	_refresh()
 
-func _refresh() -> void:
-	if manor.coins.awarded.has(room_id) and not opened:
-		opened = true
-		rattles = false
-		opening = 0.0
+func _home() -> bool:
+	return manor.rules.board[room_id] == room_id
+
+# Called with the lamps, so arriving home sounds the unlock a moment after the lamp lights.
+func refresh_home() -> void:
+	var home := _home()
+	if home and not was_home and not opened:
+		unlock_wait = UNLOCK_DELAY
 		set_process(true)
+	was_home = home
+
+func _refresh() -> void:
 	# A closed drawer hides its coin, which would otherwise still cost draw calls in every view.
 	coin.visible = opened and not manor.coins.collected.has(room_id)
 	coin_hit.collision_layer = 1 if opened and opening >= OPEN_TIME and coin.visible else 0
@@ -88,6 +99,11 @@ func _refresh() -> void:
 func interact() -> bool:
 	if manor == null or manor.controls_locked() or rattles or (opened and opening < OPEN_TIME):
 		return false
+	if not opened and manor.rules.board[room_id] == room_id:
+		opened = true
+		set_process(true)
+		_refresh()
+		return true
 	rattling = 0.0
 	rattles = true
 	set_process(true)
@@ -106,12 +122,16 @@ func take_coin() -> bool:
 	return true
 
 func _process(delta: float) -> void:
-	if manor == null or manor.at_title or manor.play_gate.visible or manor.sliding or manor.recovering or manor.in_finale:
+	if manor == null or manor.at_title or manor.play_gate.visible or manor.recovering or manor.in_finale:
+		return
+	if unlock_wait >= 0.0:
+		# A new slide restarts the wait, so the click never lands on top of another slide's sounds.
+		unlock_wait = UNLOCK_DELAY if manor.sliding else unlock_wait - delta
+		if unlock_wait < 0.0 and _home() and not opened:
+			manor.audio.play_at("drawer_unlock", global_position, -1.0)
+	if manor.sliding:
 		return
 	if opened and opening < OPEN_TIME:
-		var guide := manor.first_coin_guide
-		if guide.active and guide.drawer == self and guide.elapsed < ManorFirstCoinGuide.REWARD_TIME + 0.4:
-			return
 		if not opening_sounded:
 			opening_sounded = true
 			manor.audio.play_at("ui_tap", global_position, -5.0)
@@ -124,5 +144,5 @@ func _process(delta: float) -> void:
 		tray.position.z = (travel if opened else 0.0) + sin(rattling / RATTLE_TIME * TAU * 2) * 0.009 * (1.0 - rattling / RATTLE_TIME)
 		if rattling >= RATTLE_TIME:
 			rattles = false
-	if (not opened or opening >= OPEN_TIME) and not rattles:
+	if (not opened or opening >= OPEN_TIME) and not rattles and unlock_wait < 0.0:
 		set_process(false)

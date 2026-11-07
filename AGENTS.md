@@ -10,7 +10,7 @@ Kept in `tools/`; update this list when the scripts change.
 - Conservatory playtest (one final Foyer shift south reveals the room): `tools/try_conservatory.sh`
 - Stopwatch playtest (starts on the lawn beside the reachable hatch): `tools/try_stopwatch.sh`
 - Rule, solver and scene tests (headless): `tools/test.sh`
-- Screenshots (real window): `tools/capture.sh [title|coins|drawers|safe|binoculars|stopwatch|sleep|fall|trees|exterior|furnishings|objectives|single-gap|conservatory] [seed] [out_dir] [extra flags]`; furnishings accepts `--rooms=5,7`.
+- Screenshots (real window): `tools/capture.sh [title|coins|bells|drawers|safe|binoculars|stopwatch|sleep|fall|trees|exterior|furnishings|ending|single-gap|conservatory] [seed] [out_dir] [extra flags]`; furnishings accepts `--rooms=5,7`.
 - QR flicker check: `tools/check_qr.sh`. Door close-up pixel check: `tools/check_doors.sh [out_dir]`. Render benchmark: `tools/profile.sh [output_json]`.
 - Web build (local zip, never uploaded): `tools/build_itch.sh`
 - Windows test build (local unsigned zip, never uploaded): `tools/build_windows.sh`
@@ -21,10 +21,10 @@ Kept in `tools/`; update this list when the scripts change.
 - Godot licence notices: `tools/gen_godot_notices.sh` writes `docs/GODOT_COPYRIGHT.txt`; rerun after a Godot upgrade.
 - Native app icons: `python3 tools/gen_icons.py` packages the approved PNGs in `assets/icons/` as ICO and ICNS (macOS).
 - Export scope/identity preflight (read-only): `python3 tools/check_export_identity.py`
-- Regenerate `assets/audio/` from `tools/audio_sources/` (needs ffmpeg + oggenc): `tools/gen_audio.sh [--conservatory-only]`
+- Regenerate `assets/audio/` from `tools/audio_sources/` (needs ffmpeg + oggenc): `tools/gen_audio.sh [--conservatory-only|--bells-only]`
 
 ## Rules
-- Visible text is limited to: the title "Belvedere" and "Play"; short functional title/pause/settings/controls labels (Binoculars — B and Stopwatch — T only while owned); the binocular reward's "Binoculars" and "Press B to use"; the token reward's "Token" and "Collect them all"; the stopwatch reward's "Stopwatch", "Shows the fewest shifts needed for assembly." and "Press T to use"; the red key reward’s “Red Key” and “To your success”; the stopwatch's number-only readout; the bed confirmation’s “Start over?”, “Sleep to reset the rooms. Keep your tokens and items.”, “Sleep” and “Cancel”; the coin HUD count; the period-key frame-rate readout ("60 FPS"); the cabinet's number-only readout; Thanks for Playing with Keep Playing / Quit to Menu; the eight overview roof numbers; the three ending lines; and the final run totals labeled “Shifts”, “Sleeps” (with a trailing asterisk when falls are included), “Time”, and “Any key to continue”. No other instructions, room names, counters or taglines. All text uses bundled Fondamento Regular.
+- Visible text is limited to: the title "Belvedere" and "Play"; short functional title/pause/settings/controls labels (Binoculars — B and Stopwatch — T only while owned); the binocular reward's "Binoculars" and "Press B to use"; the token reward's "Token" and "Collect them all"; the stopwatch reward's "Stopwatch", "Shows the fewest shifts needed for assembly." and "Press T to use"; the red key reward’s “Red Key” and “To your success”; the trophy reward’s “Bell Trophy” and “For whom the bell tolls”; the stopwatch's number-only readout; the bed confirmation’s “Start over?”, “Sleep to reset the rooms. Keep your tokens and items.”, “Sleep” and “Cancel”; the coin HUD count; the period-key frame-rate readout ("60 FPS"); the eight overview roof numbers; the six painted wall letters B, E, L, V, D and R; the three ending lines; and the final run totals labeled “Shifts”, “Sleeps” (with a trailing asterisk when falls are included), “Time”, and “Any key to continue”. No other instructions, room names, counters or taglines. All text uses bundled Fondamento Regular, except the wall letters, which use bundled Stardos Stencil Bold.
 - Audio stays quiet and physical, within the scope listed in SPEC.
 - All art and audio must be original or CC0. Only third-party assets get an entry in `docs/CREDITS.md`.
 - The macOS Unsigned Test preset is authorized only for local unsigned/unnotarized testing. Run the identity preflight first.

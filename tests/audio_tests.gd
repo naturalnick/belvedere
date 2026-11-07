@@ -19,12 +19,15 @@ func run() -> void:
 	audio.cued.connect(func(group: String) -> void: cues.append(group))
 
 	var expected := {"step_wood": 5, "step_tile": 6, "step_grass": 5, "lever_grab": 3, "lever_blocked": 3,
-		"door_rattle": 3, "door_open": 2, "door_close": 2, "slide": 3, "gap_retract": 1, "conservatory_rise": 1, "wake": 1, "coin_insert": 2, "coin_acquired": 1, "ui_click": 3, "ui_tap": 3}
+		"door_rattle": 3, "door_open": 2, "door_close": 2, "slide": 3, "gap_retract": 1, "conservatory_rise": 1, "wake": 1, "coin_insert": 2, "coin_acquired": 1, "drawer_unlock": 1, "ui_click": 3, "ui_tap": 3, "bell_clear": 1, "bell_off": 1}
 	for group in expected:
 		check(audio.streams[group].size() == expected[group], "%s has %d variants" % [group, expected[group]])
 	check(absf(audio.streams["gap_retract"][0].get_length() - (ManorConservatory.RETRACT_TIME + 0.2)) < 0.01, "slab sound covers its travel and soft tail")
 	check(absf(audio.streams["conservatory_rise"][0].get_length() - (ManorConservatory.RISE_TIME + 0.2)) < 0.01, "lift sound covers the full rise and soft landing")
 	check(audio.music.stream.loop and audio.music.bus == "Music", "music loops on the Music bus")
+	check(not audio.streams["piano_song"].is_empty() and audio.streams["piano_song"].all(func(song: AudioStream) -> bool: return song.get_length() > 30.0 and song.get_length() < 61.0 and not song.loop), "piano songs run 30-60 s and end instead of looping")
+	check(audio.streams["bell_clear"][0].get_length() > 3.0 and audio.streams["bell_off"][0].get_length() > 3.0, "both bell tones keep the recording's natural ring")
+	check(audio.song_voice.bus == "Music" and audio.song_voice.get_parent() == main.player_piano, "songs come from the piano on the Music bus")
 	check(audio.birds.stream.loop, "forest birds loop")
 	check(audio.voices.all(func(voice: AudioStreamPlayer) -> bool: return voice.bus == "Effects") and audio.birds.bus == "Effects", "effects use the Effects bus")
 	var layout: AudioBusLayout = load(ProjectSettings.get_setting("audio/buses/default_bus_layout"))
@@ -44,7 +47,6 @@ func run() -> void:
 	cues.clear()
 
 	check(audio.music_intro == 0.0 and audio.music.volume_db < -59.0, "music starts silent during its delay")
-	main.coins.award([0])
 	main.coins.collect(0)
 	check(count("coin_acquired") == 0, "queued coin is silent until received")
 	main.coins.receive_next()

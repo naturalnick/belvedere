@@ -9,6 +9,9 @@
 /screenshots/*
 !/screenshots/.gdignore
 
+# Stand-in piano recordings, re-downloadable from tools/audio_sources/sources.json
+/tools/audio_sources/piano-*
+
 # OS
 .DS_Store
 

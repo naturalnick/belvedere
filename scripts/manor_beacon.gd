@@ -4,7 +4,7 @@ extends Node3D
 var globe: MeshInstance3D
 var shade: MeshInstance3D
 var light: OmniLight3D
-var state := 0
+var lit := false
 
 func _ready() -> void:
 	var brass := ManorGeometry.material("B39459", 0.004)
@@ -32,7 +32,7 @@ func _ready() -> void:
 	rim.material_override = brass
 	rim.position.y = -0.02
 	add_child(rim)
-	# A shallow frosted lens exposes the target/placement state from across the room.
+	# A shallow frosted lens shows from across the room whether this room is home.
 	globe = MeshInstance3D.new()
 	var lens := SphereMesh.new()
 	lens.radius = 0.25
@@ -46,14 +46,11 @@ func _ready() -> void:
 	light.omni_range = 5.5
 	light.light_color = Color("FFF0DA")
 	add_child(light)
-	set_state(0)
+	set_lit(false)
 
-func set_state(value: int) -> void:
-	state = value
-	var color := "6EBFFF" if value == 1 else "FFF0DA"
-	shade.material_override = ManorGeometry.material("B4CFDF" if value == 1 else "DDD3BD", 0.006)
-	globe.material_override = ManorGeometry.glowing_material(color) if value > 0 else ManorGeometry.material("77766E")
-	light.light_color = Color(color)
-	light.light_energy = 0.85 if value > 0 else 0.0
+func set_lit(value: bool) -> void:
+	lit = value
+	globe.material_override = ManorGeometry.glowing_material("FFF0DA") if value else ManorGeometry.material("77766E")
+	light.light_energy = 0.85 if value else 0.0
 	# A zero-energy light is still culled and shaded per object; hiding it skips that work.
-	light.visible = value > 0
+	light.visible = value

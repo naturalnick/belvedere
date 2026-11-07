@@ -101,7 +101,7 @@ func _stop_player() -> void:
 	manor.player.bot_drive = Vector3.ZERO
 
 func _suspended() -> bool:
-	return manor.at_title or manor.in_finale or manor.recovering or manor.sliding or manor.play_gate.visible or manor.first_coin_guide.active or manor.binoculars.locks_player() or manor.coin_device.releasing
+	return manor.at_title or manor.in_finale or manor.recovering or manor.sliding or manor.play_gate.visible or manor.first_home_guide.active or manor.binoculars.locks_player()
 
 func _input(event: InputEvent) -> void:
 	if presenting and not _suspended() and ManorCoinHUD.is_accept_press(event):

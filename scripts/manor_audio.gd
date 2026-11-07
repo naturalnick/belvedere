@@ -12,8 +12,14 @@ const MUSIC_FADE_IN := 5.0
 # Menu press sound: "ui_click" (brass latch) or "ui_tap" (muted wooden tap).
 const MENU_CLICK := "ui_click"
 const MENU_CLICK_DB := -4.0
+const BELL_DB := -6.0
+const PEAL_DB := -3.0
+# Wider than an ordinary ring, so the far rooms of the house still carry.
+const PEAL_UNIT_SIZE := 9.0
+const SONG_FADE_DB := -60.0
 
 signal cued(group: String)
+signal song_ended
 
 var manor: Manor
 # Headless runs use the dummy driver, which never reclaims playbacks still active at quit and
@@ -31,6 +37,10 @@ var music_fade: Tween
 var music_intro := 0.0
 var music_started_ms := -1
 var music_duck_db := 0.0
+var song_duck_db := 0.0
+var song_fade: Tween
+var song_voice: AudioStreamPlayer3D
+var song_active := false
 var stride := STRIDE * 0.6
 var door_events: Array[Array] = []
 
@@ -66,8 +76,24 @@ func _ready() -> void:
 		for door in manor.rooms[id].doors:
 			door.swung.connect(func(opening: bool) -> void: door_events.append([door, opening]))
 			door.rattled.connect(func() -> void: play_at("door_rattle", door.gate.global_position, -2.0))
-	if manor.coin_device != null:
-		manor.coin_device.coin_inserted.connect(func() -> void: play_at("coin_insert", manor.coin_device.global_position, -3.0))
+	var piano := manor.player_piano
+	piano.coin_inserted.connect(func() -> void: play_at("coin_insert", piano.global_position + Vector3.UP, -3.0))
+	# Parented to the piano, so a song in progress rides along when the Living room shifts.
+	song_voice = AudioStreamPlayer3D.new()
+	song_voice.bus = "Music"
+	song_voice.unit_size = 5.0
+	song_voice.max_distance = 40.0
+	song_voice.position.y = 1.0
+	piano.add_child(song_voice)
+	song_voice.finished.connect(end_song)
+	for bell: ManorBell in manor.bell_mounts.values():
+		# No random pitch here: the only clue a ring gives is its tone.
+		bell.rung.connect(func(counted: bool) -> void: play_at("bell_clear" if counted else "bell_off", bell.global_position, BELL_DB, false))
+		bell.pealed.connect(func() -> void:
+			var voice := play_at("bell_clear", bell.global_position, PEAL_DB, false)
+			if voice != null:
+				voice.unit_size = PEAL_UNIT_SIZE
+				voice.max_distance = 50.0)
 	if manor.study_safe != null:
 		manor.study_safe.button_pressed.connect(func() -> void: play_at("lever_grab", manor.study_safe.global_position, -12.0))
 		manor.study_safe.handle_tried.connect(func(success: bool) -> void: play_at("door_open" if success else "door_rattle", manor.study_safe.global_position, -8.0))
@@ -79,19 +105,29 @@ func _ready() -> void:
 	manor.fall_recovery.woke.connect(func() -> void: play("wake", -4.0))
 
 func _load_streams() -> void:
-	for group in ["step_wood", "step_tile", "step_grass", "lever_grab", "lever_blocked", "door_rattle", "door_open", "door_close", "slide", "gap_retract", "conservatory_rise", "coin_insert", "coin_acquired", "ui_click", "ui_tap"]:
+	for group in ["step_wood", "step_tile", "step_grass", "lever_grab", "lever_blocked", "door_rattle", "door_open", "door_close", "slide", "gap_retract", "conservatory_rise", "coin_insert", "coin_acquired", "drawer_unlock", "ui_click", "ui_tap"]:
 		var variants: Array = []
 		while ResourceLoader.exists(DIR + "%s_%d.wav" % [group, variants.size()]):
 			variants.append(load(DIR + "%s_%d.wav" % [group, variants.size()]))
 		streams[group] = variants
+	var songs: Array = []
+	while ResourceLoader.exists(DIR + "piano_song_%d.ogg" % songs.size()):
+		songs.append(load(DIR + "piano_song_%d.ogg" % songs.size()))
+	streams["piano_song"] = songs
+	for bell_sound in ["bell_clear", "bell_off"]:
+		streams[bell_sound] = [load(DIR + bell_sound + ".ogg")]
 	streams["wake"] = [load(DIR + "wake.wav")]
 	streams["birds"] = [load(DIR + "birds_loop.ogg")]
 	streams["theme"] = [load(DIR + "manor_theme.ogg")]
 	if OS.has_feature("web"):
 		# Web playback uses decoded samples, and a stream's first play() would decode all of it
 		# on the only thread. The 96 s theme alone took over 100 ms, so pay for it during load.
-		for variants in streams.values():
-			for stream: AudioStream in variants:
+		# Piano songs are left to decode on their first play: about 17 MB each once decoded, and
+		# most players unlock only a few, so paying for all seven up front would waste memory.
+		for group in streams:
+			if group == "piano_song":
+				continue
+			for stream: AudioStream in streams[group]:
 				AudioServer.register_stream_as_sample(stream)
 
 # Called deferred through the "menu_audio" group, so a Sound: On press is heard after unmuting.
@@ -133,6 +169,33 @@ func play_at(group: String, where: Vector3, volume_db: float = 0.0, vary_pitch: 
 	voice.play()
 	return voice
 
+# Songs beyond the supplied recordings repeat them, so all seven coins always play something.
+func play_song(index: int) -> void:
+	var songs: Array = streams["piano_song"]
+	song_active = true
+	cued.emit("piano_song")
+	_fade_theme(SONG_FADE_DB, 2.0)
+	if audible:
+		song_voice.stream = songs[index % songs.size()]
+		song_voice.play()
+
+func song_playing() -> bool:
+	return song_active
+
+func end_song() -> void:
+	if not song_active:
+		return
+	song_active = false
+	song_voice.stop()
+	_fade_theme(0.0, 3.0)
+	song_ended.emit()
+
+func _fade_theme(target_db: float, seconds: float) -> void:
+	if song_fade != null:
+		song_fade.kill()
+	song_fade = create_tween()
+	song_fade.tween_property(self, "song_duck_db", target_db, seconds).set_trans(Tween.TRANS_SINE)
+
 func _pick(group: String) -> AudioStream:
 	var variants: Array = streams.get(group, [])
 	if variants.is_empty():
@@ -168,14 +231,17 @@ func surface() -> String:
 		return "step_tile"
 	return "step_grass"
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
 	if music_started_ms >= 0 and music_intro < 1.0:
 		# Browsers hold audio until the first click while the music is already queued. Following the
 		# heard position (still 0 while held) keeps the fade-in for that moment instead of a jump.
 		var heard := music.get_playback_position() if music.playing else (Time.get_ticks_msec() - music_started_ms) / 1000.0
 		music_intro = maxf(music_intro, 0.5 - 0.5 * cos(PI * clampf(heard / MUSIC_FADE_IN, 0.0, 1.0)))
 	# Startup gain and slide ducking are independent, so an early slide cannot skip the fade.
-	music.volume_db = linear_to_db(maxf(0.001, music_intro)) + music_duck_db
+	music.volume_db = linear_to_db(maxf(0.001, music_intro)) + music_duck_db + song_duck_db
+	var paused := manor.play_gate.visible or manor.at_title
+	if song_active:
+		song_voice.stream_paused = paused
 	_flush_doors()
 	var in_conservatory := manor.conservatory != null and manor.conservatory.accessible() and manor.rules.slot() == 4
 	_set_birds(manor.rules.player < 0 and not in_conservatory and not manor.at_title and not manor.play_gate.visible)

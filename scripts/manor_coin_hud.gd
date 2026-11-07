@@ -89,7 +89,7 @@ func presenting() -> bool:
 	return not manor.coins.pending.is_empty()
 
 func showing() -> bool:
-	return visible and presenting() and not manor.sliding and not manor.first_coin_guide.holding_reward() and not ((manor.binoculars != null and manor.binoculars.locks_player()) or (manor.stopwatch != null and manor.stopwatch.locks_player()))
+	return visible and presenting() and not manor.sliding and not manor.first_home_guide.active and not ((manor.binoculars != null and manor.binoculars.locks_player()) or (manor.stopwatch != null and manor.stopwatch.locks_player()))
 
 func accept() -> void:
 	if showing() and presentation >= ACCEPT_AFTER:
@@ -106,7 +106,7 @@ func _draw() -> void:
 	var destination := Vector2(size.x - 94, 40)
 	if count.visible:
 		ManorPrizeArt.draw_coin(self, destination, 15)
-	if not presenting() or manor.sliding or manor.first_coin_guide.holding_reward() or ((manor.binoculars != null and manor.binoculars.locks_player()) or (manor.stopwatch != null and manor.stopwatch.locks_player())):
+	if not presenting() or manor.sliding or manor.first_home_guide.active or ((manor.binoculars != null and manor.binoculars.locks_player()) or (manor.stopwatch != null and manor.stopwatch.locks_player())):
 		return
 	var enter := smoothstep(0.0, 0.3, presentation)
 	var travel := smoothstep(HOLD_AT, PRESENT_TIME, presentation)

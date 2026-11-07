@@ -13,7 +13,7 @@ func run() -> void:
 	main.rooms[0].position = ManorGeometry.center(gap)
 	main.gap_floor.position = ManorGeometry.center(old_slot) + Vector3.DOWN * 0.02
 	var layout := main.rules.board.duplicate()
-	var earned := main.objectives.completed.duplicate()
+	main.bells.ring(0)
 	main.rules.player = ManorRules.OUTSIDE
 	main.player.position = Vector3(109.5, 0, 0)
 	main.player.bot_drive = Vector3.RIGHT
@@ -38,23 +38,13 @@ func run() -> void:
 	check(main.run_stats.sleeps == 1 and main.run_stats.falls == 1 and main.run_stats.sleep_count() == "1*", "walking off the map counts exactly one marked sleep")
 	check(main.player.position.distance_to(main.rooms[0].to_global(ManorFallRecovery.BEDSIDE)) < 0.1, "wake beside bed in moved Bedroom")
 	check(main.rules.player == 0, "respawn restores room occupancy")
-	check(main.rules.board == layout and main.objectives.completed == earned and main.slides == 0, "recovery preserves puzzle and objective progress")
+	check(main.rules.board == layout and main.bells.progress == 1 and main.slides == 0, "recovery preserves the puzzle and bell progress")
 	await create_timer(0.4).timeout
 	check(main.player.is_on_floor(), "bedside position is safe on the floor")
 	main.player.bot_drive = Vector3.BACK
 	var before := main.player.position
 	await create_timer(0.4).timeout
 	check(main.player.position.distance_to(before) > 0.7, "player can walk away from bed after recovery")
-	# One slide from assembled, so the next target stays reachable once this one completes.
-	main.rules.board = PackedInt32Array([0, -1, 2, 3, 1, 5, 6, 7, 8])
-	for id in main.rooms:
-		main.rooms[id].position = ManorGeometry.center(main.rules.board.find(id))
-	main.objectives.active = 0
-	main.first_coin_guide.seen = true
-	main.rules.player = ManorRules.OUTSIDE
-	main.fall_recovery._recover()
-	await create_timer(0.7).timeout
-	check(main.objectives.completed.has(0) and main.coin_drawers[0].opened, "waking in the home blue room completes its objective")
 	main.queue_free()
 	await process_frame
 	finish("Fall recovery")

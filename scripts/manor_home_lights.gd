@@ -1,11 +1,11 @@
-class_name ManorObjectiveDisplay
+class_name ManorHomeLights
 extends Node3D
 
 var lamps: Dictionary[int, ManorBeacon] = {}
 var progress_lights: Array[MeshInstance3D] = []
 
 func setup(game: Manor) -> void:
-	for id in ManorObjectives.ROOMS:
+	for id in ManorCoins.ROOMS:
 		var lamp := ManorBeacon.new()
 		lamp.position.y = 2.25
 		game.rooms[id].add_child(lamp)
@@ -46,8 +46,9 @@ func setup(game: Manor) -> void:
 		globe.position = radial + Vector3.DOWN * 0.13
 		progress_lights.append(globe)
 
-func refresh(objectives: ManorObjectives, rules: ManorRules) -> void:
+func refresh(rules: ManorRules) -> void:
 	for id in lamps:
-		lamps[id].set_state(1 if objectives.active == id else (2 if rules.board[id] == id else 0))
+		lamps[id].set_lit(rules.board[id] == id)
 	for i in progress_lights.size():
-		progress_lights[i].material_override = ManorGeometry.glowing_material("FFF0DA") if rules.board[ManorObjectives.ROOMS[i]] == ManorObjectives.ROOMS[i] else ManorGeometry.material("595C59")
+		var room := ManorCoins.ROOMS[i]
+		progress_lights[i].material_override = ManorGeometry.glowing_material("FFF0DA") if rules.board[room] == room else ManorGeometry.material("595C59")
