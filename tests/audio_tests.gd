@@ -5,10 +5,22 @@ var cues: Array[String] = []
 func count(group: String) -> int:
 	return cues.count(group)
 
+class PauseProbe extends Node:
+	var sends := 0
+	var stream_paused := false:
+		set(value):
+			sends += 1
+			stream_paused = value
+
 func run() -> void:
 	create_timer(30).timeout.connect(func() -> void:
 		printerr("FAIL: audio tests timed out")
 		quit(1))
+	var probe := PauseProbe.new()
+	for paused in [false, false, true, true, false]:
+		ManorAudio.hold(probe, paused)
+	check(probe.sends == 2 and not probe.stream_paused, "only pause changes reach a player, since each web unpause restarts its sound")
+	probe.free()
 	var main := load_manor()
 	main.start_play()
 	preload("res://tools/furnishing_fixture.gd").place(main, 7)

@@ -43,7 +43,7 @@ func _ready() -> void:
 	count.add_theme_constant_override("shadow_offset_y", 2)
 	add_child(count)
 	reward_title = ManorPrizeArt.reward_label(self, "Token")
-	reward_hint = ManorPrizeArt.reward_label(self, "Collect them all")
+	reward_hint = ManorPrizeArt.reward_label(self, "Good for one song")
 	reward_title.hide()
 	reward_hint.hide()
 	manor.coins.changed.connect(_refresh)

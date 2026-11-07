@@ -196,6 +196,12 @@ func _fade_theme(target_db: float, seconds: float) -> void:
 	song_fade = create_tween()
 	song_fade.tween_property(self, "song_duck_db", target_db, seconds).set_trans(Tween.TRANS_SINE)
 
+# Godot's web samples restart from the beginning on every unpause, even an unpause of a playing
+# sound, so a pause state assigned each frame turns the sound into noise. Only send changes.
+static func hold(player: Node, paused: bool) -> void:
+	if player.stream_paused != paused:
+		player.stream_paused = paused
+
 func _pick(group: String) -> AudioStream:
 	var variants: Array = streams.get(group, [])
 	if variants.is_empty():
@@ -241,7 +247,7 @@ func _process(delta: float) -> void:
 	music.volume_db = linear_to_db(maxf(0.001, music_intro)) + music_duck_db + song_duck_db
 	var paused := manor.play_gate.visible or manor.at_title
 	if song_active:
-		song_voice.stream_paused = paused
+		hold(song_voice, paused)
 	_flush_doors()
 	var in_conservatory := manor.conservatory != null and manor.conservatory.accessible() and manor.rules.slot() == 4
 	_set_birds(manor.rules.player < 0 and not in_conservatory and not manor.at_title and not manor.play_gate.visible)

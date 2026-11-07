@@ -83,7 +83,7 @@ func _start_reveal() -> void:
 
 func _process(delta: float) -> void:
 	if is_instance_valid(motion_sound):
-		motion_sound.stream_paused = _suspended()
+		ManorAudio.hold(motion_sound, _suspended())
 	hud.refresh_reward()
 	hud.queue_redraw()
 	if collecting or unlocking:

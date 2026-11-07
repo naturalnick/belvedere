@@ -22,13 +22,13 @@ func run(driver: Node) -> void:
 	await driver.shot("coin_count")
 	preload("res://tools/furnishing_fixture.gd").place(main, 5)
 	await get_tree().physics_frame
-	await driver.walk_to(main.rooms[5].position + Vector3(1.55, 0, 1.0))
+	await driver.walk_to(main.player_piano.to_global(Vector3(0, 0, 1.75)))
 	main.player.aim_at(main.player_piano.to_global(Vector3(0, 0.95, 0)))
 	await driver.shot("piano_front")
-	await driver.walk_to(main.rooms[5].position + Vector3(0.1, 0, 1.45))
+	await driver.walk_to(main.player_piano.to_global(Vector3(-1.3, 0, 1.2)))
 	main.player.aim_at(main.player_piano.to_global(Vector3(0, 0.8, 0.2)))
 	await driver.shot("piano_side")
-	await driver.walk_to(main.rooms[5].position + Vector3(1.55, 0, 1.45))
+	await driver.walk_to(main.player_piano.to_global(Vector3(0.3, 0, 1.15)))
 	main.player.aim_at(main.player_piano.to_global(ManorPianoArt.SLOT_POSITION))
 	await get_tree().physics_frame
 	var hit := main.player.focus()
