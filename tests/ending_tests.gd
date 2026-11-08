@@ -1,5 +1,14 @@
 extends "res://tests/manor_test.gd"
 
+func click_at(at: Vector2) -> void:
+	var click := InputEventMouseButton.new()
+	click.button_index = MOUSE_BUTTON_LEFT
+	click.position = at
+	click.pressed = true
+	root.push_input(click, true)
+	click.pressed = false
+	root.push_input(click, true)
+
 func run() -> void:
 	var main := start_manor()
 	await physics_frame
@@ -107,33 +116,46 @@ func run() -> void:
 	await create_timer(ManorEnding.CREDIT_GAP_SECONDS + 2.0).timeout
 	check(main.ending.thanks.modulate.a > 0 and main.ending.thanks.modulate.a < 1 and not main.at_title, "thank-you fades in after the additional wait")
 	check(not main.run_summary.revealed, "totals wait until every ending line has faded in")
-	main.run_summary._input(key_press())
+	root.push_input(key_press())
 	check(not main.run_summary.exiting, "early key presses cannot skip the credits")
 	while not main.run_summary.ready_to_continue:
 		await process_frame
-	check(main.run_summary.visible and is_equal_approx(main.run_summary.modulate.a, 1) and main.ending.thanks.modulate.a == 1, "totals and prompt fade in after the completed credits")
+	check(main.run_summary.visible and is_equal_approx(main.run_summary.modulate.a, 1) and main.ending.thanks.modulate.a == 1, "totals and button fade in after the completed credits")
+	main.player.automated = false
+	if main.pointer_watch != null:
+		main.pointer_watch.captured = func() -> bool: return false
+		main.pointer_watch.locked = true
+		main.pointer_watch._process(ManorPointerWatch.LOCK_TIMEOUT + 0.1)
+		check(not main.play_gate.visible, "ending pointer release does not trigger the web pause menu")
 	await create_timer(0.4).timeout
 	check(not main.at_title and is_zero_approx(main.fade.color.a) and main.run_stats.elapsed_seconds == finish_time, "completed ending waits for input without increasing run time")
 	main.release_pointer()
 	await process_frame
 	check(not main.run_summary.visible, "pause hides the results behind the menu")
-	main.run_summary._input(key_press())
-	check(not main.run_summary.exiting, "menu key presses cannot accept the results")
+	main.run_summary._continue()
+	check(not main.run_summary.exiting, "Continue cannot accept the results while paused")
 	main.resume_play()
 	await process_frame
 	var repeated := key_press()
 	repeated.echo = true
-	main.run_summary._input(repeated)
-	main.run_summary._input(InputEventMouseMotion.new())
-	var click := InputEventMouseButton.new()
-	click.button_index = MOUSE_BUTTON_LEFT
-	click.pressed = true
-	main.run_summary._input(click)
-	check(not main.run_summary.exiting, "held keys, mouse movement and clicks cannot dismiss the ending")
-	main.run_summary._input(key_press(KEY_ESCAPE))
-	check(main.run_summary.exiting and not main.at_title, "a fresh key begins the fade back to menu")
+	root.push_input(repeated)
+	root.push_input(InputEventMouseMotion.new())
+	for code in [KEY_SPACE, KEY_ENTER, KEY_TAB, KEY_F12]:
+		root.push_input(key_press(code))
+	var screenshot := key_press(KEY_3)
+	screenshot.meta_pressed = true
+	screenshot.shift_pressed = true
+	root.push_input(screenshot)
+	click_at(Vector2(10, 10))
+	check(not main.run_summary.exiting and not main.play_gate.visible, "keys, screenshot shortcuts and clicks outside Continue leave results visible")
+	root.push_input(key_press(KEY_ESCAPE))
+	check(main.play_gate.visible and not main.run_summary.exiting, "Escape pauses instead of dismissing the ending")
+	main.resume_play()
+	await process_frame
+	click_at(main.run_summary.continue_button.get_global_rect().get_center())
+	check(main.run_summary.exiting and not main.at_title, "clicking Continue begins the fade back to menu")
 	await create_timer(ManorRunSummary.FADE_SECONDS + 0.2).timeout
-	check(main.at_title and main.play_gate.mode == "title" and not main.run_summary.visible, "keypress returns to title with results hidden")
+	check(main.at_title and main.play_gate.mode == "title" and not main.run_summary.visible, "Continue returns to title with results hidden")
 	check(not main.ending.is_processing(), "flower updates stop at title")
 	main.queue_free()
 	await process_frame

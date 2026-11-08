@@ -21,7 +21,7 @@ func _input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 
 func _process(delta: float) -> void:
-	if manor.at_title or manor.play_gate.visible or manor.player.automated:
+	if manor.at_title or manor.play_gate.visible or manor.player.automated or manor.run_summary.ready_to_continue or manor.run_summary.exiting:
 		resume_on_click = false
 		locked = false
 		waiting = 0.0

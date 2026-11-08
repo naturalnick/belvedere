@@ -4,7 +4,6 @@ extends Node
 const DIR := "res://assets/audio/"
 const STRIDE := 1.05
 const DOOR_RANGE := 7.5
-const TILE_ROOMS: Array[int] = [1, 3, 7, 8]
 const MUSIC_DUCK_DB := -6.0
 const BIRDS_DB := -33.0
 const MUSIC_DELAY := 3.0
@@ -105,7 +104,7 @@ func _ready() -> void:
 	manor.fall_recovery.woke.connect(func() -> void: play("wake", -4.0))
 
 func _load_streams() -> void:
-	for group in ["step_wood", "step_tile", "step_grass", "lever_grab", "lever_blocked", "door_rattle", "door_open", "door_close", "slide", "gap_retract", "conservatory_rise", "coin_insert", "coin_acquired", "drawer_unlock", "ui_click", "ui_tap"]:
+	for group in ["step_tile", "step_grass", "lever_grab", "lever_blocked", "door_rattle", "door_open", "door_close", "slide", "gap_retract", "conservatory_rise", "coin_insert", "coin_acquired", "drawer_unlock", "ui_click", "ui_tap"]:
 		var variants: Array = []
 		while ResourceLoader.exists(DIR + "%s_%d.wav" % [group, variants.size()]):
 			variants.append(load(DIR + "%s_%d.wav" % [group, variants.size()]))
@@ -228,10 +227,10 @@ func surface() -> String:
 	var position := manor.player.global_position
 	var id := manor.rules.player
 	if id >= 0 and manor.rooms.has(id):
-		return "step_tile" if id in TILE_ROOMS else "step_wood"
-	# The finale carpet shares the soft wood step; there is no separate rug/carpet sound.
+		return "step_tile"
+	# The exit carpet uses the same indoor step instead of the surrounding grass sound.
 	if manor.carpet.visible and absf(position.x) < 0.9 and position.z > 9.3 and position.z < 22.3:
-		return "step_wood"
+		return "step_tile"
 	var half := ManorGeometry.PITCH * 1.5
 	if absf(position.x) < half and absf(position.z) < half:
 		return "step_tile"

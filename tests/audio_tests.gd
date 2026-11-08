@@ -30,7 +30,7 @@ func run() -> void:
 	var audio := main.audio
 	audio.cued.connect(func(group: String) -> void: cues.append(group))
 
-	var expected := {"step_wood": 5, "step_tile": 6, "step_grass": 5, "lever_grab": 3, "lever_blocked": 3,
+	var expected := {"step_tile": 6, "step_grass": 5, "lever_grab": 3, "lever_blocked": 3,
 		"door_rattle": 3, "door_open": 2, "door_close": 2, "slide": 3, "gap_retract": 1, "conservatory_rise": 1, "wake": 1, "coin_insert": 2, "coin_acquired": 1, "drawer_unlock": 1, "ui_click": 3, "ui_tap": 3, "bell_clear": 1, "bell_off": 1}
 	for group in expected:
 		check(audio.streams[group].size() == expected[group], "%s has %d variants" % [group, expected[group]])
@@ -70,20 +70,22 @@ func run() -> void:
 	var foyer: ManorRoom = main.rooms[7]
 	var spawn := main.player.global_position
 	check(audio.surface() == "step_tile", "Foyer tiles use hard steps")
+	for id: int in main.rooms:
+		main.rules.player = id
+		main.player.global_position = main.rooms[id].to_global(Vector3(1.5, 0.02, 1.5))
+		check(audio.surface() == "step_tile", "every room uses the same indoor steps (room %d)" % id)
 	main.rules.player = 0
-	main.player.global_position = main.rooms[0].to_global(Vector3(1.5, 0.02, 1.5))
-	check(audio.surface() == "step_wood", "Bedroom boards use wood steps")
 	for rug_point in [Vector3(-1.75, 0.02, -1.45), Vector3(-1.75, 0.02, 2.2)]:
 		main.player.global_position = main.rooms[0].to_global(rug_point)
-		check(audio.surface() == "step_wood", "Bedroom rug and boards share wood steps")
+		check(audio.surface() == "step_tile", "Bedroom rug and boards share the indoor steps")
 	main.rules.player = 5
 	for z in [-1.4, -0.5, 1.0, 2.5]:
 		main.player.global_position = main.rooms[5].to_global(Vector3(-1.86, 0.02, z))
-		check(audio.surface() == "step_wood", "Living rug and boards share wood steps (z %.1f)" % z)
+		check(audio.surface() == "step_tile", "Living rug and boards share the indoor steps (z %.1f)" % z)
 	main.carpet.visible = true
 	main.rules.player = ManorRules.OUTSIDE
 	main.player.global_position = Vector3(0, 0, 15)
-	check(audio.surface() == "step_wood", "finale carpet uses the soft wood step")
+	check(audio.surface() == "step_tile", "finale carpet uses the same indoor step")
 	main.carpet.visible = false
 	main.rules.player = -1
 	main.player.global_position = ManorGeometry.center(7)

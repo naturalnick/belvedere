@@ -20,7 +20,7 @@ func _ready() -> void:
 	_apply()
 
 # Must run before the "any key" handlers, so Manor adds this as its last child: _input runs in
-# reverse tree order, and a period must not accept a reward or dismiss the ending.
+# reverse tree order, and a period must not accept a reward.
 func _input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo and event.physical_keycode == KEY_PERIOD:
 		get_viewport().set_input_as_handled()

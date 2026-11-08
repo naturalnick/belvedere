@@ -444,9 +444,17 @@ func objective_views() -> void:
 		while not main.coins.pending.is_empty():
 			main.coins.receive_next()
 		main.run_stats.shifts = 31
-		main.run_stats.sleeps = 3
-		main.run_stats.falls = 1
+		main.run_stats.sleeps = 0
+		main.run_stats.falls = 0
 		main.run_stats.elapsed_seconds = 1542.0
+		main.binoculars.owned = true
+		main.binoculars.reward_claimed = true
+		main.stopwatch.owned = true
+		main.stopwatch.claimed = true
+		main.trophy_case.owned = true
+		main.trophy_case.holder.hide()
+		main.coins.available = 3
+		main.coins.changed.emit()
 		main.resume_play()
 		await get_tree().create_timer(0.6).timeout
 		await collect_red_key()
@@ -523,9 +531,19 @@ func capture_exit() -> void:
 	get_window().content_scale_size = content_size
 	get_window().size = window_size
 	await get_tree().process_frame
-	_check(not main.at_title, "outdoor ending waits for a fresh key")
+	_check(not main.at_title, "outdoor ending waits for Continue")
 	key_event(KEY_SPACE, true)
 	key_event(KEY_SPACE, false)
+	_check(not main.run_summary.exiting, "keyboard input leaves ending results visible")
+	main.release_pointer()
+	main.resume_play()
+	_check(Input.mouse_mode == Input.MOUSE_MODE_VISIBLE, "ending results keep the pointer visible after Resume")
+	for pressed in [true, false]:
+		var click := InputEventMouseButton.new()
+		click.button_index = MOUSE_BUTTON_LEFT
+		click.pressed = pressed
+		click.position = main.run_summary.continue_button.get_global_rect().get_center()
+		Input.parse_input_event(click)
 	while not main.at_title:
 		await get_tree().process_frame
 	_check(main.play_gate.visible and main.play_gate.mode == "title", "outdoor ending returns to title")

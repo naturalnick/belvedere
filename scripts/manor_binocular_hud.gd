@@ -58,7 +58,7 @@ func icon_position() -> Vector2:
 	return Vector2(size.x - 146, 39)
 
 func _draw() -> void:
-	if binoculars.manor.at_title or binoculars.manor.in_finale or binoculars.manor.recovering:
+	if not binoculars.manor.shows_inventory():
 		return
 	if binoculars.owned and not binoculars.presenting:
 		ManorBinocularArt.draw_icon(self, icon_position())

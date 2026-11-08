@@ -9,7 +9,7 @@ func icon_position() -> Vector2:
 
 func shows_icon() -> bool:
 	var manor := stopwatch.manor
-	return stopwatch.owned and not stopwatch.presenting and not manor.at_title and not manor.in_finale and not manor.recovering and not manor.play_gate.visible
+	return stopwatch.owned and not stopwatch.presenting and manor.shows_inventory()
 
 func _draw() -> void:
 	if not shows_icon():

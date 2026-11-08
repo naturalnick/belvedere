@@ -37,7 +37,7 @@ func icon_position() -> Vector2:
 
 func _draw() -> void:
 	var manor := conservatory.manor
-	if not conservatory.key_owned or manor.at_title or manor.in_finale or manor.recovering or manor.play_gate.visible:
+	if not conservatory.key_owned or not manor.shows_inventory():
 		return
 	var red := Color("BA5145")
 	var ink := Color("703C32")

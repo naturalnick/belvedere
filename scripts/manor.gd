@@ -248,7 +248,7 @@ func start_play() -> void:
 func resume_play() -> void:
 	if at_title:
 		return
-	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE if run_summary.ready_to_continue or run_summary.exiting else Input.MOUSE_MODE_CAPTURED
 	play_gate.hide()
 	if in_finale:
 		if finale_motion != null and finale_motion.is_valid():
@@ -269,6 +269,9 @@ func release_pointer() -> void:
 
 func controls_locked(for_movement := false) -> bool:
 	return (conservatory != null and (conservatory.collecting or conservatory.unlocking)) or (foundation_hatch != null and foundation_hatch.busy) or (stopwatch != null and stopwatch.locks_player(for_movement)) or (binoculars != null and binoculars.locks_player()) or (first_home_guide != null and first_home_guide.active) or (coin_hud != null and coin_hud.presenting()) or (trophy_case != null and trophy_case.presenting) or recovering or sliding or in_finale or at_title or (play_gate != null and play_gate.visible)
+
+func shows_inventory() -> bool:
+	return not at_title and not recovering and not play_gate.visible and (not in_finale or run_summary.revealed)
 
 func return_to_title() -> void:
 	at_title = true
@@ -321,6 +324,9 @@ func begin_finale() -> void:
 		if door.is_front and door.gate.collision_layer != 0:
 			return
 	in_finale = true
+	coin_hud.count.add_theme_color_override("font_shadow_color", ManorEnding.TEXT_SHADOW)
+	coin_hud.count.add_theme_constant_override("shadow_offset_x", 0)
+	coin_hud.count.add_theme_constant_override("shadow_offset_y", 1)
 	audio.end_song()
 	run_stats.finished = true
 	set_process(true)
@@ -340,6 +346,9 @@ func begin_finale() -> void:
 	finale_motion.tween_callback(run_summary.arm)
 
 func _process(delta: float) -> void:
+	if in_finale:
+		for inventory_hud: Control in [coin_hud, binoculars.hud, stopwatch.hud, conservatory.hud, trophy_case.hud]:
+			inventory_hud.modulate.a = run_summary.modulate.a if run_summary.revealed else 0.0
 	if in_finale and not at_title and not play_gate.visible:
 		var direction := Vector3(0, 1.3, 36) - player.camera.global_position
 		player.rotation.y = lerp_angle(player.rotation.y, atan2(-direction.x, -direction.z), minf(delta * 2.5, 1))

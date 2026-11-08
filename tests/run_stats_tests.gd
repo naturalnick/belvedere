@@ -77,10 +77,30 @@ func run() -> void:
 	stats._process(100)
 	check(stats.finished and stats.elapsed_seconds == 15, "entering the finale freezes active run time")
 	main.finale_motion.kill()
+	check(not main.shows_inventory(), "inventory stays hidden before ending results")
 	main.run_summary.reveal()
 	check(main.run_summary.totals.text == "Shifts 3\nSleeps 2*\nTime 0:15", "end-screen totals include cumulative shifts and marked sleeps")
-	check(main.run_summary.continue_hint.text == "Any key to continue", "ending shows the continue hint")
+	var three_line_height := main.run_summary.totals.size.y
+	check(main.shows_inventory(), "inventory returns with ending results")
+	main.run_summary.modulate.a = 0.5
+	main._process(0)
+	for inventory_hud: Control in [main.coin_hud, main.binoculars.hud, main.stopwatch.hud, main.conservatory.hud, main.trophy_case.hud]:
+		check(is_equal_approx(inventory_hud.modulate.a, 0.5), "inventory fades with the results")
+	main.release_pointer()
+	check(not main.shows_inventory(), "pause hides the ending inventory")
+	main.resume_play()
+	check(main.shows_inventory(), "Resume restores the ending inventory")
+	stats.sleeps = 0
+	stats.falls = 0
+	main.run_summary.reveal()
+	check(main.run_summary.totals.text == "Shifts 3\nTime 0:15", "zero sleeps leaves two adjacent totals without a blank line")
+	check(main.run_summary.totals.size.y < three_line_height, "zero sleeps collapses the totals height")
+	check(not main.run_summary.totals.accessibility_name.contains("Sleeps"), "zero sleeps is also omitted from the accessible totals")
+	check(main.run_summary.continue_button.text == "Continue" and main.run_summary.continue_button.disabled, "ending shows Continue disabled until the results finish appearing")
+	main.run_summary._continue()
+	check(not main.run_summary.exiting, "Continue cannot skip the results fade")
 	main.return_to_title()
+	check(not main.shows_inventory(), "returning to title hides the inventory")
 	stats._process(50)
 	check(stats.elapsed_seconds == 15 and not main.run_summary.visible, "menu return preserves the finished record and hides results")
 	main.queue_free()

@@ -8,6 +8,7 @@ const TITLE_FADE_SECONDS := 10.0
 const CREDIT_FADE_SECONDS := 4.0
 const CREDIT_GAP_SECONDS := 3.0
 const THANKS_FADE_SECONDS := 4.0
+const TEXT_SHADOW := Color("30251B59")
 var player: ManorPlayer
 var active := false
 var flowers: MultiMeshInstance3D
@@ -15,6 +16,7 @@ var rainbow: Node3D
 var title: Label3D
 var credit: Label3D
 var thanks: Label3D
+var text_shadows: Dictionary[Label3D, Label3D] = {}
 var ages := PackedFloat32Array()
 var positions := PackedVector3Array()
 var rotations := PackedFloat32Array()
@@ -57,7 +59,7 @@ func _ready() -> void:
 	title = _lettering("Belvedere", 8.0, 1.8)
 	# Bring the lower lines closer so they sit farther down the view without sinking into the grass.
 	credit = _lettering("A game by Nick Schaefer", 3.6, 0.50, 30.0)
-	thanks = _lettering("Thank you for playing", 1.96, 0.25, 27.0)
+	thanks = _lettering("Thank you for playing", 1.96, 0.45, 27.0)
 	flowers = MultiMeshInstance3D.new()
 	var instances := MultiMesh.new()
 	instances.transform_format = MultiMesh.TRANSFORM_3D
@@ -85,6 +87,13 @@ func _lettering(words: String, width_value: float, height_value: float, depth: f
 	label.outline_size = 0
 	label.no_depth_test = false
 	label.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	# Label3D has no text-shadow property; a second label follows its screen offset and fade.
+	var shadow := label.duplicate() as Label3D
+	shadow.transform = Transform3D.IDENTITY
+	shadow.modulate = Color(TEXT_SHADOW, 0.0)
+	shadow.render_priority = -1
+	label.add_child(shadow)
+	text_shadows[label] = shadow
 	add_child(label)
 	label.hide()
 	return label
@@ -120,7 +129,15 @@ func reset() -> void:
 	flowers.multimesh.visible_instance_count = 0
 
 func _process(delta: float) -> void:
-	if not active or player == null or player.manor.play_gate.visible or player.manor.at_title:
+	if not active or player == null:
+		return
+	for label: Label3D in text_shadows:
+		var shadow := text_shadows[label]
+		var camera := player.camera
+		var depth := maxf(camera.near, -camera.to_local(label.global_position).z)
+		shadow.global_position = camera.project_position(camera.unproject_position(label.global_position) + Vector2.DOWN, depth)
+		shadow.modulate.a = label.modulate.a * TEXT_SHADOW.a
+	if player.manor.play_gate.visible or player.manor.at_title:
 		return
 	if absf(player.global_position.x) > 9.4 or absf(player.global_position.z) > 9.4:
 		spawn_clock += delta

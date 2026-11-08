@@ -40,7 +40,7 @@ func icon_position() -> Vector2:
 
 func _draw() -> void:
 	var manor := case.manor
-	if not case.owned or manor.at_title or manor.in_finale or manor.recovering or manor.play_gate.visible:
+	if not case.owned or not manor.shows_inventory():
 		return
 	var at := icon_position()
 	var ink := Color("725637")

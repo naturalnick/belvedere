@@ -15,6 +15,7 @@ var accepted := false
 var pickup_origin := Vector2.ZERO
 var pickup_radius := 8.0
 var physical_pickup := false
+var completed := false
 
 func begin_pickup(at: Vector3) -> void:
 	var camera := manor.player.camera
@@ -51,7 +52,7 @@ func _ready() -> void:
 	_refresh()
 
 func _refresh() -> void:
-	# An empty wallet shows nothing; the first coin's flight ends where the icon then appears.
+	# Empty wallets have no count; the ending can show a checked coin for a completed collection.
 	count.visible = manor.coins.available > 0
 	count.text = str(manor.coins.available)
 	count.accessibility_name = "%d Bel coins" % manor.coins.available
@@ -61,7 +62,12 @@ func _refresh() -> void:
 	queue_redraw()
 
 func _process(delta: float) -> void:
-	visible = not manor.at_title and not manor.in_finale and not manor.recovering and not manor.play_gate.visible
+	visible = manor.shows_inventory()
+	var show_completion := manor.in_finale and manor.run_summary.revealed and manor.coins.collected.size() == ManorCoins.ROOMS.size() and manor.coins.inserted == ManorCoins.ROOMS.size() and manor.coins.available == 0
+	if completed != show_completion:
+		completed = show_completion
+		accessibility_name = "All seven coins found and used" if completed else ""
+		queue_redraw()
 	_refresh_caption()
 	if (manor.binoculars != null and manor.binoculars.locks_player()) or (manor.stopwatch != null and manor.stopwatch.locks_player()):
 		queue_redraw()
@@ -89,7 +95,7 @@ func presenting() -> bool:
 	return not manor.coins.pending.is_empty()
 
 func showing() -> bool:
-	return visible and presenting() and not manor.sliding and not manor.first_home_guide.active and not ((manor.binoculars != null and manor.binoculars.locks_player()) or (manor.stopwatch != null and manor.stopwatch.locks_player()))
+	return visible and presenting() and not manor.in_finale and not manor.sliding and not manor.first_home_guide.active and not ((manor.binoculars != null and manor.binoculars.locks_player()) or (manor.stopwatch != null and manor.stopwatch.locks_player()))
 
 func accept() -> void:
 	if showing() and presentation >= ACCEPT_AFTER:
@@ -104,9 +110,13 @@ func _input(event: InputEvent) -> void:
 
 func _draw() -> void:
 	var destination := Vector2(size.x - 94, 40)
-	if count.visible:
+	if count.visible or completed:
 		ManorPrizeArt.draw_coin(self, destination, 15)
-	if not presenting() or manor.sliding or manor.first_home_guide.active or ((manor.binoculars != null and manor.binoculars.locks_player()) or (manor.stopwatch != null and manor.stopwatch.locks_player())):
+	if completed:
+		var checkmark := PackedVector2Array([destination + Vector2(4, 7), destination + Vector2(9, 12), destination + Vector2(19, -1)])
+		draw_polyline(checkmark, Color("27485D"), 5, true)
+		draw_polyline(checkmark, Color("F6EEE1"), 2.5, true)
+	if not showing():
 		return
 	var enter := smoothstep(0.0, 0.3, presentation)
 	var travel := smoothstep(HOLD_AT, PRESENT_TIME, presentation)
