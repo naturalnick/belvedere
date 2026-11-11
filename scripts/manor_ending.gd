@@ -61,7 +61,7 @@ func _ready() -> void:
 	title = _lettering("Belvedere", 8.0, 1.8)
 	# Bring the lower lines closer so they sit farther down the view without sinking into the grass.
 	credit = _lettering("A game by Nick Schaefer", 3.6, 0.50, 30.0)
-	music_credit = _lettering("Music by Godwayne Songalia", 2.84, 0.45, 27.58)
+	music_credit = _lettering("Original music by Godwayne Songalia", 3.8, 0.45, 27.58)
 	thanks = _lettering("Thank you for playing", 1.64, 0.45, 26.18)
 	flowers = MultiMeshInstance3D.new()
 	var instances := MultiMesh.new()
