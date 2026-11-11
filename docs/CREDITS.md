@@ -1,6 +1,6 @@
 # Credits
 
-Belvedere © 2026 Puzzaholics LLC. Code, art and music were made for this game, except:
+Belvedere © 2026 Puzzaholics LLC. Main theme by Godwayne Songalia, composed for this game. All other code, art and music were made for this game, except:
 
 - Fondamento Regular: Brian J. Bonislawsky / Astigmatic (AOETI), © 2011, SIL Open Font License 1.1. License: `assets/fonts/Fondamento-OFL.txt`.
 - Stardos Stencil Bold: Vernon Adams, © 2011, SIL Open Font License 1.1. License: `assets/fonts/StardosStencil-OFL.txt`.

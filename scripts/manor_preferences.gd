@@ -3,12 +3,14 @@ extends RefCounted
 
 signal changed
 const PATH := "user://settings.cfg"
+# The Music slider at full is this fraction of the bus level (-6 dB), so music never overpowers the room.
+const MUSIC_MAX := 0.5
 var fov := 75.0
 var sensitivity := 0.0022
 var invert_y := false
 var master := 1.0
 var effects := 1.0
-var music := 0.35
+var music := 0.5
 var muted := false
 var storage_path := PATH
 
@@ -58,6 +60,6 @@ func apply(player: ManorPlayer) -> void:
 	# web builds, whose browser-side sample playback only mirrors the startup layout.
 	for bus_name in ["Master", "Effects", "Music"]:
 		var index := AudioServer.get_bus_index(bus_name)
-		var level := master if bus_name == "Master" else (effects if bus_name == "Effects" else music)
+		var level := master if bus_name == "Master" else (effects if bus_name == "Effects" else music * MUSIC_MAX)
 		AudioServer.set_bus_volume_db(index, linear_to_db(maxf(level, 0.0001)))
 	AudioServer.set_bus_mute(0, muted)

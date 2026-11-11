@@ -68,7 +68,7 @@ static func _show_finale(manor: Manor) -> void:
 	var ending := manor.ending
 	manor.carpet.show()
 	ending.rainbow.show()
-	for label in [ending.title, ending.credit, ending.thanks]:
+	for label in [ending.title, ending.credit, ending.music_credit, ending.thanks]:
 		label.modulate.a = 1.0
 		label.show()
 	var flowers := ending.flowers.multimesh
@@ -80,5 +80,5 @@ static func _hide_finale(manor: Manor) -> void:
 	var ending := manor.ending
 	manor.carpet.hide()
 	ending.reset()
-	for label in [ending.title, ending.credit, ending.thanks]:
+	for label in [ending.title, ending.credit, ending.music_credit, ending.thanks]:
 		label.modulate.a = 0.0

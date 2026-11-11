@@ -338,6 +338,7 @@ func begin_finale() -> void:
 	finale_motion.tween_property(player, "position", Vector3(0, -0.02, 22), ManorEnding.WALK_SECONDS).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 	finale_motion.parallel().tween_property(ending.title, "modulate:a", 1.0, ManorEnding.TITLE_FADE_SECONDS).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 	finale_motion.tween_property(ending.credit, "modulate:a", 1.0, ManorEnding.CREDIT_FADE_SECONDS).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	finale_motion.tween_property(ending.music_credit, "modulate:a", 1.0, ManorEnding.MUSIC_CREDIT_FADE_SECONDS).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 	finale_motion.tween_interval(ManorEnding.CREDIT_GAP_SECONDS)
 	finale_motion.tween_property(ending.thanks, "modulate:a", 1.0, ManorEnding.THANKS_FADE_SECONDS).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 	finale_motion.tween_interval(ManorRunSummary.REVEAL_DELAY)

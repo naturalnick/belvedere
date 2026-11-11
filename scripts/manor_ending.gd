@@ -6,6 +6,7 @@ const SPROUT_INTERVAL := 0.15
 const WALK_SECONDS := 20.0
 const TITLE_FADE_SECONDS := 10.0
 const CREDIT_FADE_SECONDS := 4.0
+const MUSIC_CREDIT_FADE_SECONDS := 4.0
 const CREDIT_GAP_SECONDS := 3.0
 const THANKS_FADE_SECONDS := 4.0
 const TEXT_SHADOW := Color("30251B59")
@@ -15,6 +16,7 @@ var flowers: MultiMeshInstance3D
 var rainbow: Node3D
 var title: Label3D
 var credit: Label3D
+var music_credit: Label3D
 var thanks: Label3D
 var text_shadows: Dictionary[Label3D, Label3D] = {}
 var ages := PackedFloat32Array()
@@ -59,7 +61,8 @@ func _ready() -> void:
 	title = _lettering("Belvedere", 8.0, 1.8)
 	# Bring the lower lines closer so they sit farther down the view without sinking into the grass.
 	credit = _lettering("A game by Nick Schaefer", 3.6, 0.50, 30.0)
-	thanks = _lettering("Thank you for playing", 1.96, 0.45, 27.0)
+	music_credit = _lettering("Music by Godwayne Songalia", 2.84, 0.45, 27.58)
+	thanks = _lettering("Thank you for playing", 1.64, 0.45, 26.18)
 	flowers = MultiMeshInstance3D.new()
 	var instances := MultiMesh.new()
 	instances.transform_format = MultiMesh.TRANSFORM_3D
@@ -99,7 +102,7 @@ func _lettering(words: String, width_value: float, height_value: float, depth: f
 	return label
 
 func begin_sequence() -> void:
-	for label in [title, credit, thanks]:
+	for label in [title, credit, music_credit, thanks]:
 		label.modulate.a = 0.0
 		label.show()
 
@@ -121,7 +124,7 @@ func reset() -> void:
 	rainbow.hide()
 	for mesh: MeshInstance3D in rainbow.get_children():
 		mesh.material_override.set_shader_parameter("reveal", 0.0)
-	for label in [title, credit, thanks]:
+	for label in [title, credit, music_credit, thanks]:
 		label.hide()
 	spawned = 0
 	total_spawned = 0

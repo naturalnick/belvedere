@@ -517,7 +517,7 @@ func capture_exit() -> void:
 	mouse_button(false)
 	await get_tree().process_frame
 	_check(not main.play_gate.visible, "Resume continues the ending")
-	await get_tree().create_timer(10.0).timeout
+	await get_tree().create_timer(10.0 + ManorEnding.MUSIC_CREDIT_FADE_SECONDS).timeout
 	await shot("07_thanks")
 	while not main.run_summary.ready_to_continue:
 		await get_tree().process_frame

@@ -36,7 +36,7 @@ func run() -> void:
 		check(audio.streams[group].size() == expected[group], "%s has %d variants" % [group, expected[group]])
 	check(absf(audio.streams["gap_retract"][0].get_length() - (ManorConservatory.RETRACT_TIME + 0.2)) < 0.01, "slab sound covers its travel and soft tail")
 	check(absf(audio.streams["conservatory_rise"][0].get_length() - (ManorConservatory.RISE_TIME + 0.2)) < 0.01, "lift sound covers the full rise and soft landing")
-	check(audio.music.stream.loop and audio.music.bus == "Music", "music loops on the Music bus")
+	check(not audio.music.stream.loop and audio.music.stream.get_length() > 120.0 and audio.music.bus == "Music", "the main theme plays through once on the Music bus")
 	check(not audio.streams["piano_song"].is_empty() and audio.streams["piano_song"].all(func(song: AudioStream) -> bool: return song.get_length() > 30.0 and song.get_length() < 61.0 and not song.loop), "piano songs run 30-60 s and end instead of looping")
 	check(audio.streams["bell_clear"][0].get_length() > 3.0 and audio.streams["bell_off"][0].get_length() > 3.0, "both bell tones keep the recording's natural ring")
 	check(audio.song_voice.bus == "Music" and audio.song_voice.get_parent() == main.player_piano, "songs come from the piano on the Music bus")
@@ -58,7 +58,7 @@ func run() -> void:
 	menu_button.queue_free()
 	cues.clear()
 
-	check(audio.music_intro == 0.0 and audio.music.volume_db < -59.0, "music starts silent during its delay")
+	check(count("theme") == 0, "the main theme waits for its delay")
 	main.coins.collect(0)
 	check(count("coin_acquired") == 0, "queued coin is silent until received")
 	main.coins.receive_next()
@@ -136,9 +136,13 @@ func run() -> void:
 	check(swings[true] > 1 and count("door_open") == 1, "reopening doors voice only the nearest (%d swung)" % swings[true])
 	await create_timer(1.6).timeout
 	check(absf(audio.music_duck_db) < 0.1, "music duck recovers after the slide")
-	check(audio.music_intro > 0 and audio.music_intro < 1, "music fades in slowly despite the early slide")
-	await create_timer(ManorAudio.MUSIC_DELAY + ManorAudio.MUSIC_FADE_IN).timeout
-	check(absf(audio.music.volume_db) < 0.1, "music reaches its normal level after startup")
+	check(absf(audio.music.volume_db) < 0.1, "music is back at its normal level")
+	await create_timer(ManorAudio.MUSIC_DELAY).timeout
+	cues.clear()
+	audio.music.finished.emit()
+	check(audio.music_rest.is_running() and count("theme") == 0, "the main theme ends in silence instead of looping")
+	audio.music_rest.custom_step(ManorAudio.MUSIC_REST + 0.1)
+	check(count("theme") == 1, "the main theme returns after its rest")
 
 	for door in foyer.doors:
 		if door.is_front:

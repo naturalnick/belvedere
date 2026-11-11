@@ -27,7 +27,7 @@ func run() -> void:
 		check(clue.visible, "fruit clues return")
 	var ending := main.ending
 	check(not main.carpet.visible and not ending.rainbow.visible and not ending.active, "the finale stays hidden")
-	for label in [ending.title, ending.credit, ending.thanks]:
+	for label in [ending.title, ending.credit, ending.music_credit, ending.thanks]:
 		check(not label.visible and label.modulate.a == 0.0, "finale lettering waits for the ending")
 	check(ending.flowers.multimesh.visible_instance_count == 0 and ending.spawned == 0, "no flower is left behind")
 

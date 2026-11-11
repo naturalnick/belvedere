@@ -59,8 +59,13 @@ func run() -> void:
 	while main.sliding:
 		await process_frame
 	check(piano.global_position.is_equal_approx(at + Vector3.RIGHT * ManorGeometry.PITCH) and audio.song_playing() and audio.song_voice.global_position.is_equal_approx(piano.to_global(Vector3.UP)), "the song rides along with the piano")
+	cues.clear()
+	audio.music.finished.emit()
+	audio.music_rest.custom_step(ManorAudio.MUSIC_REST + 0.1)
+	check(not cues.has("theme"), "a theme due during a song waits for it")
 	audio.end_song()
 	check(not audio.song_playing(), "a finished song ends")
+	check(cues.count("theme") == 1, "the waiting theme starts once the song ends")
 	await create_timer(3.2).timeout
 	check(absf(audio.song_duck_db) < 0.1, "the main theme returns after a song")
 	await process_frame

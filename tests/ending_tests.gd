@@ -54,7 +54,7 @@ func run() -> void:
 	check(absf(front.leaves[0].rotation.y) < deg_to_rad(50) and front.gate.collision_layer == 1, "red door opens slowly and blocks passage through its panels")
 	await create_timer(ManorDoor.EXIT_OPEN_SECONDS).timeout
 	check(front.gate.collision_layer == 0 and is_equal_approx(front.leaves[0].rotation.y, deg_to_rad(-100)), "fully open exit permits passage")
-	check(not main.ending.title.visible and not main.ending.credit.visible and not main.ending.thanks.visible, "ending lettering waits until the carpet sequence")
+	check(not main.ending.title.visible and not main.ending.credit.visible and not main.ending.music_credit.visible and not main.ending.thanks.visible, "ending lettering waits until the carpet sequence")
 	check(main.carpet.visible and main.ending.active and main.ending.rainbow.visible, "carpet and rainbow activate only for bonus")
 	main.ending.set_process(false)
 	main.player.set_physics_process(false)
@@ -104,7 +104,7 @@ func run() -> void:
 	main.resume_play()
 	await create_timer(ManorEnding.WALK_SECONDS - 2.0 + 0.2).timeout
 	check(main.player.position.is_equal_approx(Vector3(0, -0.02, 22)), "player stops at carpet end")
-	check(main.ending.credit.modulate.a > 0 and main.ending.credit.modulate.a < 1 and main.ending.thanks.modulate.a == 0, "credit begins fading only after arrival")
+	check(main.ending.credit.modulate.a > 0 and main.ending.credit.modulate.a < 1 and main.ending.music_credit.modulate.a == 0 and main.ending.thanks.modulate.a == 0, "credit begins fading only after arrival")
 	main.release_pointer()
 	paused_alpha = main.ending.credit.modulate.a
 	var paused_flowers := main.ending.total_spawned
@@ -112,7 +112,9 @@ func run() -> void:
 	check(main.ending.credit.modulate.a == paused_alpha and main.ending.total_spawned == paused_flowers and not main.fade.visible, "pause freezes credits and keeps the menu unobscured")
 	main.resume_play()
 	await create_timer(ManorEnding.CREDIT_FADE_SECONDS).timeout
-	check(is_equal_approx(main.ending.credit.modulate.a, 1) and main.ending.thanks.modulate.a == 0, "credit is readable alone before the thank-you appears")
+	check(is_equal_approx(main.ending.credit.modulate.a, 1) and main.ending.music_credit.modulate.a < 0.5 and main.ending.thanks.modulate.a == 0, "the game credit is readable before the music credit")
+	await create_timer(ManorEnding.MUSIC_CREDIT_FADE_SECONDS).timeout
+	check(is_equal_approx(main.ending.music_credit.modulate.a, 1) and main.ending.thanks.modulate.a == 0, "both credits are readable before the thank-you appears")
 	await create_timer(ManorEnding.CREDIT_GAP_SECONDS + 2.0).timeout
 	check(main.ending.thanks.modulate.a > 0 and main.ending.thanks.modulate.a < 1 and not main.at_title, "thank-you fades in after the additional wait")
 	check(not main.run_summary.revealed, "totals wait until every ending line has faded in")

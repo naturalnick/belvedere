@@ -17,7 +17,7 @@ func run() -> void:
 	check(main.controls_locked(), "settings lock game input")
 	check(main.player.camera.fov == 92 and is_equal_approx(main.player.sensitivity, 0.004), "view sliders update actual camera and mouse")
 	check(main.player.invert_y, "toggle applies preference")
-	for pair in [["Master", 0.6], ["Effects", 0.4], ["Music", 0.2]]:
+	for pair in [["Master", 0.6], ["Effects", 0.4], ["Music", 0.2 * ManorPreferences.MUSIC_MAX]]:
 		check(is_equal_approx(db_to_linear(AudioServer.get_bus_volume_db(AudioServer.get_bus_index(pair[0]))), pair[1]), "volume slider controls its bus")
 	var saved := ManorPreferences.new()
 	saved.load_file(path)

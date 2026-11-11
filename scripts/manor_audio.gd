@@ -7,7 +7,8 @@ const DOOR_RANGE := 7.5
 const MUSIC_DUCK_DB := -6.0
 const BIRDS_DB := -33.0
 const MUSIC_DELAY := 3.0
-const MUSIC_FADE_IN := 5.0
+# Silence between plays of the theme, so it doesn't run back to back.
+const MUSIC_REST := 90.0
 # Menu press sound: "ui_click" (brass latch) or "ui_tap" (muted wooden tap).
 const MENU_CLICK := "ui_click"
 const MENU_CLICK_DB := -4.0
@@ -33,8 +34,7 @@ var birds: AudioStreamPlayer
 var birds_on := false
 var birds_fade: Tween
 var music_fade: Tween
-var music_intro := 0.0
-var music_started_ms := -1
+var music_rest: Tween
 var music_duck_db := 0.0
 var song_duck_db := 0.0
 var song_fade: Tween
@@ -58,17 +58,17 @@ func _ready() -> void:
 	birds.bus = "Effects"
 	add_child(birds)
 	music = AudioStreamPlayer.new()
-	# Looping is set in the .import so a replacement track only needs the same setting.
+	# Looping is off in the .import; the theme plays through, then rests before the next play.
 	music.stream = streams["theme"][0]
 	music.bus = "Music"
 	add_child(music)
-	music.volume_db = -60.0
+	music.finished.connect(func() -> void:
+		music_rest = create_tween()
+		music_rest.tween_interval(MUSIC_REST)
+		music_rest.tween_callback(_play_theme))
 	var intro := create_tween()
 	intro.tween_interval(MUSIC_DELAY)
-	intro.tween_callback(func() -> void:
-		music_started_ms = Time.get_ticks_msec()
-		if audible:
-			music.play())
+	intro.tween_callback(_play_theme)
 	if manor.coins != null:
 		manor.coins.received.connect(func() -> void: play("coin_acquired", -4.0))
 	for id in manor.rooms:
@@ -117,10 +117,10 @@ func _load_streams() -> void:
 		streams[bell_sound] = [load(DIR + bell_sound + ".ogg")]
 	streams["wake"] = [load(DIR + "wake.wav")]
 	streams["birds"] = [load(DIR + "birds_loop.ogg")]
-	streams["theme"] = [load(DIR + "manor_theme.ogg")]
+	streams["theme"] = [load(DIR + "main_theme.ogg")]
 	if OS.has_feature("web"):
 		# Web playback uses decoded samples, and a stream's first play() would decode all of it
-		# on the only thread. The 96 s theme alone took over 100 ms, so pay for it during load.
+		# on the only thread. A 96 s theme alone took over 100 ms, so pay for it during load.
 		# Piano songs are left to decode on their first play: about 17 MB each once decoded, and
 		# most players unlock only a few, so paying for all seven up front would waste memory.
 		for group in streams:
@@ -189,6 +189,18 @@ func end_song() -> void:
 	_fade_theme(0.0, 3.0)
 	song_ended.emit()
 
+# The theme swells in on its own, so it needs no fade-in; on the web it also stays at its start
+# while the browser holds audio until the first click.
+func _play_theme() -> void:
+	# A theme due during a piano song would start buried under it, so it waits for the song to end.
+	if song_active:
+		if not song_ended.is_connected(_play_theme):
+			song_ended.connect(_play_theme, CONNECT_ONE_SHOT)
+		return
+	cued.emit("theme")
+	if audible:
+		music.play()
+
 func _fade_theme(target_db: float, seconds: float) -> void:
 	if song_fade != null:
 		song_fade.kill()
@@ -237,13 +249,7 @@ func surface() -> String:
 	return "step_grass"
 
 func _process(delta: float) -> void:
-	if music_started_ms >= 0 and music_intro < 1.0:
-		# Browsers hold audio until the first click while the music is already queued. Following the
-		# heard position (still 0 while held) keeps the fade-in for that moment instead of a jump.
-		var heard := music.get_playback_position() if music.playing else (Time.get_ticks_msec() - music_started_ms) / 1000.0
-		music_intro = maxf(music_intro, 0.5 - 0.5 * cos(PI * clampf(heard / MUSIC_FADE_IN, 0.0, 1.0)))
-	# Startup gain and slide ducking are independent, so an early slide cannot skip the fade.
-	music.volume_db = linear_to_db(maxf(0.001, music_intro)) + music_duck_db + song_duck_db
+	music.volume_db = music_duck_db + song_duck_db
 	var paused := manor.play_gate.visible or manor.at_title
 	if song_active:
 		hold(song_voice, paused)

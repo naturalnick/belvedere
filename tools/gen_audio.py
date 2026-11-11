@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Shape CC0 recorded foley and synthesize the original sparse piano sketch.
+"""Shape CC0 recorded foley and prepare the main theme for the game.
 Sources and hashes live beside the recordings in audio_sources/sources.json.
 """
 from pathlib import Path
@@ -139,7 +139,7 @@ def rolling_texture(n, rng):
 
 def conservatory_effects():
     # Reuse the room shift's rolling layer, without either timber-creak recording.
-    # A separate seed keeps these clips stable without changing the existing foley or music.
+    # A separate seed keeps these clips stable without changing the existing foley.
     rng = np.random.default_rng(73105)
     for name, seconds, peak, cutoff in [('gap_retract', 2.2, .18, 500), ('conservatory_rise', 5.5, .42, 1300)]:
         n = int(seconds * RATE)
@@ -232,62 +232,33 @@ def birds():
     write('birds_loop', wrapped[warm:], .25, ogg=True, rate=rate)
 
 
-def piano_note(midi, velocity, duration=8.):
-    n = int(duration*RATE);t=np.arange(n)/RATE;f=440*2**((midi-69)/12)
-    note=np.zeros(n)
-    # Felt piano: damped upper partials that die quickly, unison beating, and a padded attack.
-    for partial in range(1, 12):
-        frequency=f*partial*np.sqrt(1 + .00009*partial*partial)
-        decay=(3.0 + (65-midi)*.03)/(partial**.95)
-        amplitude=np.exp(-partial*.48)/partial**1.2
-        for cents, gain in [(-.65,.23), (0,.54), (.85,.23)]:
-            note += gain*amplitude*np.sin(2*np.pi*frequency*2**(cents/1200)*t)*np.exp(-t/decay)
-    note *= (1-np.exp(-t/.022))*velocity
-    # A low, soft felt thump in place of a bright hammer click.
-    thump=filt(RNG.normal(size=n), [45, 380], 'bandpass')*np.exp(-t/.03)*.05*velocity
-    return fade(note+thump, .006, .5)
+def lufs(x, rate):
+    # ffmpeg's EBU R128 meter, so the target matches what was measured on the previous theme.
+    raw = np.ascontiguousarray(x, dtype='<f4').tobytes()
+    out = subprocess.run(['ffmpeg', '-hide_banner', '-nostats', '-f', 'f32le', '-ar', str(rate), '-ac', str(x.shape[1]), '-i', '-',
+                          '-af', 'ebur128', '-f', 'null', '-'], input=raw, capture_output=True, check=True).stderr.decode()
+    return float(out[out.rindex('I:'):].split()[1])
 
 
-def music():
-    duration=96.; stereo=np.zeros((int(duration*RATE), 2))
-    # Original, unhurried voicings with rests; no looping arpeggiator or retro waveform.
-    # Each phrase is root, fifth, then the third above; leaving the phrase there gives more space.
-    phrases=[(0,[48,55,64]), (12,[45,52,60]), (24,[41,48,57]), (36,[43,50,59]),
-             (48,[48,55,64]), (60,[45,52,60]), (72,[41,48,57]), (84,[43,50,59])]
-
-    def place(sound, when, pan):
-        at=int(when*RATE);count=min(len(sound),len(stereo)-at)
-        gains=np.array([np.sqrt((1-pan)/2), np.sqrt((1+pan)/2)])
-        stereo[at:at+count] += sound[:count,None]*gains
-        # Notes ringing past the end continue from the start, so the loop has no seam.
-        stereo[:len(sound)-count] += sound[count:,None]*gains
-
-    for start, notes in phrases:
-        # A soft bass note an octave below grounds each phrase.
-        place(piano_note(notes[0]-12, .30*RNG.uniform(.92,1.04), 11.), start+.66, -.1)
-        for k, note in enumerate(notes):
-            when=start+[.7, 2.15, 4.9][k]+RNG.uniform(-.10,.10)
-            sound=piano_note(note, [.44,.36,.29][k]*RNG.uniform(.9,1.05))
-            place(sound, when, np.clip((note-56)/38, -.45,.45))
-    # Baked warm hall: ~4 s decay with darker tail; avoids a heavy live reverb on the music bus.
-    ir_n=int(4.5*RATE); t=np.arange(ir_n)/RATE
-    for channel in range(2):
-        ir=filt(RNG.normal(size=ir_n), 1700)*np.exp(-t/0.62) + filt(RNG.normal(size=ir_n), 4000)*np.exp(-t/0.18)*.35
-        ir[:int(.03*RATE)] = 0
-        ir *= .22 / np.sqrt(np.sum(ir*ir))
-        for time_value, level in [(.037,.08),(.061,.06),(.093,.04)]:
-            ir[int((time_value+channel*.003)*RATE)] += level
-        tail=signal.fftconvolve(stereo[:,channel], ir)
-        # Fold the reverb tail into the start for an exact seamless loop boundary.
-        stereo[:,channel] += tail[:len(stereo)]
-        stereo[:len(tail)-len(stereo),channel] += tail[len(stereo):]
-    write('manor_theme', filt(stereo, 5200), .34, 0, 0, ogg=True)
+def main_theme():
+    # Kept at its native 48 kHz and in stereo, as mixed. The game plays it once, then rests in silence.
+    rate = 48000
+    x = read(SOURCE / 'main-theme.mp3', 2, rate)
+    # The piece swells in and decays on its own; only the silent end is cut, with a short fade.
+    active = np.flatnonzero(np.abs(x).max(axis=1) > 10 ** (-80 / 20))
+    x = x[:active[-1] + 1]
+    release = int(.25 * rate)
+    x[-release:] *= np.linspace(1, 0, release)[:, None] ** 2
+    # The previous felt-piano loop sat at -21 LUFS against the foley; match it so the mix holds.
+    x = x * 10 ** ((-21 - lufs(x, rate)) / 20)
+    write('main_theme', x, np.max(np.abs(x)), ogg=True, rate=rate)
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--conservatory-only', action='store_true', help='Regenerate only the creak-free slab and lift sounds')
     parser.add_argument('--bells-only', action='store_true', help='Regenerate only the bells and the player-piano songs')
+    parser.add_argument('--theme-only', action='store_true', help='Regenerate only the main theme')
     args = parser.parse_args()
     manifest=json.loads((SOURCE/'sources.json').read_text())
     for name, digest in manifest['sha256'].items():
@@ -298,14 +269,16 @@ if __name__ == '__main__':
         conservatory_effects()
     elif args.bells_only:
         bell_effects();piano_songs()
+    elif args.theme_only:
+        main_theme()
     else:
         for stale in list(OUT.glob('*.wav')) + list(OUT.glob('*.ogg')):
             if not (stale.name.startswith('piano_song_') and not piano_sources_present()): stale.unlink()
-        effects();birds();music();conservatory_effects();bell_effects();piano_songs()
+        effects();birds();main_theme();conservatory_effects();bell_effects();piano_songs()
     for orphan in OUT.glob('*.import'):
         if not orphan.with_suffix('').exists(): orphan.unlink()
     target=ROOT/'build/audio-metrics.json'
-    metrics = json.loads(target.read_text()) if (args.conservatory_only or args.bells_only) and target.exists() else {}
+    metrics = json.loads(target.read_text()) if (args.conservatory_only or args.bells_only or args.theme_only) and target.exists() else {}
     metrics.update(REPORT)
     target.write_text(json.dumps(metrics,indent=2)+'\n')
     print(f'Prepared {len(REPORT)} assets; {sum(x["bytes"] for x in REPORT.values()) / 1e6:.2f} MB. Metrics: {target}')
