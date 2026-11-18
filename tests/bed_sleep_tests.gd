@@ -36,7 +36,7 @@ func run() -> void:
 	var shifted := main.rules.board.duplicate()
 	var at_bed := main.player.global_transform
 	check(main.player.begin_interact() and main.play_gate.mode == "sleep" and main.controls_locked(), "bed opens confirmation after the first completed shift")
-	check(main.play_gate.title_label.text == "Start over?" and main.play_gate.primary.text == "Sleep" and main.play_gate.secondary.text == "Cancel", "confirmation offers only Sleep and Cancel")
+	check(main.play_gate.title_label.text == "Sleep?" and main.play_gate.primary.text == "Sleep" and main.play_gate.secondary.text == "Cancel", "confirmation offers only Sleep and Cancel")
 	check(main.play_gate.secondary.has_focus(), "Cancel receives initial keyboard focus")
 	main.play_gate._activate_secondary()
 	check(not main.play_gate.visible and main.rules.board == shifted and main.player.global_transform == at_bed, "Cancel preserves the layout and viewpoint")

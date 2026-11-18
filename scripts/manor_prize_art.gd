@@ -1,7 +1,7 @@
 class_name ManorPrizeArt
 extends RefCounted
 
-const BELL_EMBLEM: Texture2D = preload("res://assets/bell_engraving.svg")
+const NOTE_EMBLEM: Texture2D = preload("res://assets/note_engraving.svg")
 
 static func reward_label(parent: Control, text_value: String) -> Label:
 	var label := Label.new()
@@ -106,20 +106,23 @@ static func _bell_cup() -> ArrayMesh:
 static func coin(parent: Node3D) -> Node3D:
 	var result := Node3D.new()
 	parent.add_child(result)
-	var blue := ManorGeometry.material("426C97", 0.001)
-	var disk := ManorGeometry.cylinder(result, 0.067, 0.009, Vector3.ZERO, blue)
+	var edge := ManorGeometry.material("D9B35C", 0.001)
+	var disk := ManorGeometry.cylinder(result, 0.067, 0.009, Vector3.ZERO, edge)
 	disk.rotation.x = PI / 2
 	# The toon shader's programs are already compiled. A StandardMaterial3D here froze slow machines
 	# for seconds on the first insert, while its PBR shader compiled.
-	var etched: ShaderMaterial = ManorGeometry.printed_material(BELL_EMBLEM)
+	var etched: ShaderMaterial = ManorGeometry.printed_material(NOTE_EMBLEM)
 	etched.set_shader_parameter("self_light", 0.0)
 	etched.set_shader_parameter("print_cutout", true)
 	for side in [-1, 1]:
-		var face := ManorGeometry.cylinder(result, 0.054, 0.002, Vector3(0, 0, side * 0.0055), ManorGeometry.material("6F9FC8", 0.0))
+		# A darker step between the raised face and the edge reads as the bevel ring.
+		var bevel := ManorGeometry.cylinder(result, 0.0577, 0.0016, Vector3(0, 0, side * 0.0053), ManorGeometry.material("A57C2E", 0.0))
+		bevel.rotation.x = PI / 2
+		var face := ManorGeometry.cylinder(result, 0.0553, 0.002, Vector3(0, 0, side * 0.0055), ManorGeometry.material("D9B35C", 0.0))
 		face.rotation.x = PI / 2
 		var engraving := MeshInstance3D.new()
 		var face_art := QuadMesh.new()
-		face_art.size = Vector2(0.11, 0.11)
+		face_art.size = Vector2(0.124, 0.124)
 		engraving.mesh = face_art
 		engraving.material_override = etched
 		engraving.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
@@ -128,18 +131,11 @@ static func coin(parent: Node3D) -> Node3D:
 		result.add_child(engraving)
 	return result
 
-static func draw_coin(canvas: Control, at: Vector2, radius: float, turn: float = 0.0, emblem: bool = false) -> void:
+static func draw_coin(canvas: Control, at: Vector2, radius: float, turn: float = 0.0) -> void:
 	# Keep drawing units in pixels: scaling a unit circle also scales its antialias fringe into a halo.
 	canvas.draw_set_transform(at, 0, Vector2(maxf(0.12, absf(cos(turn))), 1))
-	canvas.draw_circle(Vector2(0, radius * 0.025), radius, Color("355A80"), true, -1, true)
-	canvas.draw_circle(Vector2.ZERO, radius * 0.96, Color("6F9FC8"), true, -1, true)
-	canvas.draw_circle(Vector2.ZERO, radius * 0.82, Color("B4D2E8"), false, maxf(1.0, radius * 0.025), true)
-	canvas.draw_circle(Vector2.ZERO, radius * 0.76, Color("426C97"), false, maxf(0.8, radius * 0.012), true)
-	if radius > 30:
-		for i in 32:
-			var direction := Vector2.from_angle(i * TAU / 32)
-			canvas.draw_line(direction * radius * 0.88, direction * radius * 0.92, Color("426C97"), 1.0, true)
-	if emblem:
-		var art_size := Vector2.ONE * radius * 1.85
-		canvas.draw_texture_rect(BELL_EMBLEM, Rect2(-art_size / 2.0, art_size), false)
+	canvas.draw_circle(Vector2.ZERO, radius, Color("D9B35C"), true, -1, true)
+	canvas.draw_circle(Vector2.ZERO, radius * 0.84, Color("A57C2E"), false, maxf(1.0, radius * 0.045), true)
+	var art_size := Vector2.ONE * radius * 1.85
+	canvas.draw_texture_rect(NOTE_EMBLEM, Rect2(-art_size / 2.0, art_size), false)
 	canvas.draw_set_transform(Vector2.ZERO)

@@ -26,7 +26,7 @@ func _ready() -> void:
 	title_label.add_theme_color_override("font_color", Color("EFE4D2"))
 	add_child(title_label)
 	sleep_hint = Label.new()
-	sleep_hint.text = "Sleep to reset the rooms.\nKeep your tokens and items."
+	sleep_hint.text = "Reset the rooms but keep your belongings."
 	sleep_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	sleep_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	sleep_hint.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -192,7 +192,7 @@ func _layout() -> void:
 	secondary.visible = sleep_prompt
 	sound_button.visible = mode in ["title", "pause"]
 	title_label.visible = mode in ["title", "sleep"] and not wall_menu
-	title_label.text = "Start over?" if sleep_prompt else "Belvedere"
+	title_label.text = "Sleep?" if sleep_prompt else "Belvedere"
 	title_label.position = Vector2(16, size.y / 2.0 - (125 * ui_scale if sleep_prompt else 36))
 	title_label.size = Vector2(maxf(0, size.x - 32), 48)
 	title_label.add_theme_font_size_override("font_size", mini(40, maxi(20, int((size.x - 32) / 9.0))))

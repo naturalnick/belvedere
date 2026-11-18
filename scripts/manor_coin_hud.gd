@@ -34,8 +34,11 @@ static func is_accept_press(event: InputEvent) -> bool:
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
+	# The note stamp shrinks to a 30 px coin; without mipmaps it breaks into blocks.
+	texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	count = Label.new()
+	count.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 	count.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	count.add_theme_font_size_override("font_size", 25)
 	count.add_theme_color_override("font_color", Color("F6EEE1"))
@@ -114,7 +117,7 @@ func _draw() -> void:
 		ManorPrizeArt.draw_coin(self, destination, 15)
 	if completed:
 		var checkmark := PackedVector2Array([destination + Vector2(4, 7), destination + Vector2(9, 12), destination + Vector2(19, -1)])
-		draw_polyline(checkmark, Color("27485D"), 5, true)
+		draw_polyline(checkmark, Color("4E3814"), 5, true)
 		draw_polyline(checkmark, Color("F6EEE1"), 2.5, true)
 	if not showing():
 		return
@@ -126,4 +129,4 @@ func _draw() -> void:
 		origin = pickup_origin.lerp(size * Vector2(0.32, 0.5), enter)
 		radius = lerpf(lerpf(pickup_radius, minf(size.y * 0.15, 110), enter), 15.0, travel)
 	var at := origin.lerp(destination, travel)
-	ManorPrizeArt.draw_coin(self, at, radius, lerpf(-0.85, 0.0, enter), radius > 30)
+	ManorPrizeArt.draw_coin(self, at, radius, lerpf(-0.85, 0.0, enter))

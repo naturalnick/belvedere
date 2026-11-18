@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://cptsh3oupxuw6"
-path="res://.godot/imported/bell_engraving.svg-bea02997be5cc589a37d8c74a3b2517e.ctex"
+uid="uid://bo344ye1h1gvd"
+path="res://.godot/imported/note_engraving.svg-03c856a341dab579c8f01fd502eff869.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/bell_engraving.svg"
-dest_files=["res://.godot/imported/bell_engraving.svg-bea02997be5cc589a37d8c74a3b2517e.ctex"]
+source_file="res://assets/note_engraving.svg"
+dest_files=["res://.godot/imported/note_engraving.svg-03c856a341dab579c8f01fd502eff869.ctex"]
 
 [params]
 
@@ -23,7 +23,7 @@ compress/rdo_quality_loss=0.0
 compress/hdr_compression=1
 compress/normal_map=0
 compress/channel_pack=0
-mipmaps/generate=false
+mipmaps/generate=true
 mipmaps/limit=-1
 roughness/mode=0
 roughness/src_normal=""
