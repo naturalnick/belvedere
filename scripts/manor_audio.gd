@@ -8,7 +8,7 @@ const MUSIC_DUCK_DB := -6.0
 const BIRDS_DB := -33.0
 const MUSIC_DELAY := 3.0
 # Silence between plays of the theme, so it doesn't run back to back.
-const MUSIC_REST := 90.0
+const MUSIC_REST := 30.0
 # Menu press sound: "ui_click" (brass latch) or "ui_tap" (muted wooden tap).
 const MENU_CLICK := "ui_click"
 const MENU_CLICK_DB := -4.0
